@@ -62,10 +62,7 @@ Dumper::~Dumper() = default;
 Status Dumper::Init() {
 
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
-
-  if (mem_mgr_->PreallocateChunks() < 0) {
-    return Status::Corruption("Could not allocate memory");
-  }
+  RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
   task_scheduler_.reset(new TaskScheduler(num_threads_, this));
   task_scheduler_->Init();

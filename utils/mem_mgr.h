@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/status.h"
+
 #include <stdint.h>
 
 #include <mutex>
@@ -16,7 +18,7 @@ class MemoryManager {
   uint64_t chunk_size() { return chunk_size_; }
 
   // Preallocates all the free buffers.
-  int PreallocateChunks();
+  Status PreallocateChunks();
 
   // Obtain a single chunk. Returns 'nullptr' if none are available.
   uint8_t* GetBuffer();

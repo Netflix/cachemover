@@ -35,35 +35,28 @@ void MetadumpTask::Execute() {
 
 
 // TODO: Move into utils
-int MetadumpTask::SendCommand(const std::string& metadump_cmd) {
-  int bytes_sent;
+Status MetadumpTask::SendCommand(const std::string& metadump_cmd) {
+  int32_t bytes_sent;
 
-  bytes_sent = memcached_socket_->Send(
-      reinterpret_cast<const uint8_t*>(metadump_cmd.c_str()), metadump_cmd.length());
-  if (bytes_sent < 0) {
-    std::cout << "Failed to send keydump command" << std::endl;
-    return -1;
-  }
+  RETURN_ON_ERROR(memcached_socket_->Send(
+      reinterpret_cast<const uint8_t*>(metadump_cmd.c_str()),
+      metadump_cmd.length(), &bytes_sent));
 
-  return 0;
+  return Status::OK();
 }
 
-int MetadumpTask::RecvResponse() {
+Status MetadumpTask::RecvResponse() {
 
   uint8_t *buf = mem_mgr_->GetBuffer();
   uint64_t chunk_size = mem_mgr_->chunk_size();
-  uint64_t bytes_read = 0;
+  int32_t bytes_read = 0;
   uint64_t bytes_written_to_file = 0;
   int num_files = 0;
   std::ofstream chunk_file;
   std::string chunk_file_name(file_prefix_ + std::to_string(num_files));
   chunk_file.open(file_prefix_ + std::to_string(num_files));
   do {
-    bytes_read = memcached_socket_->Recv(buf, chunk_size-1);
-    if (bytes_read < 0) {
-      std::cout << "Failed to recv" << std::endl;
-      exit(0);
-    }
+    RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
 
     chunk_file.write(reinterpret_cast<char*>(buf), bytes_read);
     buf[bytes_read] = '\0';
@@ -99,7 +92,7 @@ int MetadumpTask::RecvResponse() {
   chunk_file.close();
 
   mem_mgr_->ReturnBuffer(buf);
-  return 0;
+  return Status::OK();
 }
 
 } // namespace memcachedumper

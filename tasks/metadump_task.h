@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tasks/task.h"
+#include "utils/status.h"
 
 #include <string>
 
@@ -16,8 +17,8 @@ class MetadumpTask : public Task {
   void Execute() override;
 
  private:
-  int SendCommand(const std::string& metadump_cmd);
-  int RecvResponse();
+  Status SendCommand(const std::string& metadump_cmd);
+  Status RecvResponse();
 
   Socket *memcached_socket_;
 

@@ -15,8 +15,8 @@ class Socket {
   Status Create();
   Status SetRecvTimeout(int seconds);
   Status Connect(const Sockaddr& remote_addr);
-  int Recv(uint8_t* buf, size_t len);
-  int Send(const uint8_t* buf, size_t len);
+  Status Recv(uint8_t* buf, size_t len, int32_t *nbytes_read);
+  Status Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent);
 
  private:
   int fd_;

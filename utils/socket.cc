@@ -53,34 +53,30 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
   return Status::OK();
 }
 
-int Socket::Recv(uint8_t* buf, size_t len) {
-  int bytes;
+Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
+  int32_t nbytes;
 
-  bytes = recv(fd_, buf, len, 0);
-  if (bytes < 0) {
-    std::cout << "Got recv error. Reason: " << strerror(errno) << std::endl;
-    return bytes;
-  } else if (bytes == 0) {
-    std::cout << "Got recv EOF. Reason: " << strerror(errno) << std::endl;
-    return bytes;
+  nbytes = recv(fd_, buf, len, 0);
+  if (nbytes < 0) {
+    return Status::NetworkError("Recv error", strerror(errno));
+  } else if (nbytes == 0) {
+    return Status::NetworkError("Recv EOF", strerror(errno));
   }
 
-  return bytes;
+  *nbytes_read = nbytes;
+  return Status::OK();
 }
 
-int Socket::Send(const uint8_t* buf, size_t len) {
-  int bytes;
+Status Socket::Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent) {
+  int32_t nbytes;
 
-  bytes = send(fd_, buf, len, 0);
-  if (bytes < 0) {
-    std::cout << "Got send error. Reason: " << strerror(errno) << std::endl;
-    return bytes;
-  } else if (bytes == 0) {
-    std::cout << "Got send EOF. Reason: " << strerror(errno) << std::endl;
-    return bytes;
+  nbytes = send(fd_, buf, len, 0);
+  if (nbytes < 0) {
+    return Status::NetworkError("Send error", strerror(errno));
   }
 
-  return bytes;
+  *nbytes_sent = nbytes;
+  return Status::OK();
 }
 
 } // namespace memcachedumper
