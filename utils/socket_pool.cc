@@ -12,26 +12,19 @@ SocketPool::SocketPool(std::string_view hostname, int port, int num_sockets)
 }
 
 Status SocketPool::PrimeConnections() {
-  Status status  = sockaddr_.ResolveAndPopulateSockaddr(hostname_, port_);
-  if (!status.ok()) return status;
+  RETURN_ON_ERROR(sockaddr_.ResolveAndPopulateSockaddr(hostname_, port_));
 
   for (int i = 0; i < num_sockets_; ++i) {
     sockets_.push_back(new Socket());
     Socket *sock = sockets_[i];
-    status = sock->Create();
-    if (!status.ok()) return status;
+    RETURN_ON_ERROR(sock->Create());
 
-    status = sock->SetRecvTimeout(2);
-    if (!status.ok()) return status;
-    
-    status = sock->Connect(sockaddr_);
-    if (!status.ok()) {
-      return status;
-    }
+    // TODO: Make configurable if necessary.
+    RETURN_ON_ERROR(sock->SetRecvTimeout(2));
+    RETURN_ON_ERROR(sock->Connect(sockaddr_));
   }
 
   std::cout << "Successfully primed connections." << std::endl;
-
   return Status::OK();
 }
 

@@ -17,6 +17,11 @@
 
 #include "utils/slice.h"
 
+#define RETURN_ON_ERROR(s) do {\
+  const memcachedumper::Status& _s = (s);   \
+  if (!_s.ok()) return _s;                  \
+  } while (0);
+
 namespace memcachedumper {
 
 class Status {

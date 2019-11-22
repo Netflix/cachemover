@@ -61,8 +61,7 @@ Dumper::~Dumper() = default;
 
 Status Dumper::Init() {
 
-  Status status = socket_pool_->PrimeConnections();
-  if (!status.ok()) return status;
+  RETURN_ON_ERROR(socket_pool_->PrimeConnections());
 
   if (mem_mgr_->PreallocateChunks() < 0) {
     return Status::Corruption("Could not allocate memory");
