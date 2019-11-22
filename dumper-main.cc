@@ -1,4 +1,5 @@
 #include "dumper/dumper.h"
+#include "utils/status.h"
 
 #include <iostream>
 #include <string>
@@ -8,10 +9,11 @@ namespace memcachedumper {
 
 void DumperMain(DumperOptions& opts) {
   Dumper dumper(opts);
-  if (dumper.Init() < 0) {
+  Status dumper_status = dumper.Init();
+  if (!dumper_status.ok()) {
+    std::cout << "Received fatal error: " << dumper_status.ToString() << std::endl;
     exit(-1);
   }
-
   dumper.Run();
 }
 

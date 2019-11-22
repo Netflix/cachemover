@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/status.h"
+
 #include <memory>
 #include <string>
 
@@ -50,7 +52,7 @@ class Dumper {
   ~Dumper();
 
   // Initializes the dumper by connecting to memcached.
-  int Init();
+  Status Init();
 
   // Starts the dumping process.
   void Run();

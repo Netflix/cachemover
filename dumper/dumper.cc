@@ -59,17 +59,19 @@ Dumper::Dumper(DumperOptions& opts) {
 
 Dumper::~Dumper() = default;
 
-int Dumper::Init() {
+Status Dumper::Init() {
 
   int ret = socket_pool_->PrimeConnections();
-  if (ret < 0) return -1;
+  if (ret < 0) return Status::IOError("Could not prime connections");
 
-  if (mem_mgr_->PreallocateChunks() < 0) return -1;
+  if (mem_mgr_->PreallocateChunks() < 0) {
+    return Status::Corruption("Could not allocate memory");
+  }
 
   task_scheduler_.reset(new TaskScheduler(num_threads_, this));
   task_scheduler_->Init();
 
-  return 0;
+  return Status::OK();
 }
 
 Socket* Dumper::GetMemcachedSocket() {

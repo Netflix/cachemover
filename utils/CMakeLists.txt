@@ -4,6 +4,7 @@ set(UTILS_SRCS
   sockaddr.cc
   socket.cc
   socket_pool.cc
+  status.cc
 )
 
 add_library(utils ${UTILS_SRCS})
