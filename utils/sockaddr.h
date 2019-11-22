@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/status.h"
+
 #include <netinet/in.h>
 #include <netdb.h>
 
@@ -17,7 +19,7 @@ class Sockaddr {
   }
 
   // Populate our sockaddr with the right resolved hostname and port.
-  int ResolveAndPopulateSockaddr(const std::string& hostname, int port);
+  Status ResolveAndPopulateSockaddr(const std::string& hostname, int port);
 
  private:
   struct sockaddr_in sockaddr_;

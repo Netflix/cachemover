@@ -2,6 +2,7 @@
 
 #include "utils/sockaddr.h"
 #include "utils/socket.h"
+#include "utils/status.h"
 
 #include <mutex>
 #include <string>
@@ -13,7 +14,7 @@ class SocketPool {
  public:
   SocketPool(std::string_view hostname, int port, int num_sockets);
 
-  int PrimeConnections();
+  Status PrimeConnections();
 
   Socket* GetSocket();
 

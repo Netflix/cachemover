@@ -50,6 +50,12 @@ class Status {
   static Status IOError(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kIOError, msg, msg2);
   }
+  static Status NetworkError(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kNetworkError, msg, msg2);
+  }
+  static Status OutOfMemoryError(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kOutOfMemoryError, msg, msg2);
+  }
 
   // Returns true iff the status indicates success.
   bool ok() const { return (state_ == nullptr); }
@@ -69,6 +75,12 @@ class Status {
   // Returns true iff the status indicates an InvalidArgument.
   bool IsInvalidArgument() const { return code() == kInvalidArgument; }
 
+  // Returns true iff the status indicates a network error.
+  bool IsNetworkError() const { return code() == kNetworkError; }
+
+  // Returns true iff the status indicates an OOM error.
+  bool IsOutOfMemoryError() const { return code() == kOutOfMemoryError; }
+
   // Return a string representation of this status suitable for printing.
   // Returns the string "OK" for success.
   std::string ToString() const;
@@ -80,7 +92,9 @@ class Status {
     kCorruption = 2,
     kNotSupported = 3,
     kInvalidArgument = 4,
-    kIOError = 5
+    kIOError = 5,
+    kNetworkError = 6,
+    kOutOfMemoryError = 7
   };
 
   Code code() const {

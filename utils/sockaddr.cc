@@ -14,19 +14,18 @@ Sockaddr::Sockaddr() {
   sockaddr_.sin_addr.s_addr = INADDR_ANY;
 }
 
-int Sockaddr::ResolveAndPopulateSockaddr(const std::string& hostname, int port) {
+Status Sockaddr::ResolveAndPopulateSockaddr(const std::string& hostname, int port) {
   struct hostent *server;
 
   server = gethostbyname(hostname.c_str());
   if (server == nullptr) {
-    std::cout << "ERROR: Could not find host " << hostname << std::endl;
-    return -1;
+    return Status::NetworkError("Could not find host", hostname);
   }
   memcpy(&sockaddr_.sin_addr.s_addr, server->h_addr, server->h_length);
 
   sockaddr_.sin_port = htons(port);
 
-  return 0;
+  return Status::OK();
 }
 
 } // namespace memcachedumper

@@ -13,35 +13,32 @@ Socket::Socket()
   : fd_(-1) {
 }
 
-int Socket::Create() {
+Status Socket::Create() {
   fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
   if (fd_ < 0) {
-    std::cout << "Could not open socket. Reason: " << strerror(errno) << std::endl;
-    return -1;
+    return Status::NetworkError("Could not open socket", strerror(errno));
   }
 
-  return 0;
+  return Status::OK();
 }
 
-int Socket::SetRecvTimeout(int seconds) {
+Status Socket::SetRecvTimeout(int seconds) {
   struct timeval tv;
   tv.tv_sec = seconds;
   tv.tv_usec = 0;
   if (setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == -1) {
-    std::cout << "Could not set socket timeout. Reason: " << strerror(errno) << std::endl;
-    return -1;
+    return Status::NetworkError("Could not set socket timeout", strerror(errno));
   }
 
-  return 0;
+  return Status::OK();
 }
 
-int Socket::Connect(const Sockaddr& remote_addr) {
+Status Socket::Connect(const Sockaddr& remote_addr) {
   struct sockaddr_in addr;
 
   if (fd_ == -1) {
-    std::cout << "Socket not created yet, cannot connect()." << std::endl;
-    return -1;
+    return Status::InvalidArgument("Socket not yet created. Cannot connect()");
   }
 
   // Copy before reinterpreting.
@@ -50,11 +47,10 @@ int Socket::Connect(const Sockaddr& remote_addr) {
       sizeof(addr));
 
   if (ret < 0) {
-    std::cout << "Could not connect to server. Reason: " << strerror(errno) << std::endl;
-    return -1;
+    return Status::NetworkError("Could not connect to host", strerror(errno));
   }
 
-  return 0;
+  return Status::OK();
 }
 
 int Socket::Recv(uint8_t* buf, size_t len) {
