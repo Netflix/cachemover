@@ -4,3 +4,4 @@ set(DUMPER_SRCS
 )
 
 add_library(dumper ${DUMPER_SRCS})
+target_link_libraries(dumper spdlog::spdlog)

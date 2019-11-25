@@ -8,3 +8,4 @@ set(UTILS_SRCS
 )
 
 add_library(utils ${UTILS_SRCS})
+target_link_libraries(utils spdlog::spdlog)

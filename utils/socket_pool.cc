@@ -1,5 +1,7 @@
 #include "utils/socket_pool.h"
 
+#include "common/logger.h"
+
 #include <iostream>
 
 namespace memcachedumper {
@@ -24,7 +26,7 @@ Status SocketPool::PrimeConnections() {
     RETURN_ON_ERROR(sock->Connect(sockaddr_));
   }
 
-  std::cout << "Successfully primed connections." << std::endl;
+  LOG("Successfully primed connections.");
   return Status::OK();
 }
 

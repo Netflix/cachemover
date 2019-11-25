@@ -7,3 +7,4 @@ set(TASKS_SRCS
 )
 
 add_library(tasks ${TASKS_SRCS})
+target_link_libraries(tasks spdlog::spdlog)

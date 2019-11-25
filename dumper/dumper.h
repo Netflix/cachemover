@@ -22,6 +22,7 @@ class DumperOptions {
   void set_chunk_size(uint64_t chunk_size);
   void set_max_memory_limit(uint64_t max_memory_limit);
   void set_max_file_size(uint64_t max_file_size);
+  void set_logfile_path(std::string_view logfile_path);
 
   std::string hostname() { return hostname_; }
   int port() { return port_; }
@@ -29,6 +30,7 @@ class DumperOptions {
   int chunk_size() { return chunk_size_; }
   int max_memory_limit() { return max_memory_limit_; }
   int max_file_size() { return max_file_size_; }
+  std::string logfile_path() { return logfile_path_; }
 
  private:
   // Hostname that contains target memecached.
@@ -43,6 +45,8 @@ class DumperOptions {
   uint64_t max_memory_limit_;
   // Max size per file we produce.
   uint64_t max_file_size_;
+  // Path to the logfile.
+  std::string logfile_path_;
 };
 
 class Dumper {

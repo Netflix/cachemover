@@ -1,5 +1,6 @@
 #include "tasks/task.h"
 
+#include "common/logger.h"
 #include "utils/mem_mgr.h"
 
 #include <string.h>
@@ -16,7 +17,7 @@ PrintTask::PrintTask(std::string print_str, int num)
 }
 
 void PrintTask::Execute() {
-  std::cout << "PrintTask: " << print_str_ << " ||| " << num_ << std::endl;
+  LOG("PrintTask: " + print_str_ + " || " + std::to_string(num_));
 }
 
 PrintKeysFromFileTask::PrintKeysFromFileTask(const std::string& filename,
@@ -29,7 +30,7 @@ void PrintKeysFromFileTask::Execute() {
   std::ifstream file;
   file.open(filename_);
 
-  std::cout << "Starting PrintKeysFromFileTask" << std::endl; 
+  LOG("Starting PrintKeysFromFileTask");
 
   std::string key, exp, la, cas, fetch, cls, size;
   std::ofstream keyfile;

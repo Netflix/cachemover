@@ -1,5 +1,6 @@
 #include "dumper/dumper.h"
 
+#include "common/logger.h"
 #include "tasks/metadump_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
@@ -7,6 +8,7 @@
 #include "utils/socket_pool.h"
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include <string.h>
@@ -39,8 +41,13 @@ void DumperOptions::set_max_memory_limit(uint64_t max_memory_limit) {
   max_memory_limit_ = max_memory_limit;
 }
 
+void DumperOptions::set_logfile_path(string_view logfile_path) {
+  logfile_path_ = logfile_path;
+}
+
 Dumper::Dumper(DumperOptions& opts) {
-  std::cout << "Starting dumper with options: " << std::endl
+  std::stringstream options_log;
+  options_log << "Starting dumper with options: " << std::endl
             << "Hostname: " << opts.hostname() << std::endl
             << "Port: " << opts.port() << std::endl
             << "Num threads: " << opts.num_threads() << std::endl
@@ -48,6 +55,7 @@ Dumper::Dumper(DumperOptions& opts) {
             << "Max memory limit: " << opts.max_memory_limit() << std::endl
             << "Max file size: " << opts.max_file_size() << std::endl
             << std::endl;
+  LOG(options_log.str());
   memcached_hostname_ = opts.hostname();
   memcached_port_ = opts.port();
   num_threads_ = opts.num_threads();
@@ -84,7 +92,7 @@ void Dumper::Run() {
   task_scheduler_->SubmitTask(mtask);
 
   task_scheduler_->WaitUntilTasksComplete();
-  std::cout << "Status: All Tasks completed. Exiting..." << std::endl;
+  LOG("Status: All tasks completed. Exiting...");
 }
 
 } // namespace memcachedumper

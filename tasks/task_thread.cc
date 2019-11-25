@@ -1,5 +1,6 @@
 #include "tasks/task_thread.h"
 
+#include "common/logger.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
 #include "utils/socket.h"
@@ -25,18 +26,18 @@ bool TaskThread::ShuttingDown() {
 }
 
 Task* TaskThread::WaitForNextTask() {
-  std::cout << "Waiting for next task. Thread: " << thread_name_ << std::endl;
+  LOG("[" + thread_name_ + "] Waiting for next task...");
   return task_scheduler_->WaitForNextTask();
 }
 
 void TaskThread::WorkerLoop() {
-  std::cout << "Started thread " << thread_name_ << std::endl;
+  LOG("Started thread: " + thread_name_);
 
   while (!ShuttingDown()) {
     Task *task = WaitForNextTask();
 
     if (task != nullptr) {
-      std::cout << "\tGot next task" << std::endl;
+      LOG("[" + thread_name_ + "] Got next task");
       task->set_owning_thread(this);
       task->Execute();
       task_scheduler_->MarkTaskComplete(task);
@@ -44,7 +45,7 @@ void TaskThread::WorkerLoop() {
   }
 
   // TODO: There's a race here, the main thread can complete before this thread completes.
-  std::cout << "\t\tExiting thread: " << thread_name_ << std::endl;
+  LOG("Exiting thread: " + thread_name_);
 }
 
 } // namespace memcachedumper

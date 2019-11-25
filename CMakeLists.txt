@@ -21,8 +21,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
-target_link_libraries(memcache-dumper dumper tasks utils)
+target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils)
 
+add_subdirectory(common)
 add_subdirectory(dumper)
+add_subdirectory(extern/spdlog)
 add_subdirectory(tasks)
 add_subdirectory(utils)

@@ -1,5 +1,6 @@
 #include "tasks/task_scheduler.h"
 
+#include "common/logger.h"
 #include "dumper/dumper.h"
 #include "tasks/task_thread.h"
 
@@ -17,7 +18,7 @@ TaskScheduler::TaskScheduler(int num_threads, Dumper* dumper)
 TaskScheduler::~TaskScheduler() = default;
 
 int TaskScheduler::Init() {
-  std::cout << "Initing task scheduler" << std::endl;
+  LOG("Initing task scheduler");
   for (int i = 0; i < num_threads_; ++i) {
     threads_.push_back(
         std::make_unique<TaskThread>(this, "task_thread_" + std::to_string(i + 1)));
