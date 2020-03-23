@@ -55,6 +55,8 @@ class Dumper {
 
   ~Dumper();
 
+  MemoryManager *mem_mgr() { return mem_mgr_.get(); }
+
   // Initializes the dumper by connecting to memcached.
   Status Init();
 
@@ -64,10 +66,14 @@ class Dumper {
   // Returns a socket to memcached from the socket pool.
   Socket* GetMemcachedSocket();
 
+  // Releases a memcached socket back to the socket pool.
+  void ReleaseMemcachedSocket(Socket *sock);
+
  private:
   std::string memcached_hostname_;
   int memcached_port_;
   int num_threads_;
+  uint64_t max_file_size_;
 
   // Pool of sockets to talk to memcached.
   std::unique_ptr<SocketPool> socket_pool_;

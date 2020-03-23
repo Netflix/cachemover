@@ -12,7 +12,7 @@ class Socket;
 
 class MetadumpTask : public Task {
  public:
-  MetadumpTask(Socket *socket, int slab_class, const std::string& file_prefix,
+  MetadumpTask(int slab_class, const std::string& file_prefix,
       uint64_t max_file_size, MemoryManager *mem_mgr);
   void Execute() override;
 

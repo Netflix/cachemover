@@ -26,6 +26,10 @@ int TaskScheduler::Init() {
   return 0;
 }
 
+MemoryManager* TaskScheduler::mem_mgr() {
+  return dumper_->mem_mgr();
+}
+
 void TaskScheduler::SubmitTask(Task *task) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
   task_queue_.push(task);
@@ -88,6 +92,10 @@ void TaskScheduler::WaitUntilTasksComplete() {
 
 Socket* TaskScheduler::GetMemcachedSocket() {
   return dumper_->GetMemcachedSocket();
+}
+
+void TaskScheduler::ReleaseMemcachedSocket(Socket *sock) {
+  return dumper_->ReleaseMemcachedSocket(sock);
 }
 
 } // namespace memcachedumper

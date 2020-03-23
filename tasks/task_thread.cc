@@ -21,6 +21,10 @@ TaskThread::~TaskThread() {
   if (thread_.joinable()) thread_.join();
 }
 
+MemoryManager* TaskThread::mem_mgr() {
+  return task_scheduler_->mem_mgr();
+}
+
 bool TaskThread::ShuttingDown() {
   return task_scheduler_->AllTasksComplete();
 }

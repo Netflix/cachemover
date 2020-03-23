@@ -37,13 +37,12 @@ class PrintTask : public Task {
 
 class PrintKeysFromFileTask : public Task {
  public:
-  PrintKeysFromFileTask(const std::string& filename, MemoryManager *mem_mgr);
+  PrintKeysFromFileTask(const std::string& filename);
 
   void Execute() override;
 
  private:
   std::string filename_;
-  MemoryManager *mem_mgr_;
 };
 
 } // namespace memcachedumper

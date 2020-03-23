@@ -41,11 +41,19 @@ void DumperOptions::set_max_memory_limit(uint64_t max_memory_limit) {
   max_memory_limit_ = max_memory_limit;
 }
 
+void DumperOptions::set_max_file_size(uint64_t max_file_size) {
+  max_file_size_ = max_file_size;
+}
+
 void DumperOptions::set_logfile_path(string_view logfile_path) {
   logfile_path_ = logfile_path;
 }
 
-Dumper::Dumper(DumperOptions& opts) {
+Dumper::Dumper(DumperOptions& opts)
+  : memcached_hostname_(opts.hostname()),
+    memcached_port_(opts.port()),
+    num_threads_(opts.num_threads()),
+    max_file_size_(opts.max_file_size()) {
   std::stringstream options_log;
   options_log << "Starting dumper with options: " << std::endl
             << "Hostname: " << opts.hostname() << std::endl
@@ -56,9 +64,6 @@ Dumper::Dumper(DumperOptions& opts) {
             << "Max file size: " << opts.max_file_size() << std::endl
             << std::endl;
   LOG(options_log.str());
-  memcached_hostname_ = opts.hostname();
-  memcached_port_ = opts.port();
-  num_threads_ = opts.num_threads();
 
   socket_pool_.reset(new SocketPool(memcached_hostname_, memcached_port_, num_threads_));
   mem_mgr_.reset(new MemoryManager(
@@ -82,13 +87,16 @@ Socket* Dumper::GetMemcachedSocket() {
   return socket_pool_->GetSocket();
 }
 
+void Dumper::ReleaseMemcachedSocket(Socket *sock) {
+  return socket_pool_->ReleaseSocket(sock);
+}
+
 void Dumper::Run() {
 
   PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
   task_scheduler_->SubmitTask(ptask);
 
-  Socket *sock = GetMemcachedSocket();
-  MetadumpTask *mtask = new MetadumpTask(sock, 0, "test_prefix", 1024 * 1024, mem_mgr_.get());
+  MetadumpTask *mtask = new MetadumpTask(0, "test_prefix", max_file_size_, mem_mgr_.get());
   task_scheduler_->SubmitTask(mtask);
 
   task_scheduler_->WaitUntilTasksComplete();

@@ -22,6 +22,8 @@ class TaskScheduler {
 
   ~TaskScheduler();
 
+  MemoryManager *mem_mgr();
+
   int Init();
 
   void SubmitTask(Task *task);
@@ -30,11 +32,14 @@ class TaskScheduler {
 
   void WaitUntilTasksComplete();
 
- private:
-  friend class TaskThread;
-
   // Get a socket to memcached.
   Socket* GetMemcachedSocket();
+
+  // Release a memcached socket.
+  void ReleaseMemcachedSocket(Socket *sock);
+
+ private:
+  friend class TaskThread;
 
   // Returns the next task in the queue of it's present.
   // Returns nullptr otherwise. Not thread-safe.

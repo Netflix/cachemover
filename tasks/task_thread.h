@@ -5,6 +5,7 @@
 
 namespace memcachedumper {
 
+class MemoryManager;
 class Socket;
 class Task;
 class TaskScheduler;
@@ -15,6 +16,10 @@ class TaskThread {
   ~TaskThread();
 
   TaskScheduler *task_scheduler() { return task_scheduler_; }
+
+  std::string thread_name() { return thread_name_; }
+
+  MemoryManager *mem_mgr();
 
   int Init();
 

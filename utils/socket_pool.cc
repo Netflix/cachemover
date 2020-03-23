@@ -3,6 +3,7 @@
 #include "common/logger.h"
 
 #include <iostream>
+#include <sstream>
 
 namespace memcachedumper {
 
@@ -26,7 +27,11 @@ Status SocketPool::PrimeConnections() {
     RETURN_ON_ERROR(sock->Connect(sockaddr_));
   }
 
-  LOG("Successfully primed connections.");
+  {
+    std::stringstream ss;
+    ss << "Successfully primed " << num_sockets_ << " connections";
+    LOG(ss.str());
+  }
   return Status::OK();
 }
 
@@ -37,6 +42,11 @@ Socket* SocketPool::GetSocket() {
   Socket* sock = sockets_.back();
   sockets_.pop_back();
   return sock;
+}
+
+void SocketPool::ReleaseSocket(Socket *sock) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  sockets_.push_back(sock);
 }
 
 } // namespace memcachedumper
