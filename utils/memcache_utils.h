@@ -164,6 +164,8 @@ class DataBufferSlice : public Slice {
 
   const char* pending_data() { return pending_data_; }
 
+  int32_t bytes_pending() { return &data()[size()] - pending_data_; }
+
   bool reached_end() {
     return !strncmp(&data()[size() - 5], "END\r\n", 5);
   }

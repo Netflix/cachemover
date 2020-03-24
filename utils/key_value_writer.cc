@@ -152,12 +152,20 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
     newline_after_data = response_slice.next_crlf();
     if (newline_after_data == nullptr) {
       // TODO: Handle partial buffer case.
-      std::cout << "Creaking coz no newline_after_DATA" << std::endl << response_slice.data() << std::endl;
+      std::cout << "Creaking coz no newline_after_DATA" << std::endl << response_slice.data() << " | Partial bytes to write: " << response_slice.bytes_pending() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
+
+      mcdata_entry->setValue(
+          newline_after_datalen + 2, response_slice.bytes_pending());
+    mcdata_entry->setValueLength(response_slice.bytes_pending());
+
+      mcdata_entry->printValue();
+      mcdata_entry->MarkComplete();
+      ++num_complete_entries;
       break;
     }
 
-    mcdata_entry->setValue(newline_after_datalen + 1, datalen);
+    mcdata_entry->setValue(newline_after_datalen + 2, datalen);
 
     mcdata_entry->printValue();
     mcdata_entry->MarkComplete();
