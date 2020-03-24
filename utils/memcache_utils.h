@@ -161,6 +161,13 @@ class DataBufferSlice : public Slice {
     if (pos) MarkProcessedUntil(pos + 2); // Skip '\r\n'
     return pos;
   }
+  const char* process_value(size_t value_size) {
+    if (pending_data_ + value_size > data() + size()) {
+      return nullptr;
+    }
+    MarkProcessedUntil(pending_data_ + value_size + 2);
+    return pending_data_ + value_size;
+  }
 
   const char* pending_data() { return pending_data_; }
 
