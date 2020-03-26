@@ -121,11 +121,14 @@ void ProcessMetabufTask::Execute() {
 
   data_writer_->FlushPending();
 
+  owning_thread()->account_keys_processed(data_writer_->num_processed_keys());
   metafile.close();
   keyfile.close();
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
+
+  owning_thread()->PrintNumKeysProcessed();
 }
 
 } // namespace memcachedumper

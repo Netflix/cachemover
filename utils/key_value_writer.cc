@@ -61,6 +61,7 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
     //std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
     std::cout << "Iovec writing KEY: " << mcdata_entry->key() << " | keylen: " << key_ref.length() << std::endl;
     it = mcdata_entries_.erase(it);
+    ++num_processed_keys_;
     iovec_idx += 2;
 
     stupid_debug_func();
@@ -75,7 +76,6 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
   out_file->Open();
 
   out_file->Close();
-  
 }
 
 bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <thread>
+#include <iostream>
 
 namespace memcachedumper {
 
@@ -25,6 +26,13 @@ class TaskThread {
 
   void Join();
 
+  void account_keys_processed(uint64_t num_keys) {
+    num_keys_processed_ += num_keys;
+  }
+
+  void PrintNumKeysProcessed() {
+    std::cout << "Thread (" << thread_name_.c_str() << ") - Num keys: " << num_keys_processed_ << std::endl;
+  }
  private:
 
   void WorkerLoop();
@@ -40,6 +48,8 @@ class TaskThread {
   std::string thread_name_;
 
   std::thread thread_;
+
+  uint64_t num_keys_processed_ = 0;
 
   // Socket to talk to memcached. Not owned.
   //Socket *sock_;

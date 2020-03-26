@@ -21,6 +21,9 @@ class KeyValueWriter {
   void FlushPending();
 
   void PrintKeys();
+
+  uint64_t num_processed_keys() { return num_processed_keys_; }
+
  private:
 
   // Get values from Memcached for keys present in mcdata_entries_ map.
@@ -58,6 +61,7 @@ class KeyValueWriter {
   // Was the last buffer processed a partial buffer?
   bool last_buffer_partial_;
 
+  uint64_t num_processed_keys_ = 0;
 };
 
 } // namespace memcachedumper
