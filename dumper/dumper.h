@@ -29,7 +29,7 @@ class DumperOptions {
   int num_threads() { return num_threads_; }
   int chunk_size() { return chunk_size_; }
   int max_memory_limit() { return max_memory_limit_; }
-  int max_file_size() { return max_file_size_; }
+  uint64_t max_file_size() { return max_file_size_; }
   std::string logfile_path() { return logfile_path_; }
 
  private:
@@ -56,6 +56,8 @@ class Dumper {
   ~Dumper();
 
   MemoryManager *mem_mgr() { return mem_mgr_.get(); }
+
+  uint64_t max_file_size() { return max_file_size_; }
 
   // Initializes the dumper by connecting to memcached.
   Status Init();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils/file_util.h"
 #include "utils/memcache_utils.h"
 
 #include <string>
@@ -12,13 +13,18 @@ class Socket;
 
 class KeyValueWriter {
  public:
-  KeyValueWriter(uint8_t* buffer, size_t capacity, Socket* mc_sock);
+  KeyValueWriter(std::string data_file_prefix, uint8_t* buffer,
+      size_t capacity, uint64_t max_file_size, Socket* mc_sock);
+
+  // Initialize the KeyValueWriter.
+  Status Init();
+
+  // Tears down any state and flushes pending keys for bulk get and writing, if any,
+  // from the mcdata_entries_.
+  Status Finalize();
 
   // Adds 'mc_key' to the entries to get the value for and write to a file.
   void ProcessKey(McData* mc_key);
-
-  // Flushes pending keys for bulk get and writing, if any, from the mcdata_entries_.
-  void FlushPending();
 
   void PrintKeys();
 
@@ -38,10 +44,14 @@ class KeyValueWriter {
   // file.
   void WriteCompletedEntries(uint32_t num_complete_entries);
 
+  // The prefix to use for every file created by this object.
+  std::string data_file_prefix_;
   // The buffer to use while getting values from Memcached.
   uint8_t* buffer_;
   // The size of 'buffer_'.
   size_t capacity_;
+  // Maximum size of file to create.
+  uint64_t max_file_size_;
   // Socket to talk to Memcached.
   Socket* mc_sock_;
   // Map of key name to McData entries.
@@ -60,6 +70,9 @@ class KeyValueWriter {
 
   // Was the last buffer processed a partial buffer?
   bool last_buffer_partial_;
+
+  // Responsible for managing all the files that we will write data to.
+  std::unique_ptr<RotatingFile> rotating_data_files_;
 
   uint64_t num_processed_keys_ = 0;
 };

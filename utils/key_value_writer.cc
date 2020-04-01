@@ -20,9 +20,12 @@
 
 namespace memcachedumper {
 
-KeyValueWriter::KeyValueWriter(uint8_t* buffer, size_t capacity, Socket* mc_sock)
-  : buffer_(buffer),
+KeyValueWriter::KeyValueWriter(std::string data_file_prefix, uint8_t* buffer,
+    size_t capacity, uint64_t max_file_size, Socket* mc_sock)
+  : data_file_prefix_(data_file_prefix),
+    buffer_(buffer),
     capacity_(capacity),
+    max_file_size_(max_file_size),
     mc_sock_(mc_sock),
     last_buffer_partial_(false) {
   mcdata_entries_.reserve(BULK_GET_THRESHOLD);
@@ -30,6 +33,13 @@ KeyValueWriter::KeyValueWriter(uint8_t* buffer, size_t capacity, Socket* mc_sock
 
 void stupid_debug_func() {
   printf("Stupid debug func\n");
+}
+
+Status KeyValueWriter::Init() {
+  rotating_data_files_.reset(new RotatingFile(data_file_prefix_, max_file_size_));
+  RETURN_ON_ERROR(rotating_data_files_->Init());
+
+  return Status::OK();
 }
 
 void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
@@ -60,22 +70,34 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
     iovecs[iovec_idx + 1].iov_len = mcdata_entry->ValueLength();
     //std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
     std::cout << "Iovec writing KEY: " << mcdata_entry->key() << " | keylen: " << key_ref.length() << std::endl;
-    it = mcdata_entries_.erase(it);
     ++num_processed_keys_;
+    ++it;
     iovec_idx += 2;
-
-    stupid_debug_func();
 
   }
   std::cout << "GOING TO WRITE " << iovec_idx << " DATA!!!" << std::endl;
 
-  int nwritten = writev(STDOUT_FILENO, iovecs, iovec_idx);
+  //RotatingFile* out_files = new RotatingFile(data_file_prefix_, max_file_size_);
+  //out_files->Init();
+
+  ssize_t nwritten = 0;
+  rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
   std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
 
-  PosixFile *out_file = new PosixFile("TEST_FILE_UTIL");
-  out_file->Open();
+  //out_files->Finish();
 
-  out_file->Close();
+  // TODO: Find better way to erase written entries from map.
+  it = mcdata_entries_.begin();
+  while (it != mcdata_entries_.end()) {
+
+    McData* mcdata_entry = it->second.get();
+
+    if (!mcdata_entry->Complete()) {
+      ++it;
+      continue;
+    }
+    it = mcdata_entries_.erase(it);
+  }
 }
 
 bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
@@ -101,6 +123,7 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
     if (value_delim_pos == nullptr) {
       // TODO: Handle partial buffer case.
       if (!reached_end) {
+        stupid_debug_func();
         std::cout << "Creaking coz no value_delim_pos" << std::endl;
         broken_buffer_state_ = response_slice.parse_state();
       }
@@ -109,6 +132,8 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
     const char* whitespace_after_key = response_slice.next_whitespace();
     if (whitespace_after_key == nullptr) {
+      stupid_debug_func();
+
       // TODO: Handle partial buffer case.
       std::cout << "Creaking coz no whitespace_after_key" << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
@@ -126,8 +151,11 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
     const char* whitespace_after_flags = response_slice.next_whitespace();
     if (whitespace_after_flags == nullptr) {
+      stupid_debug_func();
+
+      McData* mc = entry->second.get();
       // TODO: Handle partial buffer case.
-      std::cout << "Creaking coz no whitespace_after_flags" << std::endl;
+      std::cout << "Creaking coz no whitespace_after_flags for key " << mc->key() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
@@ -136,6 +164,8 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
     const char* newline_after_datalen = response_slice.next_crlf();
     if (newline_after_datalen == nullptr) {
+      stupid_debug_func();
+
       // TODO: Handle partial buffer case.
       std::cout << "Creaking coz no newline_after_datalen" << std::endl << response_slice.data() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
@@ -244,9 +274,13 @@ void KeyValueWriter::ProcessKey(McData* mc_key) {
   }
 }
 
-void KeyValueWriter::FlushPending() {
+Status KeyValueWriter::Finalize() {
   std::cout << "Flushing keys" << std::endl;
   BulkGetKeys();
+
+  RETURN_ON_ERROR(rotating_data_files_->Finish());
+
+  return Status::OK();
 }
 
 void KeyValueWriter::PrintKeys() {

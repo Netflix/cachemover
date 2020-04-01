@@ -22,7 +22,9 @@ class TaskScheduler {
 
   ~TaskScheduler();
 
-  MemoryManager *mem_mgr();
+  MemoryManager* mem_mgr();
+
+  Dumper* dumper() { return dumper_; }
 
   int Init();
 

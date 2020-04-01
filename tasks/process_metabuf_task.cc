@@ -1,4 +1,5 @@
 #include "common/logger.h"
+#include "dumper/dumper.h"
 #include "tasks/process_metabuf_task.h"
 #include "tasks/task_scheduler.h"
 #include "tasks/task_thread.h"
@@ -82,16 +83,21 @@ void ProcessMetabufTask::Execute() {
 
   uint8_t* data_writer_buf = owning_thread()->mem_mgr()->GetBuffer();
   assert(data_writer_buf != nullptr);
-  data_writer_.reset(new KeyValueWriter(
-      data_writer_buf, owning_thread()->mem_mgr()->chunk_size(), mc_sock));
+  data_writer_.reset(new KeyValueWriter(std::string("DATAFILE_" + filename_),
+      data_writer_buf, owning_thread()->mem_mgr()->chunk_size(),
+      owning_thread()->task_scheduler()->dumper()->max_file_size(), mc_sock));
+
+  // TODO: Check return status
+  Status init_status = data_writer_->Init();
+  if (!init_status.ok()) {
+    LOG_ERROR("FAILED TO INITIALIZE KeyValueWriter");
+    return;
+  }
 
   std::ifstream metafile;
   metafile.open(filename_);
 
   LOG("Starting PrintKeysFromFileTask: " + filename_);
-
-  std::ofstream keyfile;
-  keyfile.open("KEYFILE_" + filename_ + ".txt");
 
   char *metabuf = reinterpret_cast<char*>(owning_thread()->mem_mgr()->GetBuffer());
   uint64_t buf_size = owning_thread()->mem_mgr()->chunk_size();
@@ -119,11 +125,10 @@ void ProcessMetabufTask::Execute() {
     mslice_size = size_remaining + bytes_read;
   }
 
-  data_writer_->FlushPending();
+  data_writer_->Finalize();
 
   owning_thread()->account_keys_processed(data_writer_->num_processed_keys());
   metafile.close();
-  keyfile.close();
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
