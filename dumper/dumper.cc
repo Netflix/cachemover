@@ -41,8 +41,12 @@ void DumperOptions::set_max_memory_limit(uint64_t max_memory_limit) {
   max_memory_limit_ = max_memory_limit;
 }
 
-void DumperOptions::set_max_file_size(uint64_t max_file_size) {
-  max_file_size_ = max_file_size;
+void DumperOptions::set_max_key_file_size(uint64_t max_key_file_size) {
+  max_key_file_size_ = max_key_file_size;
+}
+
+void DumperOptions::set_max_data_file_size(uint64_t max_data_file_size) {
+  max_data_file_size_ = max_data_file_size;
 }
 
 void DumperOptions::set_logfile_path(string_view logfile_path) {
@@ -53,7 +57,8 @@ Dumper::Dumper(DumperOptions& opts)
   : memcached_hostname_(opts.hostname()),
     memcached_port_(opts.port()),
     num_threads_(opts.num_threads()),
-    max_file_size_(opts.max_file_size()) {
+    max_key_file_size_(opts.max_key_file_size()),
+    max_data_file_size_(opts.max_data_file_size()) {
   std::stringstream options_log;
   options_log << "Starting dumper with options: " << std::endl
             << "Hostname: " << opts.hostname() << std::endl
@@ -61,7 +66,8 @@ Dumper::Dumper(DumperOptions& opts)
             << "Num threads: " << opts.num_threads() << std::endl
             << "Chunk size: " << opts.chunk_size() << std::endl
             << "Max memory limit: " << opts.max_memory_limit() << std::endl
-            << "Max file size: " << opts.max_file_size() << std::endl
+            << "Max key file size: " << opts.max_key_file_size() << std::endl
+            << "Max data file size: " << opts.max_data_file_size() << std::endl
             << std::endl;
   LOG(options_log.str());
 
@@ -96,7 +102,7 @@ void Dumper::Run() {
   PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
   task_scheduler_->SubmitTask(ptask);
 
-  MetadumpTask *mtask = new MetadumpTask(0, "test_prefix", max_file_size_, mem_mgr_.get());
+  MetadumpTask *mtask = new MetadumpTask(0, "test_prefix", max_key_file_size_, mem_mgr_.get());
   task_scheduler_->SubmitTask(mtask);
 
   task_scheduler_->WaitUntilTasksComplete();

@@ -38,7 +38,8 @@ int main(int argc, char** argv) {
   dummy_options.set_num_threads(4);
   dummy_options.set_chunk_size(1024); // 1MB
   dummy_options.set_max_memory_limit(67108864); // 64MB
-  dummy_options.set_max_file_size(4096); // 1MB
+  dummy_options.set_max_key_file_size(1024); // 1MB
+  dummy_options.set_max_data_file_size(2048); // 1MB
   dummy_options.set_logfile_path("logfile.txt");
 
   memcachedumper::DumperMain(dummy_options);

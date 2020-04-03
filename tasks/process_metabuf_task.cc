@@ -85,7 +85,7 @@ void ProcessMetabufTask::Execute() {
   assert(data_writer_buf != nullptr);
   data_writer_.reset(new KeyValueWriter(std::string("DATAFILE_" + filename_),
       data_writer_buf, owning_thread()->mem_mgr()->chunk_size(),
-      owning_thread()->task_scheduler()->dumper()->max_file_size(), mc_sock));
+      owning_thread()->task_scheduler()->dumper()->max_data_file_size(), mc_sock));
 
   // TODO: Check return status
   Status init_status = data_writer_->Init();
