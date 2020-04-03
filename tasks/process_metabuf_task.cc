@@ -132,6 +132,7 @@ void ProcessMetabufTask::Execute() {
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
+  owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
 
   owning_thread()->PrintNumKeysProcessed();
 }
