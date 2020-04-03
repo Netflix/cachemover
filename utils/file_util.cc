@@ -84,6 +84,7 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
   if (nwritten_current_ > max_file_size_) {
     nwritten_current_ = 0;
     std::cout << "nwritten_current_: " << nwritten_current_ << " Max file size: " << max_file_size_ << std::endl;
+    nwritten_current_ = 0;
     Status s = RotateFile();
     if (!s.ok()) {
       return Status::IOError("Error while rotating file", s.ToString());

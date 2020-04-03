@@ -69,20 +69,20 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
     iovecs[iovec_idx + 1].iov_base = mcdata_entry->Value();
     iovecs[iovec_idx + 1].iov_len = mcdata_entry->ValueLength();
     //std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
-    std::cout << "Iovec writing KEY: " << mcdata_entry->key() << " | keylen: " << key_ref.length() << std::endl;
+    //std::cout << "Iovec writing KEY: " << mcdata_entry->key() << " | keylen: " << key_ref.length() << std::endl;
     ++num_processed_keys_;
     ++it;
     iovec_idx += 2;
 
   }
-  std::cout << "GOING TO WRITE " << iovec_idx << " DATA!!!" << std::endl;
+  //std::cout << "GOING TO WRITE " << iovec_idx << " DATA!!!" << std::endl;
 
   //RotatingFile* out_files = new RotatingFile(data_file_prefix_, max_file_size_);
   //out_files->Init();
 
   ssize_t nwritten = 0;
   rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
-  std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
+  //std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
 
   //out_files->Finish();
 
@@ -109,7 +109,7 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
   DataBufferSlice response_slice(reinterpret_cast<char*>(buffer), bufsize);
   bool reached_end = response_slice.reached_end();
-  std::cout << "Reached end: " << reached_end << std::endl;
+  //std::cout << "Reached end: " << reached_end << std::endl;
   if (!reached_end) {
     last_buffer_partial_ = true;
     //std::cout << "Partial buffer: " << response_slice.data() << std::endl;
@@ -177,13 +177,14 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
     McData* mcdata_entry = entry->second.get();
     mcdata_entry->setValueLength(datalen);
 
-    std::cout << "CUR KEY: " << cur_key_.c_str() << " | " << flags << " | " << datalen << std::endl;
+    //std::cout << "CUR KEY: " << cur_key_.c_str() << " | " << flags << " | " << datalen << std::endl;
 
     //newline_after_data = response_slice.next_crlf();
     newline_after_data = response_slice.process_value(datalen);
     if (newline_after_data == nullptr) {
       // TODO: Handle partial buffer case.
-      std::cout << "Creaking coz no newline_after_DATA" << std::endl << response_slice.data() << " | Partial bytes to write: " << response_slice.bytes_pending() << std::endl;
+      //std::cout << "Creaking coz no newline_after_DATA" << std::endl << response_slice.data() << " | Partial bytes to write: " << response_slice.bytes_pending() << std::endl;
+      //std::cout << "Creaking coz no newline_after_DATA" << " | Partial bytes to write: " << response_slice.bytes_pending() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
 
       mcdata_entry->setValue(
@@ -206,7 +207,7 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
   WriteCompletedEntries(num_complete_entries);
 
-  std::cout << "*-----------------*" << std::endl;
+  //std::cout << "*-----------------*" << std::endl;
   return reached_end;
 }
 
@@ -239,7 +240,7 @@ void KeyValueWriter::BulkGetKeys() {
   }
 
 
-  std::cout << "Sent command [" << mcdata_entries_.size() << " keys]: " << bulk_get_cmd.str().c_str() << std::endl;
+  //std::cout << "Sent command [" << mcdata_entries_.size() << " keys]: " << bulk_get_cmd.str().c_str() << std::endl;
   {
     bool reached_end = false;
     while (!reached_end) {
@@ -253,6 +254,7 @@ void KeyValueWriter::BulkGetKeys() {
       // Make sure to bzero previously processed bytes so that we don't re-process
       // the same bytes again.
       if (static_cast<uint32_t>(nread) < capacity_) {
+	// TODO: This is very expensive. Find alternate way.
         bzero(const_cast<char*>(reinterpret_cast<char*>(buffer_) + nread), capacity_ - nread);
       }
 
@@ -267,7 +269,7 @@ void KeyValueWriter::BulkGetKeys() {
 void KeyValueWriter::ProcessKey(McData* mc_key) {
   mcdata_entries_.emplace(mc_key->key(), std::unique_ptr<McData>(mc_key));
 
-  std::cout << "Added key: " << mc_key->key() << std::endl;
+  //std::cout << "Added key: " << mc_key->key() << std::endl;
   // Time to do a bulk get of all keys gathered so far and write their values to a file.
   if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
     BulkGetKeys();

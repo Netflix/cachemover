@@ -17,7 +17,7 @@ void McData::setValue(const char* data, size_t size) {
 }
 
 void McData::printValue() {
-  std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
+  //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
 }
 
 } // namespace memcachedumper
