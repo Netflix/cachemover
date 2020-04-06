@@ -13,8 +13,8 @@ class Socket;
 
 class KeyValueWriter {
  public:
-  KeyValueWriter(std::string data_file_prefix, uint8_t* buffer,
-      size_t capacity, uint64_t max_file_size, Socket* mc_sock);
+  KeyValueWriter(std::string data_file_prefix, std::string owning_thread_name,
+      uint8_t* buffer, size_t capacity, uint64_t max_file_size, Socket* mc_sock);
 
   // Initialize the KeyValueWriter.
   Status Init();
@@ -46,6 +46,8 @@ class KeyValueWriter {
 
   // The prefix to use for every file created by this object.
   std::string data_file_prefix_;
+  // Name of the thread that's operating on this object.
+  const std::string owning_thread_name_;
   // The buffer to use while getting values from Memcached.
   uint8_t* buffer_;
   // The size of 'buffer_'.

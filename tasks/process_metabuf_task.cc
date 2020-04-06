@@ -84,6 +84,7 @@ void ProcessMetabufTask::Execute() {
   uint8_t* data_writer_buf = owning_thread()->mem_mgr()->GetBuffer();
   assert(data_writer_buf != nullptr);
   data_writer_.reset(new KeyValueWriter(std::string("DATAFILE_" + filename_),
+      owning_thread()->thread_name(),
       data_writer_buf, owning_thread()->mem_mgr()->chunk_size(),
       owning_thread()->task_scheduler()->dumper()->max_data_file_size(), mc_sock));
 

@@ -2,6 +2,7 @@
 #include "utils/file_util.h"
 #include "utils/key_value_writer.h"
 #include "utils/socket.h"
+#include "utils/stopwatch.h"
 
 #include <stdio.h>
 #include <sys/uio.h>
@@ -20,9 +21,11 @@
 
 namespace memcachedumper {
 
-KeyValueWriter::KeyValueWriter(std::string data_file_prefix, uint8_t* buffer,
+KeyValueWriter::KeyValueWriter(std::string data_file_prefix,
+    std::string owning_thread_name, uint8_t* buffer,
     size_t capacity, uint64_t max_file_size, Socket* mc_sock)
   : data_file_prefix_(data_file_prefix),
+    owning_thread_name_(owning_thread_name),
     buffer_(buffer),
     capacity_(capacity),
     max_file_size_(max_file_size),
@@ -81,7 +84,18 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
   //out_files->Init();
 
   ssize_t nwritten = 0;
-  rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
+
+
+  MonotonicStopWatch msw;
+
+  {
+    SCOPED_STOP_WATCH(&msw);
+    rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
+  }
+
+  std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
+            << ") IOVEC Writing elapsed: "
+            << msw.ElapsedTime() << std::endl;
   //std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
 
   //out_files->Finish();
@@ -233,11 +247,23 @@ void KeyValueWriter::BulkGetKeys() {
 
   bulk_get_cmd << "\n";
 
+  MonotonicStopWatch msw;
   int32_t nsent;
-  Status send_status = mc_sock_->Send(reinterpret_cast<const uint8_t*>(bulk_get_cmd.str().c_str()), bulk_get_cmd.str().length(), &nsent);
-  if (!send_status.ok()) {
-    LOG_ERROR("Could not send bulk get command");
+
+
+  Status send_status;
+  {
+    SCOPED_STOP_WATCH(&msw);
+    send_status = mc_sock_->Send(
+        reinterpret_cast<const uint8_t*>(bulk_get_cmd.str().c_str()),
+        bulk_get_cmd.str().length(), &nsent);
+    if (!send_status.ok()) {
+      LOG_ERROR("Could not send bulk get command");
+    }
   }
+  std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
+            << ") Bulk get elapsed: "
+            << msw.ElapsedTime() << std::endl;
 
 
   //std::cout << "Sent command [" << mcdata_entries_.size() << " keys]: " << bulk_get_cmd.str().c_str() << std::endl;
