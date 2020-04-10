@@ -11,6 +11,8 @@ namespace memcachedumper {
 // Forward declarations.
 class Socket;
 
+typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
+
 class KeyValueWriter {
  public:
   KeyValueWriter(std::string data_file_prefix, std::string owning_thread_name,
@@ -33,7 +35,9 @@ class KeyValueWriter {
  private:
 
   // Get values from Memcached for keys present in mcdata_entries_ map.
-  void BulkGetKeys();
+  // If 'flush' is true, it will get all the keys from mcdata_entries_ even if
+  // our buffer is not used to 'capacity_'.
+  void BulkGetKeys(bool flush);
 
   // Process the response from Memcached and populate mcdata_entries_ appropriately.
   // Returns 'true' if the entire response was processed, i.e. if "END\r\n" was seen
@@ -48,8 +52,10 @@ class KeyValueWriter {
   std::string data_file_prefix_;
   // Name of the thread that's operating on this object.
   const std::string owning_thread_name_;
-  // The buffer to use while getting values from Memcached.
-  uint8_t* buffer_;
+  // The address of the buffer to use while getting values from Memcached.
+  uint8_t* buffer_begin_;
+  // A pointer to the first free byte in buffer_begin_.
+  uint8_t* buffer_current_;
   // The size of 'buffer_'.
   size_t capacity_;
   // Maximum size of file to create.
@@ -57,7 +63,8 @@ class KeyValueWriter {
   // Socket to talk to Memcached.
   Socket* mc_sock_;
   // Map of key name to McData entries.
-  std::unordered_map<std::string, std::unique_ptr<McData>> mcdata_entries_;
+  //std::unordered_map<std::string, std::unique_ptr<McData>> mcdata_entries_;
+  McDataMap mcdata_entries_;
 
   // While parsing responses from Memcached, this keeps track of the current key
   // being processed.

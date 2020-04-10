@@ -27,6 +27,8 @@ class McData {
 
   void MarkComplete() { complete_ = true; }
 
+  void set_get_complete(bool get_complete) { get_complete_ = get_complete; }
+  bool get_complete() { return get_complete_; }
   // Returns 'false' if this McData is marked as incomplete, i.e. one or
   // more required fields are not present/completely entered.
   bool Complete() { return complete_; }
@@ -38,6 +40,7 @@ class McData {
   size_t value_len_;
   std::unique_ptr<Slice> data_;
 
+  bool get_complete_;
   bool complete_;
 };
 
@@ -175,6 +178,9 @@ class DataBufferSlice : public Slice {
 
   bool reached_end() {
     return !strncmp(&data()[size() - 5], "END\r\n", 5);
+  }
+  bool reached_error() {
+    return !strncmp(&data()[size() - 7], "ERROR\r\n", 7);
   }
 
   ResponseFormatState parse_state() { return parse_state_; }

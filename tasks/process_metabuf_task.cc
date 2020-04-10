@@ -15,14 +15,14 @@ ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
   : filename_(filename) {
 }
 
-void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice, Socket* mc_sock) {
+void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
   char* newline_pos = nullptr;
   do {
 
     const char *key_pos = mslice->next_key_pos();
     if (key_pos == nullptr) {
-      printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
+      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -31,7 +31,7 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice, Socket* mc_s
 
     const char *exp_pos = mslice->next_exp_pos();
     if (exp_pos == nullptr) {
-      printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
+      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -41,7 +41,7 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice, Socket* mc_s
 
     const char *la_pos = mslice->next_la_pos();
     if (la_pos == nullptr) {
-      printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
+      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -111,7 +111,7 @@ void ProcessMetabufTask::Execute() {
 
     MetaBufferSlice mslice(metabuf, mslice_size);
 
-    ProcessMetaBuffer(&mslice, mc_sock);
+    ProcessMetaBuffer(&mslice);
 
     // Find number of bytes free in the buffer. Usually should be the entire 'buf_size',
     // but in some cases, we can have a little leftover unparsed bytes at the end of the

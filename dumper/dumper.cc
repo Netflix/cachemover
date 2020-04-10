@@ -71,7 +71,7 @@ Dumper::Dumper(DumperOptions& opts)
             << std::endl;
   LOG(options_log.str());
 
-  socket_pool_.reset(new SocketPool(memcached_hostname_, memcached_port_, num_threads_));
+  socket_pool_.reset(new SocketPool(memcached_hostname_, memcached_port_, num_threads_ + 1));
   mem_mgr_.reset(new MemoryManager(
       opts.chunk_size(), opts.max_memory_limit() / opts.chunk_size()));
 }

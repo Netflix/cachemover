@@ -9,6 +9,7 @@ McData::McData(char *key, size_t keylen, int32_t expiry)
   : key_(std::string(key, keylen)),
     expiry_(expiry),
     value_len_(0),
+    get_complete_(false),
     complete_(false) {
 }
 

@@ -15,7 +15,7 @@ class ProcessMetabufTask : public Task {
  public:
   ProcessMetabufTask(const std::string& filename);
 
-  void ProcessMetaBuffer(MetaBufferSlice* mslice, Socket* mc_sock);
+  void ProcessMetaBuffer(MetaBufferSlice* mslice);
 
   void Execute() override;
 
