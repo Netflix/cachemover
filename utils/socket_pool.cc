@@ -37,7 +37,9 @@ Status SocketPool::PrimeConnections() {
 
 Socket* SocketPool::GetSocket() {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (sockets_.empty()) return nullptr;
+  if (sockets_.empty()) {
+    return nullptr;
+  }
 
   Socket* sock = sockets_.back();
   sockets_.pop_back();

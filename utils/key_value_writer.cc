@@ -77,25 +77,31 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
     ++it;
     iovec_idx += 2;
 
+    if (iovec_idx == 1024) {
+      ssize_t nwritten = 0;
+      MonotonicStopWatch msw;
+
+      std::cout << "iovec_idx: " << iovec_idx << std::endl;
+      {
+        SCOPED_STOP_WATCH(&msw);
+        Status write_status = rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
+        if (!write_status.ok()) {
+          std::cout << "ERROR: Could not write to file: " << write_status.ToString() << std::endl;
+        }
+      }
+
+      std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
+                << ") IOVEC Writing elapsed: "
+                << msw.ElapsedTime() << " | Nwritten: " << nwritten << std::endl;
+
+      iovec_idx = 0;
+    }
   }
   //std::cout << "GOING TO WRITE " << iovec_idx << " DATA!!!" << std::endl;
 
   //RotatingFile* out_files = new RotatingFile(data_file_prefix_, max_file_size_);
   //out_files->Init();
 
-  ssize_t nwritten = 0;
-
-
-  MonotonicStopWatch msw;
-
-  {
-    SCOPED_STOP_WATCH(&msw);
-    rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
-  }
-
-  std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
-            << ") IOVEC Writing elapsed: "
-            << msw.ElapsedTime() << std::endl;
   //std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
 
   //out_files->Finish();
