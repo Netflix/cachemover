@@ -31,6 +31,7 @@ KeyValueWriter::KeyValueWriter(std::string data_file_prefix,
     capacity_(capacity),
     max_file_size_(max_file_size),
     mc_sock_(mc_sock),
+    n_keys_pending_(0),
     last_buffer_partial_(false) {
   mcdata_entries_.reserve(BULK_GET_THRESHOLD);
 }
@@ -313,6 +314,7 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
           vit != keys_processing.end();) {
           //std::cout << "Marking GET complete for: " << *vit << std::endl;
           mcdata_entries_[*vit]->set_get_complete(true);
+          --n_keys_pending_;
           vit = keys_processing.erase(vit);
         }
 
@@ -351,6 +353,7 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
         if (!mcdata_entry->Complete()) {
           //std::cout << "UNMarking GET complete: " << mcdata_entry->key() << std::endl;
           mcdata_entry->set_get_complete(false);
+          ++n_keys_pending_;
           ++it;
           continue;
         } else {
@@ -368,10 +371,12 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
 
 void KeyValueWriter::ProcessKey(McData* mc_key) {
   mcdata_entries_.emplace(mc_key->key(), std::unique_ptr<McData>(mc_key));
+  ++n_keys_pending_;
 
   //std::cout << "Added key: " << mc_key->key() << std::endl;
   // Time to do a bulk get of all keys gathered so far and write their values to a file.
-  if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
+  //if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
+  if (n_keys_pending_ == BULK_GET_THRESHOLD) {
     BulkGetKeys(false);
   }
 }

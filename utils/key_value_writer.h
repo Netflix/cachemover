@@ -66,6 +66,9 @@ class KeyValueWriter {
   //std::unordered_map<std::string, std::unique_ptr<McData>> mcdata_entries_;
   McDataMap mcdata_entries_;
 
+  // Number of keys waiting to get data for.
+  uint32_t n_keys_pending_;
+
   // While parsing responses from Memcached, this keeps track of the current key
   // being processed.
   // We keep track of this since the response for a key can be truncated at the end of
