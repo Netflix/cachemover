@@ -167,9 +167,9 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
     cur_key_ = std::string(value_delim_pos + 6, whitespace_after_key - value_delim_pos - 6);
 
     auto entry = mcdata_entries_.find(cur_key_.c_str());
-    assert(entry != mcdata_entries_.end());
     if (entry == mcdata_entries_.end()) {
       std::cout << "COULD NOT FIND KEY: " << cur_key_.c_str() << std::endl;
+      assert(entry != mcdata_entries_.end());
       abort();
     }
 
@@ -322,8 +322,8 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
         // the same bytes again.
         if (remaining_space > 0) {
           // TODO: This is very expensive. Find alternate way.
-          bzero(const_cast<char*>(reinterpret_cast<char*>(buffer_current_)),
-              remaining_space);
+          //bzero(const_cast<char*>(reinterpret_cast<char*>(buffer_current_)),
+          //    remaining_space);
 
           //stupid_debug_func();
           // Return here since there's more free space in the buffer that we can fill up
@@ -332,7 +332,11 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
             //std::cout << "No flush, hence breaking due to free space of: " << remaining_space << std::endl;
             // Override the "END\r\n" delimiter if we're going to fill this buffer some
             // more before sending it up for processing.
-            buffer_current_ -= 5;
+            if (strncmp(const_cast<char*>(reinterpret_cast<char*>(buffer_current_)) - 5, "END\r\n", 5) == 0) {
+              buffer_current_ -= 5;
+	    } else {
+              continue;
+            }
             return;
           }
         }

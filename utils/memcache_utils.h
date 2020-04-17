@@ -150,7 +150,9 @@ class DataBufferSlice : public Slice {
   }
 
   const char* next_value_delim() {
-    const char* pos = strstr(pending_data_, "VALUE ");
+    //const char* pos = strstr(pending_data_, "VALUE ");
+    int32_t n_pending = bytes_pending();
+    const char* pos = static_cast<const char*>(memmem(pending_data_, n_pending, "VALUE ", 6));
     if (pos) MarkProcessedUntil(pos + 6); // Skip 'VALUE '
     return pos;
   }
