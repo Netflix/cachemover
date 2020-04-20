@@ -44,6 +44,7 @@ void MetadumpTask::Execute() {
   Status stat = RecvResponse();
   if (!stat.ok()) {
     LOG_ERROR(stat.ToString());
+    std::cout << "RecvResponse() failed: " << stat.ToString() << std::endl;
     assert(false);
   }
 

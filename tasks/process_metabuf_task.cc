@@ -78,6 +78,11 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
 void ProcessMetabufTask::Execute() {
 
+  /*if (!(strcmp(filename_.c_str(), "test_prefix11") == 0)) {
+	  if (strcmp(filename_.c_str(), "test_prefix0") == 0) sleep(5);
+	  std::cout <<" Not 10. Returning... Got: " << filename_.c_str() << std::endl;
+	  return;
+  }*/
   Socket *mc_sock = owning_thread()->task_scheduler()->GetMemcachedSocket();
   assert(mc_sock != nullptr);
 

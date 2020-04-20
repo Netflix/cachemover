@@ -33,7 +33,7 @@ KeyValueWriter::KeyValueWriter(std::string data_file_prefix,
     mc_sock_(mc_sock),
     n_keys_pending_(0),
     last_buffer_partial_(false) {
-  mcdata_entries_.reserve(BULK_GET_THRESHOLD);
+  mcdata_entries_pending_.reserve(BULK_GET_THRESHOLD);
 }
 
 void stupid_debug_func() {
@@ -49,14 +49,19 @@ Status KeyValueWriter::Init() {
 
 void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
 
+  std::cout << "In WriteCompletedEntries" << std::endl;
+  MonotonicStopWatch total_msw;
+
+  total_msw.Start();
   //uint32_t n_iovecs = num_complete_entries * PER_KEY_DATAPOINTS;
-  uint32_t n_iovecs = num_complete_entries * 2;
+  uint32_t n_iovecs = std::min(static_cast<uint32_t>(1024), num_complete_entries * 2);
+  std::cout << "n_iovecs: " << n_iovecs << std::endl;
   struct iovec iovecs[n_iovecs];
-  McDataMap::iterator it = mcdata_entries_.begin();
+  McDataMap::iterator it = mcdata_entries_processing_.begin();
 
   uint32_t iovec_idx = 0;
 
-  while (it != mcdata_entries_.end()) {
+  while (it != mcdata_entries_processing_.end()) {
 
     McData* mcdata_entry = it->second.get();
 
@@ -108,8 +113,8 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
   //out_files->Finish();
 
   // TODO: Find better way to erase written entries from map.
-  it = mcdata_entries_.begin();
-  while (it != mcdata_entries_.end()) {
+  it = mcdata_entries_processing_.begin();
+  while (it != mcdata_entries_processing_.end()) {
 
     McData* mcdata_entry = it->second.get();
 
@@ -118,12 +123,19 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
       continue;
     }
     //std::cout << "Iovec ERASING KEY: " << mcdata_entry->key() << std::endl;
-    it = mcdata_entries_.erase(it);
+    it = mcdata_entries_processing_.erase(it);
   }
+
+  total_msw.Stop();
+  std::cout << "Total WriteCompletedEntries elapsed: " << total_msw.ElapsedTime() << std::endl;
 }
 
 bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
+  std::cout << "In ProcessBulkResponse" << std::endl;
+  MonotonicStopWatch total_msw;
+
+  total_msw.Start();
   if (last_buffer_partial_) {
     /*std::cout << "Last partial state: " << static_cast<int>(broken_buffer_state_) 
         << " | For key: " << cur_key_ << std::endl;*/
@@ -166,10 +178,10 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
     cur_key_ = std::string(value_delim_pos + 6, whitespace_after_key - value_delim_pos - 6);
 
-    auto entry = mcdata_entries_.find(cur_key_.c_str());
-    if (entry == mcdata_entries_.end()) {
+    auto entry = mcdata_entries_processing_.find(cur_key_.c_str());
+    if (entry == mcdata_entries_processing_.end()) {
       std::cout << "COULD NOT FIND KEY: " << cur_key_.c_str() << std::endl;
-      assert(entry != mcdata_entries_.end());
+      assert(entry != mcdata_entries_processing_.end());
       abort();
     }
 
@@ -229,6 +241,9 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 
   } while (newline_after_data != nullptr); // TODO: Redundant loop condition; change.
 
+  total_msw.Stop();
+  std::cout << "Total ProcessBulkResponse elapsed: " << total_msw.ElapsedTime() << std::endl;
+
   WriteCompletedEntries(num_complete_entries);
 
   //std::cout << "*-----------------*" << std::endl;
@@ -245,7 +260,7 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
   {
     SCOPED_STOP_WATCH(&total_msw);
     // No keys to get.
-    if (mcdata_entries_.empty()) {
+    if (mcdata_entries_pending_.empty()) {
       return;
     }
 
@@ -254,8 +269,8 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
     std::vector<std::string> keys_processing;
     {
       bulk_get_cmd << "get ";
-      McDataMap::iterator it = mcdata_entries_.begin();
-      while (it != mcdata_entries_.end()) {
+      McDataMap::iterator it = mcdata_entries_pending_.begin();
+      while (it != mcdata_entries_pending_.end()) {
         if (!it->second->get_complete()) {
           keys_processing.push_back(it->first);
           bulk_get_cmd << it->first << " ";
@@ -276,6 +291,7 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
           reinterpret_cast<const uint8_t*>(bulk_get_cmd.str().c_str()),
           bulk_get_cmd.str().length(), &nsent);
       if (!send_status.ok()) {
+	      std::cout << "Could not send bulk get command" << std::endl;
         LOG_ERROR("Could not send bulk get command");
       }
 
@@ -295,7 +311,8 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
           }
           std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
                 << ") Bulk get elapsed: "
-                << msw.ElapsedTime() << std::endl;
+                << msw.ElapsedTime() << "   ||  Free space: " << remaining_space
+		<< "  ||  nread: " << nread << std::endl;
           if (!recv_status.ok()) {
             LOG_ERROR("Could not recv bulk get response.");
             std::cout << "Could not recv bulk get response." << recv_status.ToString() << std::endl;
@@ -312,8 +329,15 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
 
         for (std::vector<std::string>::iterator vit = keys_processing.begin();
           vit != keys_processing.end();) {
-          //std::cout << "Marking GET complete for: " << *vit << std::endl;
-          mcdata_entries_[*vit]->set_get_complete(true);
+          //std::cout << "Moving from pending to processing: " << *vit << std::endl;
+	  // Move these keys from pending map to processing map.
+	  McDataMap::iterator entry_in_pending = mcdata_entries_pending_.find(*vit);
+	  McDataMap::iterator entry_in_processing =
+            mcdata_entries_processing_.emplace(*vit, entry_in_pending->second.release()).first;
+	  entry_in_processing->second->set_get_complete(true);
+	  mcdata_entries_pending_.erase(entry_in_pending);
+
+          //mcdata_entries_[*vit]->set_get_complete(true);
           --n_keys_pending_;
           vit = keys_processing.erase(vit);
         }
@@ -349,16 +373,21 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
 
       }
 
-      McDataMap::iterator it = mcdata_entries_.begin();
-      while (it != mcdata_entries_.end()) {
+      McDataMap::iterator it = mcdata_entries_processing_.begin();
+      while (it != mcdata_entries_processing_.end()) {
 
         McData* mcdata_entry = it->second.get();
 
         if (!mcdata_entry->Complete()) {
-          //std::cout << "UNMarking GET complete: " << mcdata_entry->key() << std::endl;
-          mcdata_entry->set_get_complete(false);
+          //std::cout << "MOVING BACK from processing to pending: " << mcdata_entry->key() << std::endl;
+	  // Move it back to the pending map if we weren't able to process it. We will have to re-get the
+	  // value for this key from memcached.
+	  McDataMap::iterator entry_in_pending =
+            mcdata_entries_pending_.emplace(it->first, it->second.release()).first;
+          entry_in_pending->second->set_get_complete(false);
+
+	  it = mcdata_entries_processing_.erase(it);
           ++n_keys_pending_;
-          ++it;
           continue;
         } else {
           std::cout << "WARNING: Completed entry still in map" << std::endl;
@@ -366,7 +395,8 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
       }
 
     }
-    std::cout << "Total time (BulkGetKeys): " << total_msw.ElapsedTime() << std::endl;
+      std::cout << "Total time (BulkGetKeys): " << total_msw.ElapsedTime() << "  |(" << owning_thread_name_
+  	        << "): " << data_file_prefix_ << std::endl;
   }
   //std::cout << "BULK GETTING: " << std::endl << bulk_get_cmd.str() << std::endl;
 
@@ -374,7 +404,7 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
 }
 
 void KeyValueWriter::ProcessKey(McData* mc_key) {
-  mcdata_entries_.emplace(mc_key->key(), std::unique_ptr<McData>(mc_key));
+  mcdata_entries_pending_.emplace(mc_key->key(), std::unique_ptr<McData>(mc_key));
   ++n_keys_pending_;
 
   //std::cout << "Added key: " << mc_key->key() << std::endl;
@@ -398,9 +428,9 @@ void KeyValueWriter::PrintKeys() {
 
   std::cout << "PRINTING KEYS!!\n";
 
-  McDataMap::iterator it = mcdata_entries_.begin();
+  McDataMap::iterator it = mcdata_entries_processing_.begin();
 
-  while (it != mcdata_entries_.end()) {
+  while (it != mcdata_entries_processing_.end()) {
 
     std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
     it++;

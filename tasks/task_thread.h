@@ -30,6 +30,8 @@ class TaskThread {
     num_keys_processed_ += num_keys;
   }
 
+  uint64_t num_keys_processed() { return num_keys_processed_; }
+
   void PrintNumKeysProcessed() {
     std::cout << "Thread (" << thread_name_.c_str() << ") - Num keys: " << num_keys_processed_ << std::endl;
   }

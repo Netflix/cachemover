@@ -98,4 +98,12 @@ void TaskScheduler::ReleaseMemcachedSocket(Socket *sock) {
   return dumper_->ReleaseMemcachedSocket(sock);
 }
 
+uint64_t TaskScheduler::total_keys_processed() {
+  uint64_t total_keys_processed = 0;
+  for (auto&& thread : threads_) {
+    total_keys_processed += thread->num_keys_processed();
+  }
+  return total_keys_processed;
+}
+
 } // namespace memcachedumper

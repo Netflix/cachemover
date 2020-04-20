@@ -62,9 +62,13 @@ class KeyValueWriter {
   uint64_t max_file_size_;
   // Socket to talk to Memcached.
   Socket* mc_sock_;
-  // Map of key name to McData entries.
+  // Map of key name to McData entries that we have yet to get the values for.
   //std::unordered_map<std::string, std::unique_ptr<McData>> mcdata_entries_;
-  McDataMap mcdata_entries_;
+  McDataMap mcdata_entries_pending_;
+
+  // Map of keys to McData entries for which we have already called bulk get.
+  // Once a key from this map is written to disk, it will be erased from this map.
+  McDataMap mcdata_entries_processing_;
 
   // Number of keys waiting to get data for.
   uint32_t n_keys_pending_;

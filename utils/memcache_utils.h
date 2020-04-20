@@ -28,7 +28,7 @@ class McData {
   void MarkComplete() { complete_ = true; }
 
   void set_get_complete(bool get_complete) { get_complete_ = get_complete; }
-  bool get_complete() { return get_complete_; }
+  inline bool get_complete() { return get_complete_; }
   // Returns 'false' if this McData is marked as incomplete, i.e. one or
   // more required fields are not present/completely entered.
   bool Complete() { return complete_; }

@@ -6,6 +6,7 @@
 #include "tasks/task_scheduler.h"
 #include "utils/mem_mgr.h"
 #include "utils/socket_pool.h"
+#include "utils/stopwatch.h"
 
 #include <iostream>
 #include <sstream>
@@ -99,13 +100,19 @@ void Dumper::ReleaseMemcachedSocket(Socket *sock) {
 
 void Dumper::Run() {
 
-  PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
-  task_scheduler_->SubmitTask(ptask);
+  //PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
+  //task_scheduler_->SubmitTask(ptask);
 
-  MetadumpTask *mtask = new MetadumpTask(0, "test_prefix", max_key_file_size_, mem_mgr_.get());
-  task_scheduler_->SubmitTask(mtask);
+  MonotonicStopWatch dumping_msw;
+  {
+    SCOPED_STOP_WATCH(&dumping_msw);
+    MetadumpTask *mtask = new MetadumpTask(0, "test_prefix", max_key_file_size_, mem_mgr_.get());
+    task_scheduler_->SubmitTask(mtask);
 
-  task_scheduler_->WaitUntilTasksComplete();
+    task_scheduler_->WaitUntilTasksComplete();
+  }
+  std::cout << "All tasks completed. Total keys dumped: " << task_scheduler_->total_keys_processed()
+	    << "   | Time taken: " << dumping_msw.ElapsedTime() << std::endl;
   LOG("Status: All tasks completed. Exiting...");
 }
 

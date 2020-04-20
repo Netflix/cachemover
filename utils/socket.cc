@@ -56,15 +56,22 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
 Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
   int32_t nbytes;
 
-  nbytes = recv(fd_, buf, len, 0);
-  if (nbytes < 0) {
-    return Status::NetworkError("Recv error", strerror(errno));
-  } else if (nbytes == 0) {
-    return Status::NetworkError("Recv EOF", strerror(errno));
-  }
+  while (1) {
+	  nbytes = recv(fd_, buf, len, 0);
+	  if (nbytes < 0) {
+	    int err = errno;
+	    if (err == EINTR) {
+		    std::cout << "Recv(): EINTR received; trying again." << std::endl;
+		    continue;
+	    }
+	    return Status::NetworkError("Recv error", strerror(errno));
+	  } else if (nbytes == 0) {
+	    return Status::NetworkError("Recv EOF", strerror(errno));
+	  }
 
-  *nbytes_read = nbytes;
-  return Status::OK();
+	  *nbytes_read = nbytes;
+	  return Status::OK();
+  }
 }
 
 Status Socket::Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent) {

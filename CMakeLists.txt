@@ -17,6 +17,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 # Add dependency for pthreads.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+# Add gprof.
+# TODO: Make configurable
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 
 set(CMAKE_BUILD_TYPE Debug)
 

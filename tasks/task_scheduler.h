@@ -40,6 +40,9 @@ class TaskScheduler {
   // Release a memcached socket.
   void ReleaseMemcachedSocket(Socket *sock);
 
+  // The total number of keys processed by all the threads.
+  uint64_t total_keys_processed();
+
  private:
   friend class TaskThread;
 
