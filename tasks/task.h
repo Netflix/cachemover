@@ -10,6 +10,7 @@ class TaskThread;
 
 class Task {
 public:
+  virtual ~Task() = default;
   //virtual ~Task();
   TaskThread* owning_thread() { return owning_thread_; }
 
@@ -38,7 +39,7 @@ class PrintTask : public Task {
 class PrintKeysFromFileTask : public Task {
  public:
   PrintKeysFromFileTask(const std::string& filename);
-
+  ~PrintKeysFromFileTask() = default;
   void Execute() override;
 
  private:

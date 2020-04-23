@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   dummy_options.set_port(11211);
   dummy_options.set_num_threads(8);
   dummy_options.set_chunk_size(67108864); // 1MB
-  dummy_options.set_max_memory_limit(1610612736); // 64MB
+  dummy_options.set_max_memory_limit(1073741824); // 64MB
   dummy_options.set_max_key_file_size(67108864); // 1MB
   dummy_options.set_max_data_file_size(268435456); // 1MB
   dummy_options.set_logfile_path("logfile.txt");

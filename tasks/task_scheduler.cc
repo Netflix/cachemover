@@ -76,6 +76,7 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
   std::lock_guard<std::mutex> mlock(metrics_mutex_);
   num_running_--;
 
+  delete task;
   // If all tasks completed, notify everyone waiting on the task queue
   // and everyone waiting for all tasks to complete.
   if (num_running_ == 0 && num_waiting_ == 0) {

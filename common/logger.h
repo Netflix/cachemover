@@ -4,7 +4,6 @@
 
 #include <assert.h>
 
-
 #define LOG(s) do {   \
   spdlog::info(s);    \
   } while(0);

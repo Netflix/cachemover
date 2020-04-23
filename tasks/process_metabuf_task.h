@@ -14,6 +14,7 @@ class Socket;
 class ProcessMetabufTask : public Task {
  public:
   ProcessMetabufTask(const std::string& filename);
+  ~ProcessMetabufTask() = default;
 
   void ProcessMetaBuffer(MetaBufferSlice* mslice);
 

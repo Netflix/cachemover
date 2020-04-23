@@ -39,7 +39,12 @@ void MetadumpTask::Execute() {
   if (memcached_socket_ == nullptr) abort();
 
   std::string metadump_cmd("lru_crawler metadump all\n");
-  SendCommand(metadump_cmd);
+  Status send_status = SendCommand(metadump_cmd);
+  if (!send_status.ok()) {
+    LOG_ERROR(send_status.ToString());
+    std::cout << "RecvResponse() failed: " << send_status.ToString() << std::endl;
+    assert(false);
+  }
 
   Status stat = RecvResponse();
   if (!stat.ok()) {

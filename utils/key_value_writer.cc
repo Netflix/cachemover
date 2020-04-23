@@ -239,7 +239,7 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
     mcdata_entry->MarkComplete();
     ++num_complete_entries;
 
-  } while (newline_after_data != nullptr); // TODO: Redundant loop condition; change.
+  } while (response_slice.bytes_pending() > 0); // TODO: Redundant loop condition; change.
 
   total_msw.Stop();
   std::cout << "Total ProcessBulkResponse elapsed: " << total_msw.ElapsedTime() << std::endl;

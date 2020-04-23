@@ -20,6 +20,19 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 # Add gprof.
 # TODO: Make configurable
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+# Add dependency for pthreads.
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+
+option(GPROF_ENABLED "Enable GPROF instrumentation" OFF)
+option(ASAN_ENABLED "Enable ASAN" OFF)
+
+if (GPROF_ENABLED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+endif(GPROF_ENABLED)
+
+if(ASAN_ENABLED)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+endif(ASAN_ENABLED)
 
 set(CMAKE_BUILD_TYPE Debug)
 

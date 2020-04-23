@@ -14,6 +14,8 @@ class MetadumpTask : public Task {
  public:
   MetadumpTask(int slab_class, const std::string& file_prefix,
       uint64_t max_file_size, MemoryManager *mem_mgr);
+  ~MetadumpTask() = default;
+
   void Execute() override;
 
  private:
