@@ -63,6 +63,9 @@ Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
 	    if (err == EINTR) {
 		    std::cout << "Recv(): EINTR received; trying again." << std::endl;
 		    continue;
+	    } else if (err == EAGAIN) {
+		    std::cout << "Recv(): EAGAIN received; trying again." << std::endl;
+		    continue;
 	    }
 	    return Status::NetworkError("Recv error", strerror(errno));
 	  } else if (nbytes == 0) {

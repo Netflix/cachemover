@@ -3,6 +3,8 @@
 #include "tasks/task.h"
 #include "utils/key_value_writer.h"
 
+#include <curl/curl.h>
+
 #include <string>
 
 namespace memcachedumper {
@@ -24,6 +26,9 @@ class ProcessMetabufTask : public Task {
   std::string filename_;
 
   std::unique_ptr<KeyValueWriter> data_writer_;
+
+  // CURL object used for decoding URL encoded keys.
+  CURL* curl_;
 };
 
 } // namespace memcachedumper

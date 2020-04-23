@@ -36,6 +36,7 @@ class MetadumpTask : public Task {
 
   // Pointer to a memory manager.
   MemoryManager *mem_mgr_;
+
 };
 
 } // namespace memcachedumper

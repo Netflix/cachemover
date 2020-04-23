@@ -36,8 +36,11 @@ endif(ASAN_ENABLED)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+find_package(CURL REQUIRED)
+include_directories(SYSTEM ${CURL_INCLUDE_DIR})
+
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
-target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils)
+target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils ${CURL_LIBRARIES})
 
 add_subdirectory(common)
 add_subdirectory(dumper)

@@ -50,7 +50,19 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     char *unused;
     int32_t expiry = strtol(exp_pos + 4, &unused, 10);
-    McData *new_key = new McData(const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), expiry);
+    //char *curl_easy_unescape( CURL *curl, const char *url , int inlength, int *outlength );
+
+    printf("ENCODED KEY: %.*s\n", static_cast<int>(exp_pos - key_pos - 4 - 1), const_cast<char*>(key_pos) + 4);
+    int decoded_keylen = 0;
+    char* decoded_key = curl_easy_unescape(curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), &decoded_keylen);
+    if (decoded_key == NULL) {
+      std::cout << "Could not decode key! " << std::endl;
+      abort();
+    }
+    printf("DECODED KEY: %s\n\n", decoded_key);
+    //McData *new_key = new McData(const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), expiry);
+    McData *new_key = new McData(decoded_key, static_cast<size_t>(decoded_keylen), expiry);
+    curl_free(decoded_key);
     data_writer_->ProcessKey(new_key);
 /*
     //printf("New key: %s | %d\n", new_key->key().c_str(), new_key->expiry());
@@ -83,6 +95,13 @@ void ProcessMetabufTask::Execute() {
 	  std::cout <<" Not 10. Returning... Got: " << filename_.c_str() << std::endl;
 	  return;
   }*/
+
+  curl_ = curl_easy_init();
+  if (curl_ == NULL) {
+    std::cout << "Could not initialize CURL library; exiting..." << std::endl;
+    abort();
+  }
+
   Socket *mc_sock = owning_thread()->task_scheduler()->GetMemcachedSocket();
   assert(mc_sock != nullptr);
 
