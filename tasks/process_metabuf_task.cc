@@ -52,14 +52,12 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
     int32_t expiry = strtol(exp_pos + 4, &unused, 10);
     //char *curl_easy_unescape( CURL *curl, const char *url , int inlength, int *outlength );
 
-    printf("ENCODED KEY: %.*s\n", static_cast<int>(exp_pos - key_pos - 4 - 1), const_cast<char*>(key_pos) + 4);
     int decoded_keylen = 0;
     char* decoded_key = curl_easy_unescape(curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), &decoded_keylen);
     if (decoded_key == NULL) {
       std::cout << "Could not decode key! " << std::endl;
       abort();
     }
-    printf("DECODED KEY: %s\n\n", decoded_key);
     //McData *new_key = new McData(const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), expiry);
     McData *new_key = new McData(decoded_key, static_cast<size_t>(decoded_keylen), expiry);
     curl_free(decoded_key);

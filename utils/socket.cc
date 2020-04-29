@@ -4,10 +4,17 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <iostream>
 
 namespace memcachedumper {
+
+#define RETRY_ON_EINTR(err, expr) do {                \
+  static_assert(std::is_signed<decltype(err)>::value, \
+                #err " must be a signed integer");    \
+  (err) = (expr);                                     \
+} while ((err) == -1 && errno == EINTR)
 
 Socket::Socket()
   : fd_(-1) {
@@ -56,25 +63,15 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
 Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
   int32_t nbytes;
 
-  while (1) {
-	  nbytes = recv(fd_, buf, len, 0);
-	  if (nbytes < 0) {
-	    int err = errno;
-	    if (err == EINTR) {
-		    std::cout << "Recv(): EINTR received; trying again." << std::endl;
-		    continue;
-	    } else if (err == EAGAIN) {
-		    std::cout << "Recv(): EAGAIN received; trying again." << std::endl;
-		    continue;
-	    }
-	    return Status::NetworkError("Recv error", strerror(errno));
-	  } else if (nbytes == 0) {
-	    return Status::NetworkError("Recv EOF", strerror(errno));
-	  }
-
-	  *nbytes_read = nbytes;
-	  return Status::OK();
+  RETRY_ON_EINTR(nbytes, recv(fd_, buf, len, 0));
+  if (nbytes < 0) {
+    return Status::NetworkError("Recv error", strerror(errno));
+  } else if (nbytes == 0) {
+    return Status::NetworkError("Recv EOF", strerror(errno));
   }
+
+  *nbytes_read = nbytes;
+  return Status::OK();
 }
 
 Status Socket::Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent) {
@@ -86,6 +83,26 @@ Status Socket::Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent) {
   }
 
   *nbytes_sent = nbytes;
+  return Status::OK();
+}
+
+Status Socket::Close() {
+  if (fd_ < 0) return Status::OK();
+
+  int fd = fd_;
+  int ret;
+  RETRY_ON_EINTR(ret, close(fd));
+  if (ret < 0) {
+    return Status::NetworkError("Close error", strerror(errno));
+  }
+  fd_ = -1;
+  return Status::OK();
+}
+
+Status Socket::Refresh() {
+  RETURN_ON_ERROR(Close());
+  RETURN_ON_ERROR(Create())
+
   return Status::OK();
 }
 

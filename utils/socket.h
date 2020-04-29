@@ -17,6 +17,8 @@ class Socket {
   Status Connect(const Sockaddr& remote_addr);
   Status Recv(uint8_t* buf, size_t len, int32_t *nbytes_read);
   Status Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent);
+  Status Close();
+  Status Refresh();
 
  private:
   int fd_;

@@ -5,6 +5,7 @@
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
 #include "utils/mem_mgr.h"
+#include "utils/net_util.h"
 #include "utils/socket_pool.h"
 #include "utils/stopwatch.h"
 
@@ -103,6 +104,13 @@ void Dumper::Run() {
   //PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
   //task_scheduler_->SubmitTask(ptask);
 
+  const std::string ip_addr;
+  Status s = GetIPAddrAsString(&ip_addr);
+  if (!s.ok()) {
+    std::cout << "Could not get IP Addr" << s.ToString() << std::endl;
+  } else {
+    std::cout << "IPADDR: " << ip_addr.c_str() << std::endl;
+  }
   MonotonicStopWatch dumping_msw;
   {
     SCOPED_STOP_WATCH(&dumping_msw);

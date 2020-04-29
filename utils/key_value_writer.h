@@ -48,6 +48,10 @@ class KeyValueWriter {
   // file.
   void WriteCompletedEntries(uint32_t num_complete_entries);
 
+  // Helper function to Recv() data from memcached with retry loops and connection
+  // refreshes on failures.
+  Status GetFromMemcached(uint8_t *buf, int32_t size, int32_t *nread);
+
   // The prefix to use for every file created by this object.
   std::string data_file_prefix_;
   // Name of the thread that's operating on this object.

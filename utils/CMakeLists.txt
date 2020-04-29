@@ -4,6 +4,7 @@ set(UTILS_SRCS
   key_value_writer.cc
   mem_mgr.cc
   memcache_utils.cc
+  net_util.cc
   ring_buffer.cc
   sockaddr.cc
   socket.cc

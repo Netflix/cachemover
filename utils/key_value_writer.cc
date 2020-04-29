@@ -250,6 +250,32 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
   return reached_end;
 }
 
+Status KeyValueWriter::GetFromMemcached(uint8_t *buf, int32_t size, int32_t *nread) {
+  int num_retries = 2;
+
+  while (num_retries > 0) {
+    int num_eagain_retries = 2;
+
+    while (num_eagain_retries > 0) {
+      Status recv_status = mc_sock_->Recv(buf, size, nread);
+      if (recv_status.ok()) { return Status::OK(); }
+      int err = errno;
+      if (err == EAGAIN) {
+        --num_eagain_retries;
+      } else {
+        break;
+      }
+    }
+
+    --num_retries;
+    if (num_retries > 0) {
+      // Refresh the socket connection
+      RETURN_ON_ERROR(mc_sock_->Refresh());
+    }
+  }
+  return Status::OK();
+}
+
 void KeyValueWriter::BulkGetKeys(bool flush) {
   // Using untracked memory for the bulk get command should be fine. In the worst case,
   // we will use ~(BULK_GET_THRESHOLD * MAX_KEY_SIZE).
@@ -307,7 +333,8 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
         if (num_keys_to_get > 0) {
           {
             SCOPED_STOP_WATCH(&msw);
-            recv_status = mc_sock_->Recv(buffer_current_, remaining_space, &nread);
+            //recv_status = mc_sock_->Recv(buffer_current_, remaining_space, &nread);
+            recv_status = GetFromMemcached(buffer_current_, remaining_space, &nread);
           }
           std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
                 << ") Bulk get elapsed: "
