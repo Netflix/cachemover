@@ -104,12 +104,12 @@ void Dumper::Run() {
   //PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
   //task_scheduler_->SubmitTask(ptask);
 
-  const std::string ip_addr;
+  const std::string* ip_addr = nullptr;
   Status s = GetIPAddrAsString(&ip_addr);
   if (!s.ok()) {
     std::cout << "Could not get IP Addr" << s.ToString() << std::endl;
   } else {
-    std::cout << "IPADDR: " << ip_addr.c_str() << std::endl;
+    std::cout << "IPADDR: " << ip_addr->c_str() << std::endl;
   }
   MonotonicStopWatch dumping_msw;
   {

@@ -13,7 +13,7 @@ namespace memcachedumper {
 
 std::string cached_ip_addr;
 
-Status GetIPAddrAsString(const std::string* ip_addr) {
+Status GetIPAddrAsString(const std::string** ip_addr) {
   char hostname[256]; 
   char *ip_raw_buf; 
   struct hostent *host_entry; 
@@ -35,7 +35,7 @@ Status GetIPAddrAsString(const std::string* ip_addr) {
     cached_ip_addr = std::string(ip_raw_buf, strlen(ip_raw_buf));
   }
 
-  ip_addr = const_cast<const std::string*>(&cached_ip_addr);
+  *ip_addr = const_cast<const std::string*>(&cached_ip_addr);
   return Status::OK();
 }
 
