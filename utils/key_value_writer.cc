@@ -55,7 +55,6 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
   total_msw.Start();
   //uint32_t n_iovecs = num_complete_entries * PER_KEY_DATAPOINTS;
   uint32_t n_iovecs = std::min(static_cast<uint32_t>(1024), num_complete_entries * 2);
-  std::cout << "n_iovecs: " << n_iovecs << std::endl;
   struct iovec iovecs[n_iovecs];
   McDataMap::iterator it = mcdata_entries_processing_.begin();
 
@@ -87,7 +86,6 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
       ssize_t nwritten = 0;
       MonotonicStopWatch msw;
 
-      std::cout << "iovec_idx: " << iovec_idx << std::endl;
       {
         SCOPED_STOP_WATCH(&msw);
         Status write_status = rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten);
@@ -96,9 +94,9 @@ void KeyValueWriter::WriteCompletedEntries(uint32_t num_complete_entries) {
         }
       }
 
-      std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
+      /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
                 << ") IOVEC Writing elapsed: "
-                << msw.ElapsedTime() << " | Nwritten: " << nwritten << std::endl;
+                << msw.ElapsedTime() << " | Nwritten: " << nwritten << std::endl;*/
 
       iovec_idx = 0;
     }
@@ -251,16 +249,18 @@ bool KeyValueWriter::ProcessBulkResponse(uint8_t* buffer, int32_t bufsize) {
 }
 
 Status KeyValueWriter::GetFromMemcached(uint8_t *buf, int32_t size, int32_t *nread) {
-  int num_retries = 2;
+  int num_retries = 1;
 
+  Status recv_status = Status::OK();
   while (num_retries > 0) {
-    int num_eagain_retries = 2;
+    int num_eagain_retries = 10;
 
     while (num_eagain_retries > 0) {
-      Status recv_status = mc_sock_->Recv(buf, size, nread);
+      recv_status = mc_sock_->Recv(buf, size, nread);
       if (recv_status.ok()) { return Status::OK(); }
       int err = errno;
       if (err == EAGAIN) {
+	std::cout << owning_thread_name_ << ": Got EAGAIN. num_eagain_retries left: " << num_eagain_retries << std::endl;
         --num_eagain_retries;
       } else {
         break;
@@ -270,10 +270,11 @@ Status KeyValueWriter::GetFromMemcached(uint8_t *buf, int32_t size, int32_t *nre
     --num_retries;
     if (num_retries > 0) {
       // Refresh the socket connection
-      RETURN_ON_ERROR(mc_sock_->Refresh());
+      //std::cout << "Refreshing connection and trying again." << std::endl;
+      //RETURN_ON_ERROR(mc_sock_->Refresh());
     }
   }
-  return Status::OK();
+  return recv_status;
 }
 
 void KeyValueWriter::BulkGetKeys(bool flush) {
@@ -336,10 +337,10 @@ void KeyValueWriter::BulkGetKeys(bool flush) {
             //recv_status = mc_sock_->Recv(buffer_current_, remaining_space, &nread);
             recv_status = GetFromMemcached(buffer_current_, remaining_space, &nread);
           }
-          std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
+          /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
                 << ") Bulk get elapsed: "
                 << msw.ElapsedTime() << "   ||  Free space: " << remaining_space
-		<< "  ||  nread: " << nread << std::endl;
+		<< "  ||  nread: " << nread << std::endl;*/
           if (!recv_status.ok()) {
             LOG_ERROR("Could not recv bulk get response.");
             std::cout << "Could not recv bulk get response." << recv_status.ToString() << std::endl;

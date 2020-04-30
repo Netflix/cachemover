@@ -23,7 +23,7 @@ Status SocketPool::PrimeConnections() {
     RETURN_ON_ERROR(sock->Create());
 
     // TODO: Make configurable if necessary.
-    RETURN_ON_ERROR(sock->SetRecvTimeout(2));
+    RETURN_ON_ERROR(sock->SetRecvTimeout(30));
     RETURN_ON_ERROR(sock->Connect(sockaddr_));
   }
 

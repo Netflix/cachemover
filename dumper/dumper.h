@@ -28,8 +28,8 @@ class DumperOptions {
   std::string hostname() { return hostname_; }
   int port() { return port_; }
   int num_threads() { return num_threads_; }
-  int chunk_size() { return chunk_size_; }
-  int max_memory_limit() { return max_memory_limit_; }
+  uint64_t chunk_size() { return chunk_size_; }
+  uint64_t max_memory_limit() { return max_memory_limit_; }
   uint64_t max_key_file_size() { return max_key_file_size_; }
   uint64_t max_data_file_size() { return max_data_file_size_; }
   std::string logfile_path() { return logfile_path_; }
