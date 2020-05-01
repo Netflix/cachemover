@@ -45,11 +45,12 @@ class KeyValueWriter {
   // file.
   Status WriteCompletedEntries();
 
-  Status BulkGetKeys();
+  Status BulkGetKeys(bool* broken_connection);
 
   // Helper function to Recv() data from memcached with retry loops and connection
   // refreshes on failures.
-  Status RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nread);
+  Status RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nread,
+      bool* broken_connection);
 
   // Move keys from mcdata_entries_pending_ map to mcdata_entries_processing_ map.
   // Must only be called if we have already sent a get command to MC for these keys.

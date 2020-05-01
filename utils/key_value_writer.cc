@@ -15,6 +15,12 @@
 #define BULK_GET_THRESHOLD 30
 #define MC_VALUE_DELIM "VALUE "
 
+#define INJECT_EAGAIN_EVERY_N 0
+
+#if INJECT_EAGAIN_EVERY_N
+static int32_t inject_every_n = INJECT_EAGAIN_EVERY_N;
+#endif
+
 // We write 5 datapoints per key (in UTF-8):
 // <key> <expiry> <flags> <datalen> <data>
 #define PER_KEY_DATAPOINTS 5
@@ -141,6 +147,9 @@ Status KeyValueWriter::WriteCompletedEntries() {
 
 uint32_t KeyValueWriter::ProcessBulkResponse() {
 
+  // Buffer is empty, nothing to process.
+  if (buffer_free_bytes() == capacity_) return 0;
+
   MonotonicStopWatch total_msw;
 
   total_msw.Start();
@@ -196,7 +205,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
 
        std::cout << "KEY INFO TRUNCATED: " << cur_key_.c_str() << " | " << flags <<  std::endl;
       // TODO: Handle partial buffer case.
-      std::cout << "Creaking coz no newline_after_datalen" << std::endl << response_slice.data() << std::endl;
+      //std::cout << "Creaking coz no newline_after_datalen" << std::endl << response_slice.data() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
@@ -240,33 +249,34 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
   return n_complete_entries;
 }
 
-Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nread) {
-  int num_retries = 1;
-
+Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nread,
+    bool* broken_connection) {
   Status recv_status = Status::OK();
-  while (num_retries > 0) {
-    int num_eagain_retries = 10;
+  int err = 0;
+  int num_eagain_retries = 3;
 
-    while (num_eagain_retries > 0) {
-      recv_status = mc_sock_->Recv(buf, size, nread);
-      if (recv_status.ok()) { return Status::OK(); }
-      int err = errno;
-      if (err == EAGAIN) {
-	      std::cout << owning_thread_name_ << ": Got EAGAIN. num_eagain_retries left: "
-                  << num_eagain_retries << std::endl;
-        --num_eagain_retries;
-      } else {
-        break;
-      }
-    }
-
-    --num_retries;
-    if (num_retries > 0) {
-      // Refresh the socket connection
-      //std::cout << "Refreshing connection and trying again." << std::endl;
-      //RETURN_ON_ERROR(mc_sock_->Refresh());
+#if INJECT_EAGAIN_EVERY_N
+  // Spoof an EAGAIN for testing.
+  if (--inject_every_n == 0) {
+    inject_every_n = INJECT_EAGAIN_EVERY_N;
+    *broken_connection = true;
+    return Status::NetworkError("Injected EAGAIN", "");
+  }
+#endif
+  while (num_eagain_retries > 0) {
+    recv_status = mc_sock_->Recv(buf, size, nread);
+    if (recv_status.ok()) { return Status::OK(); }
+    err = errno;
+    if (err == EAGAIN) {
+      std::cout << owning_thread_name_ << ": Got EAGAIN. num_eagain_retries left: "
+                << num_eagain_retries << std::endl;
+      --num_eagain_retries;
+    } else {
+      break;
     }
   }
+
+  if (err == EAGAIN) *broken_connection = true;
   return recv_status;
 }
 
@@ -305,7 +315,7 @@ void KeyValueWriter::DemoteKeysToPending() {
   }
 }
 
-Status KeyValueWriter::BulkGetKeys() {
+Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
 
   // Skip sending a command if we're yet to finish processing the response to a
   // previous command.
@@ -331,7 +341,8 @@ Status KeyValueWriter::BulkGetKeys() {
     size_t remaining_space = buffer_free_bytes();
     {
       SCOPED_STOP_WATCH(&msw);
-      RETURN_ON_ERROR(RecvFromMemcached(buffer_current_, remaining_space, &nread));
+      RETURN_ON_ERROR(RecvFromMemcached(buffer_current_, remaining_space, &nread,
+          broken_connection));
     }
     /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
           << ") Bulk get elapsed: "
@@ -369,75 +380,83 @@ Status KeyValueWriter::BulkGetKeys() {
 }
 
 void KeyValueWriter::ProcessKeys(bool flush) {
-  // Using untracked memory for the bulk get command should be fine. In the worst case,
-  // we will use ~(BULK_GET_THRESHOLD * MAX_KEY_SIZE).
-  std::stringstream bulk_get_cmd;
-
   MonotonicStopWatch total_msw;
-
-  {
-    SCOPED_STOP_WATCH(&total_msw);
-    // No keys to get.
-    if (mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()) {
-      return;
-    }
-
-    bool did_write = false;
-    do {
-      Status bulk_get_status = BulkGetKeys();
-      if (!bulk_get_status.ok()) {
-        std::cout << "BulkGetKeys failure. " << bulk_get_status.ToString() << std::endl;
-
-        // TODO: Fail gracefully.
-        abort();
-      }
-
-      // Since we sent the bulk get command and started receiving values, mark those
-      // keys as processing from pending.
-      PromoteKeysFromPending();
-
-      // If we're not asked to flush and the buffer is not full, postpone writing them
-      // for later.
-      if (!flush && buffer_free_bytes() > 0) break;
-
-      // Process the buffer and make the McData entries ready for writing.
-      n_unwritten_processed_keys_ += ProcessBulkResponse();
-
-      // Write fully processed entries.
-      Status write_status = WriteCompletedEntries();
-      if (!write_status.ok()) {
-        std::cout << "WriteCompletedEntries failure. "
-                  << write_status.ToString() << std::endl;
-        // TODO: Fail gracefully.
-        abort();
-      }
-      did_write = true;
-
-      // Reset the buffer.
-      buffer_current_ = buffer_begin_;
-      process_from_ = buffer_begin_;
-
-    // If we're yet to complete draining the socket, go back and complete the cycle.
-    } while (need_drain_socket_ == true);
-
-    // All the keys we attempted to process but still haven't are marked as pending
-    // again, so that we can get and write them the next time this function is called.
-    if (did_write) {
-      // Process one last time since some keys might have been returned in the last call
-      // to BulkGetKeys(), and we don't want to demote those; else we will end up
-      // asking memcached for the same key(s) twice.
-      n_unwritten_processed_keys_ += ProcessBulkResponse();
-
-      // Next time we call ProcessBulkResponse(), start processing from here, since the
-      // data before has already been processed.
-      process_from_ = buffer_current_;
-
-      DemoteKeysToPending();
-    }
-    //std::cout << "Total time (ProcessKeys): " << total_msw.ElapsedTime()
-    //          << "  |(" << owning_thread_name_
-    //          << "): " << data_file_prefix_ << std::endl;
+  SCOPED_STOP_WATCH(&total_msw);
+  // No keys to get.
+  if (mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()) {
+    return;
   }
+
+  bool broken_connection = false;
+  bool did_write = false;
+  do {
+    Status bulk_get_status = BulkGetKeys(&broken_connection);
+    if (!bulk_get_status.ok() && !broken_connection) {
+      std::cout << "BulkGetKeys failure. " << bulk_get_status.ToString() << std::endl;
+
+      // TODO: Fail gracefully.
+      abort();
+    }
+
+    // Since we sent the bulk get command and started receiving values, mark those
+    // keys as processing from pending.
+    PromoteKeysFromPending();
+
+    // If we're not asked to flush and the buffer is not full, postpone writing them
+    // for later.
+    if (!broken_connection && !flush && buffer_free_bytes() > 0) break;
+
+    // Process the buffer and make the McData entries ready for writing.
+    n_unwritten_processed_keys_ += ProcessBulkResponse();
+
+    // Write fully processed entries.
+    Status write_status = WriteCompletedEntries();
+    if (!write_status.ok()) {
+      std::cout << "WriteCompletedEntries failure. "
+                << write_status.ToString() << std::endl;
+      // TODO: Fail gracefully.
+      abort();
+    }
+    did_write = true;
+
+    // Reset the buffer.
+    buffer_current_ = buffer_begin_;
+    process_from_ = buffer_begin_;
+
+  // If we're yet to complete draining the socket, go back and complete the cycle.
+  } while (need_drain_socket_ == true);
+
+  // All the keys we attempted to process but still haven't are marked as pending
+  // again, so that we can get and write them the next time this function is called.
+  if (did_write) {
+    // Process one last time since some keys might have been returned in the last call
+    // to BulkGetKeys(), and we don't want to demote those; else we will end up
+    // asking memcached for the same key(s) twice.
+    n_unwritten_processed_keys_ += ProcessBulkResponse();
+
+    // Next time we call ProcessBulkResponse(), start processing from here, since the
+    // data before has already been processed.
+    process_from_ = buffer_current_;
+
+    DemoteKeysToPending();
+  }
+
+  // If our connection was broken, refresh the connection.
+  // We will process the keys in the next call to this function.
+  if (broken_connection) {
+    std::cout << "Connection is broken, refreshing it." << std::endl;
+    Status refresh_status = mc_sock_->Refresh();
+    if (!refresh_status.ok()) {
+      std::cout << "Failed to refresh connection" << std::endl;
+      abort();
+    }
+
+    // TODO: Avoid a recursive call.
+    ProcessKeys(flush);
+  }
+  //std::cout << "Total time (ProcessKeys): " << total_msw.ElapsedTime()
+  //          << "  |(" << owning_thread_name_
+  //          << "): " << data_file_prefix_ << std::endl;
 }
 
 void KeyValueWriter::QueueForProcessing(McData* mc_key) {
@@ -448,7 +467,7 @@ void KeyValueWriter::QueueForProcessing(McData* mc_key) {
   //std::cout << "Added key: " << mc_key->key() << std::endl;
   // Time to do a bulk get of all keys gathered so far and write their values to a file.
   //if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
-  if (n_keys_pending_ == BULK_GET_THRESHOLD) {
+  if (n_keys_pending_ >= BULK_GET_THRESHOLD) {
     ProcessKeys(false);
   }
 }

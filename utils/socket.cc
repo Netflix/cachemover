@@ -49,8 +49,10 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
   }
 
   // Copy before reinterpreting.
-  memcpy(&addr, &remote_addr.raw_struct_ref(), sizeof(sockaddr_in));
-  int ret = connect(fd_, reinterpret_cast<const struct sockaddr*>(&addr),
+  //memcpy(&addr, &remote_addr.raw_struct_ref(), sizeof(sockaddr_in));
+  remote_addr_ = remote_addr;
+  int ret = connect(fd_,
+      reinterpret_cast<const struct sockaddr*>(&remote_addr_.raw_struct_ref()),
       sizeof(addr));
 
   if (ret < 0) {
@@ -101,7 +103,10 @@ Status Socket::Close() {
 
 Status Socket::Refresh() {
   RETURN_ON_ERROR(Close());
-  RETURN_ON_ERROR(Create())
+  RETURN_ON_ERROR(Create());
+  // TODO: Make configurable if necessary.
+  RETURN_ON_ERROR(SetRecvTimeout(2));
+  RETURN_ON_ERROR(Connect(remote_addr_));
 
   return Status::OK();
 }

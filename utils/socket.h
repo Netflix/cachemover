@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils/sockaddr.h"
 #include "utils/status.h"
 
 #include <cstddef>
@@ -22,6 +23,7 @@ class Socket {
 
  private:
   int fd_;
+  Sockaddr remote_addr_;
 };
 
 } // namespace memcachedumper

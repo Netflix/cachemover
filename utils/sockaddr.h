@@ -14,6 +14,8 @@ class Sockaddr {
  public:
   Sockaddr();
 
+  Sockaddr& operator=(const struct sockaddr_in &addr);
+
   const struct sockaddr_in& raw_struct_ref() const {
     return sockaddr_;
   }
