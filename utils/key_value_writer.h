@@ -11,8 +11,6 @@ namespace memcachedumper {
 // Forward declarations.
 class Socket;
 
-typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
-
 class KeyValueWriter {
  public:
   KeyValueWriter(std::string data_file_prefix, std::string owning_thread_name,
@@ -26,7 +24,7 @@ class KeyValueWriter {
   Status Finalize();
 
   // Adds 'mc_key' to the entries to get the value for and write to a file.
-  void ProcessKey(McData* mc_key);
+  void QueueForProcessing(McData* mc_key);
 
   void PrintKeys();
 
@@ -37,20 +35,33 @@ class KeyValueWriter {
   // Get values from Memcached for keys present in mcdata_entries_ map.
   // If 'flush' is true, it will get all the keys from mcdata_entries_ even if
   // our buffer is not used to 'capacity_'.
-  void BulkGetKeys(bool flush);
+  void ProcessKeys(bool flush);
 
-  // Process the response from Memcached and populate mcdata_entries_ appropriately.
-  // Returns 'true' if the entire response was processed, i.e. if "END\r\n" was seen
-  // in 'buffer'.
-  bool ProcessBulkResponse(uint8_t* buffer, int32_t bufsize);
+  // Process the response from Memcached and populate mcdata_entries_processing_
+  // appropriately.
+  uint32_t ProcessBulkResponse();
 
   // Writes entires marked as complete from 'mcdata_entries_' to the final output
   // file.
-  void WriteCompletedEntries(uint32_t num_complete_entries);
+  Status WriteCompletedEntries();
+
+  Status BulkGetKeys();
 
   // Helper function to Recv() data from memcached with retry loops and connection
   // refreshes on failures.
-  Status GetFromMemcached(uint8_t *buf, int32_t size, int32_t *nread);
+  Status RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nread);
+
+  // Move keys from mcdata_entries_pending_ map to mcdata_entries_processing_ map.
+  // Must only be called if we have already sent a get command to MC for these keys.
+  void PromoteKeysFromPending();
+
+  // Move keys that we attempted to process but did not complete back to the
+  // mcdata_entries_pending_ map.
+  void DemoteKeysToPending();
+
+  inline uint64_t buffer_free_bytes() {
+    return buffer_begin_ + capacity_ - buffer_current_;
+  }
 
   // The prefix to use for every file created by this object.
   std::string data_file_prefix_;
@@ -60,6 +71,9 @@ class KeyValueWriter {
   uint8_t* buffer_begin_;
   // A pointer to the first free byte in buffer_begin_.
   uint8_t* buffer_current_;
+  // Pointer in buffer until where we've processed so far. If nothing is processed,
+  // it pointes to 'buffer_begin_'.
+  uint8_t* process_from_;
   // The size of 'buffer_'.
   size_t capacity_;
   // Maximum size of file to create.
@@ -77,6 +91,16 @@ class KeyValueWriter {
   // Number of keys waiting to get data for.
   uint32_t n_keys_pending_;
 
+  // The number of keys we've processed (i.e. populated the corressponding McData with
+  // data and flags), but not yet written.
+  uint32_t n_unwritten_processed_keys_;
+
+  // Total number of keys we've been asked to process.
+  uint32_t total_keys_to_process_;
+
+  // Number of keys we've successfully processed.
+  uint64_t num_processed_keys_;
+
   // While parsing responses from Memcached, this keeps track of the current key
   // being processed.
   // We keep track of this since the response for a key can be truncated at the end of
@@ -88,13 +112,12 @@ class KeyValueWriter {
   // our buffer got truncated, so we can continue from there.
   DataBufferSlice::ResponseFormatState broken_buffer_state_;
 
-  // Was the last buffer processed a partial buffer?
-  bool last_buffer_partial_;
+  // If our buffer filled up before we could receive all the data for a command,
+  // we need to make sure to drain the socket before sending the next command.
+  bool need_drain_socket_;
 
   // Responsible for managing all the files that we will write data to.
   std::unique_ptr<RotatingFile> rotating_data_files_;
-
-  uint64_t num_processed_keys_ = 0;
 };
 
 } // namespace memcachedumper

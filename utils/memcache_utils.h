@@ -4,11 +4,19 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace memcachedumper {
 
-class MemcacheUtils {
+class McData;
+
+typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
+
+class MemcachedUtils {
+ public:
+  static std::string CraftBulkGetCommand(McDataMap* pending_keys);
 };
+
 
 class McData {
  public:

@@ -95,7 +95,8 @@ Status MetadumpTask::RecvResponse() {
             METADUMP_END_STR, METADUMP_END_STRLEN);
 
     bool rotate_file = false;
-    if ((bytes_written_to_file + bytes_read > max_file_size_) && !reached_end) {
+    if ((bytes_written_to_file + bytes_read >= max_file_size_) && !reached_end) {
+      // TODO: Make more efficient. Avoid the copy.
       std::string str_representation(reinterpret_cast<char*>(buf), bytes_read);
       size_t last_key_pos = str_representation.rfind("key=", bytes_read);
 

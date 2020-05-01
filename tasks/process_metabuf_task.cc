@@ -61,7 +61,7 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
     //McData *new_key = new McData(const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), expiry);
     McData *new_key = new McData(decoded_key, static_cast<size_t>(decoded_keylen), expiry);
     curl_free(decoded_key);
-    data_writer_->ProcessKey(new_key);
+    data_writer_->QueueForProcessing(new_key);
 /*
     //printf("New key: %s | %d\n", new_key->key().c_str(), new_key->expiry());
     char key_cmd_temp[300] = "get ";
