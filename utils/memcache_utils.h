@@ -14,7 +14,7 @@ typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
 
 class MemcachedUtils {
  public:
-  static std::string CraftBulkGetCommand(McDataMap* pending_keys);
+  static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
 };
 
 

@@ -323,7 +323,7 @@ Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
 
     // Craft a bulk get command with all the pending keys.
     std::string bulk_get_cmd = MemcachedUtils::CraftBulkGetCommand(
-        &mcdata_entries_pending_);
+        &mcdata_entries_pending_, BULK_GET_THRESHOLD);
 
     if (bulk_get_cmd.empty()) return Status::OK();
 

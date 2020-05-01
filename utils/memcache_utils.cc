@@ -22,7 +22,7 @@ void McData::printValue() {
   //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
 }
 
-std::string MemcachedUtils::CraftBulkGetCommand(McDataMap* pending_keys) {
+std::string MemcachedUtils::CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys) {
   std::stringstream bulk_get_cmd;
   bulk_get_cmd << "get ";
   int32_t num_keys_to_get = 0;
@@ -31,7 +31,8 @@ std::string MemcachedUtils::CraftBulkGetCommand(McDataMap* pending_keys) {
   while (it != pending_keys->end()) {
     if (!it->second->get_complete()) {
       bulk_get_cmd << it->first << " ";
-      num_keys_to_get = num_keys_to_get + 1;
+      ++num_keys_to_get;
+      if (num_keys_to_get == max_keys) break;
     }
     it++;
   }
