@@ -106,9 +106,21 @@ Status Socket::Refresh() {
   RETURN_ON_ERROR(Create());
   // TODO: Make configurable if necessary.
   RETURN_ON_ERROR(SetRecvTimeout(2));
-  RETURN_ON_ERROR(Connect(remote_addr_));
 
-  return Status::OK();
+  int num_retries = 0;
+  int sleep_duration_s = 5;
+  Status connect_status = Status::OK();
+  do {
+    connect_status = Connect(remote_addr_);
+    if (connect_status.ok()) return Status::OK();
+
+    sleep(sleep_duration_s);
+    // TODO: Make configurable
+    sleep_duration_s += 10;
+    ++num_retries;
+  } while (num_retries < 3);
+
+  return connect_status;
 }
 
 } // namespace memcachedumper
