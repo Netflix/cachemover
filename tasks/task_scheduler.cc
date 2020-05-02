@@ -107,4 +107,12 @@ uint64_t TaskScheduler::total_keys_processed() {
   return total_keys_processed;
 }
 
+uint64_t TaskScheduler::total_keys_ignored() {
+  uint64_t total_keys_ignored = 0;
+  for (auto&& thread : threads_) {
+    total_keys_ignored += thread->num_keys_ignored();
+  }
+  return total_keys_ignored;
+}
+
 } // namespace memcachedumper

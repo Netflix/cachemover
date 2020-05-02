@@ -60,7 +60,10 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
       abort();
     }
 
-    if (expiry != -1 && MemcachedUtils::KeyExpiresSoon(now, expiry)) continue;
+    if (expiry != -1 && MemcachedUtils::KeyExpiresSoon(now, expiry)) {
+      owning_thread()->increment_keys_ignored();
+      continue;
+    }
 
     McData *new_key = new McData(
         decoded_key, static_cast<size_t>(decoded_keylen), expiry);

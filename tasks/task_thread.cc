@@ -14,7 +14,9 @@ namespace memcachedumper {
 TaskThread::TaskThread(TaskScheduler *task_scheduler, const std::string& thread_name)
   : task_scheduler_(task_scheduler),
     thread_name_(thread_name),
-    thread_(&TaskThread::WorkerLoop, this) {
+    thread_(&TaskThread::WorkerLoop, this),
+    num_keys_processed_(0),
+    num_keys_ignored_(0) {
 }
 
 TaskThread::~TaskThread() {

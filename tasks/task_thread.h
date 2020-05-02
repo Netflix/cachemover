@@ -26,11 +26,11 @@ class TaskThread {
 
   void Join();
 
-  void account_keys_processed(uint64_t num_keys) {
-    num_keys_processed_ += num_keys;
-  }
+  void account_keys_processed(uint64_t num_keys) { num_keys_processed_ += num_keys; }
+  void increment_keys_ignored() { num_keys_processed_++; }
 
   uint64_t num_keys_processed() { return num_keys_processed_; }
+  uint64_t num_keys_ignored() { return num_keys_ignored_; }
 
   void PrintNumKeysProcessed() {
     std::cout << "Thread (" << thread_name_.c_str() << ") - Num keys: " << num_keys_processed_ << std::endl;
@@ -51,10 +51,8 @@ class TaskThread {
 
   std::thread thread_;
 
-  uint64_t num_keys_processed_ = 0;
-
-  // Socket to talk to memcached. Not owned.
-  //Socket *sock_;
+  uint64_t num_keys_processed_;
+  uint64_t num_keys_ignored_;
 
 };
 

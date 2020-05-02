@@ -151,6 +151,29 @@ class MonotonicStopWatch {
     return total_time_ + RunningTime();
   }
 
+  // Return a human readable string representation of ElapsedTime().
+  std::string HumanElapsedStr() {
+    std::string str_rep;
+    int64_t remaining_elapsed_s = ElapsedTime() / 1000000000;
+
+    int hours = remaining_elapsed_s / 3600;
+    remaining_elapsed_s = remaining_elapsed_s % 3600;
+
+    int minutes = remaining_elapsed_s / 60;
+    remaining_elapsed_s = remaining_elapsed_s % 60;
+
+    int seconds = remaining_elapsed_s;
+
+    str_rep.append(std::to_string(hours));
+    str_rep.append(" hours, ");
+    str_rep.append(std::to_string(minutes));
+    str_rep.append(" minutes, ");
+    str_rep.append(std::to_string(seconds));
+    str_rep.append(" seconds.");
+
+    return str_rep;
+  }
+
   /// Returns an representation of the current time in nanoseconds. It can be used to
   /// measure time durations by repeatedly calling this function and comparing the result.
   /// While this function returns nanoseconds, its resolution may be as large as

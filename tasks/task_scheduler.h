@@ -43,6 +43,9 @@ class TaskScheduler {
   // The total number of keys processed by all the threads.
   uint64_t total_keys_processed();
 
+  // The total number of keys ignored (due to imminent expiry) by all the
+  // threads.
+  uint64_t total_keys_ignored();
  private:
   friend class TaskThread;
 
