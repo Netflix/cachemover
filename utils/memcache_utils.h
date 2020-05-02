@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 // Items that are expiring in these many seconds will not be dumped.
-#define EXPIRE_THRESHOLD_DELTA_S 30
+#define EXPIRE_THRESHOLD_DELTA_S 9000
 
 // Ignore a key if we tried to get it these many times unsuccessfully.
 #define MAX_GET_ATTEMPTS 3

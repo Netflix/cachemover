@@ -114,6 +114,7 @@ Status Socket::Refresh() {
     connect_status = Connect(remote_addr_);
     if (connect_status.ok()) return Status::OK();
 
+    std::cout << "Connect() failed. Sleeping for " << sleep_duration_s << " seconds." << std::endl;
     sleep(sleep_duration_s);
     // TODO: Make configurable
     sleep_duration_s += 10;
