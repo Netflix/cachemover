@@ -345,6 +345,7 @@ Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
       RETURN_ON_ERROR(RecvFromMemcached(buffer_current_, remaining_space, &nread,
           broken_connection));
     }
+
     /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
           << ") Bulk get elapsed: "
           << msw.ElapsedTime() << "   ||  Free space: " << remaining_space
@@ -424,6 +425,7 @@ void KeyValueWriter::ProcessKeys(bool flush) {
     buffer_current_ = buffer_begin_;
     process_from_ = buffer_begin_;
 
+    if (broken_connection) break;
   // If we're yet to complete draining the socket, go back and complete the cycle.
   } while (need_drain_socket_ == true);
 
