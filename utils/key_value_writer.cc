@@ -15,6 +15,9 @@
 #define BULK_GET_THRESHOLD 30
 #define MC_VALUE_DELIM "VALUE "
 
+// Items that are expiring in these many seconds will not be dumped.
+#define EXPIRE_THRESHOLD_DELTA_S 30
+
 #define INJECT_EAGAIN_EVERY_N 0
 
 #if INJECT_EAGAIN_EVERY_N
@@ -151,9 +154,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
   if (buffer_free_bytes() == capacity_) return 0;
 
   MonotonicStopWatch total_msw;
-
   total_msw.Start();
-
   // Wrap the buffer in a DataBufferSlice for easier processing.
   DataBufferSlice response_slice(reinterpret_cast<char*>(process_from_),
       buffer_current_ - process_from_);

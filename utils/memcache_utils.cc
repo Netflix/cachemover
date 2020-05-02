@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+
 namespace memcachedumper {
 
 McData::McData(char *key, size_t keylen, int32_t expiry)
@@ -22,7 +23,8 @@ void McData::printValue() {
   //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
 }
 
-std::string MemcachedUtils::CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys) {
+std::string MemcachedUtils::CraftBulkGetCommand(
+    McDataMap* pending_keys, const int max_keys) {
   std::stringstream bulk_get_cmd;
   bulk_get_cmd << "get ";
   int32_t num_keys_to_get = 0;
@@ -42,5 +44,6 @@ std::string MemcachedUtils::CraftBulkGetCommand(McDataMap* pending_keys, const i
   bulk_get_cmd << "\n";
   return bulk_get_cmd.str();
 }
+
 
 } // namespace memcachedumper

@@ -6,6 +6,9 @@
 #include <string>
 #include <unordered_map>
 
+// Items that are expiring in these many seconds will not be dumped.
+#define EXPIRE_THRESHOLD_DELTA_S 30
+
 namespace memcachedumper {
 
 class McData;
@@ -15,6 +18,12 @@ typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
 class MemcachedUtils {
  public:
   static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
+  static bool KeyExpiresSoon(time_t now, long int key_expiry) {
+    long int now_ll = reinterpret_cast<long int>(time);
+    return (key_expiry <= now_ll + EXPIRE_THRESHOLD_DELTA_S);
+  }
+
+  static void lol();
 };
 
 

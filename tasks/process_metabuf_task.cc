@@ -17,6 +17,7 @@ ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
 
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
+  time_t now = std::time(0);
   char* newline_pos = nullptr;
   do {
 
@@ -37,7 +38,6 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
       }
       break;
     }
-    //printf("[%s]KEY: %.*s   ", owning_thread()->thread_name().c_str(), static_cast<int>(exp_pos - key_pos), key_pos);
 
     const char *la_pos = mslice->next_la_pos();
     if (la_pos == nullptr) {
@@ -50,38 +50,22 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     char *unused;
     int32_t expiry = strtol(exp_pos + 4, &unused, 10);
-    //char *curl_easy_unescape( CURL *curl, const char *url , int inlength, int *outlength );
 
     int decoded_keylen = 0;
-    char* decoded_key = curl_easy_unescape(curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), &decoded_keylen);
-    if (decoded_key == NULL) {
+    char* decoded_key = curl_easy_unescape(
+        curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(
+            exp_pos - key_pos - 4 - 1), &decoded_keylen);
+    if (decoded_key == nullptr) {
       std::cout << "Could not decode key! " << std::endl;
       abort();
     }
-    //McData *new_key = new McData(const_cast<char*>(key_pos) + 4, static_cast<int>(exp_pos - key_pos - 4 - 1), expiry);
-    McData *new_key = new McData(decoded_key, static_cast<size_t>(decoded_keylen), expiry);
+
+    if (expiry != -1 && MemcachedUtils::KeyExpiresSoon(now, expiry)) continue;
+
+    McData *new_key = new McData(
+        decoded_key, static_cast<size_t>(decoded_keylen), expiry);
     curl_free(decoded_key);
     data_writer_->QueueForProcessing(new_key);
-/*
-    //printf("New key: %s | %d\n", new_key->key().c_str(), new_key->expiry());
-    char key_cmd_temp[300] = "get ";
-    strncpy(key_cmd_temp + 4, key_pos + 4, exp_pos - key_pos - 4);
-    strncpy(key_cmd_temp + 4 + (exp_pos - key_pos - 4), "\n", 1);
-    //printf("CMD: %.*s", static_cast<int>(exp_pos - key_pos - 4) + 5, key_cmd_temp);
-
-    int32_t nsent = 0;
-    mc_sock->Send(reinterpret_cast<const uint8_t*>(key_cmd_temp), exp_pos - key_pos - 4 + 5, &nsent);
-
-    //printf("NSENT: %d  ", nsent);
-
-    char temp_buf[500];
-    int32_t nread = 0;
-    mc_sock->Recv(reinterpret_cast<uint8_t*>(&temp_buf), 499, &nread);
-    temp_buf[nread] = '\0';
-    //printf("Value: %s\n", temp_buf);
-    //printf("EXP: %.*s\n", static_cast<int>(la_pos - exp_pos), exp_pos);
-*/
-    //data_writer_->PrintKeys();
   } while ((newline_pos = const_cast<char*>(mslice->next_newline())) != nullptr);
 
 }
