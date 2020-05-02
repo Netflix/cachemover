@@ -102,6 +102,10 @@ class KeyValueWriter {
   // Number of keys we've successfully processed.
   uint64_t num_processed_keys_;
 
+  // Number of keys we've tried to repeatedly call "get" on but received no data
+  // back for.
+  uint64_t num_missing_keys_;
+
   // While parsing responses from Memcached, this keeps track of the current key
   // being processed.
   // We keep track of this since the response for a key can be truncated at the end of

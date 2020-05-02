@@ -9,6 +9,9 @@
 // Items that are expiring in these many seconds will not be dumped.
 #define EXPIRE_THRESHOLD_DELTA_S 30
 
+// Ignore a key if we tried to get it these many times unsuccessfully.
+#define MAX_GET_ATTEMPTS 3
+
 namespace memcachedumper {
 
 class McData;
@@ -44,11 +47,18 @@ class McData {
 
   void MarkComplete() { complete_ = true; }
 
-  void set_get_complete(bool get_complete) { get_complete_ = get_complete; }
+  void set_get_complete(bool get_complete) {
+    ++get_attempts_;
+    get_complete_ = get_complete;
+  }
   inline bool get_complete() { return get_complete_; }
   // Returns 'false' if this McData is marked as incomplete, i.e. one or
   // more required fields are not present/completely entered.
   bool Complete() { return complete_; }
+
+  // If we tried to get a key for MAX_GET_ATTEMPTS unsuccussfully, we
+  // consider the key evicted or expired.
+  bool PossiblyEvicted() { return get_attempts_ >= MAX_GET_ATTEMPTS; }
 
  private:
   std::string key_;
@@ -59,6 +69,7 @@ class McData {
 
   bool get_complete_;
   bool complete_;
+  int get_attempts_;
 };
 
 class MetaBufferSlice : public Slice {

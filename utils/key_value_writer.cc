@@ -304,12 +304,18 @@ void KeyValueWriter::DemoteKeysToPending() {
 
   while (it != mcdata_entries_processing_.end()) {
     if (!it->second->Complete()) {
-      McDataMap::iterator entry_in_pending = mcdata_entries_pending_.emplace(
-          it->first, it->second.release()).first;
-      entry_in_pending->second->set_get_complete(false);
+      // If we think it's evicted, delete the key, else move it back to the pending
+      // map.
+      if (it->second->PossiblyEvicted()) {
+        ++num_missing_keys_;
+      } else {
+        ++n_keys_pending_;
+        McDataMap::iterator entry_in_pending = mcdata_entries_pending_.emplace(
+            it->first, it->second.release()).first;
+        entry_in_pending->second->set_get_complete(false);
+      }
       it = mcdata_entries_processing_.erase(it);
 
-      ++n_keys_pending_;
     } else {
       ++it;
     }
