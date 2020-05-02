@@ -27,7 +27,7 @@ class TaskThread {
   void Join();
 
   void account_keys_processed(uint64_t num_keys) { num_keys_processed_ += num_keys; }
-  void increment_keys_ignored() { num_keys_processed_++; }
+  void increment_keys_ignored() { num_keys_ignored_++; }
 
   uint64_t num_keys_processed() { return num_keys_processed_; }
   uint64_t num_keys_ignored() { return num_keys_ignored_; }

@@ -19,8 +19,8 @@ class MemcachedUtils {
  public:
   static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
   static bool KeyExpiresSoon(time_t now, long int key_expiry) {
-    long int now_ll = reinterpret_cast<long int>(time);
-    return (key_expiry <= now_ll + EXPIRE_THRESHOLD_DELTA_S);
+    // TODO: Is this protable?
+    return (key_expiry <= now + EXPIRE_THRESHOLD_DELTA_S);
   }
 
   static void lol();
