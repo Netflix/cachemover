@@ -457,6 +457,8 @@ void KeyValueWriter::ProcessKeys(bool flush) {
       abort();
     }
 
+    // We need to send another bulk get command since this is a new socket.
+    need_drain_socket_ = false;
     // TODO: Avoid a recursive call.
     ProcessKeys(flush);
   }
