@@ -1,2 +1,2 @@
-sudo apt update
-yes | sudo apt install cmake g++ libcurl4-openssl-dev
+apt update
+yes | apt install cmake g++ libcurl4-openssl-dev
