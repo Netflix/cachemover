@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Items that are expiring in these many seconds will not be dumped.
 #define EXPIRE_THRESHOLD_DELTA_S 9000
@@ -13,22 +14,6 @@
 #define MAX_GET_ATTEMPTS 3
 
 namespace memcachedumper {
-
-class McData;
-
-typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
-
-class MemcachedUtils {
- public:
-  static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
-  static bool KeyExpiresSoon(time_t now, long int key_expiry) {
-    // TODO: Is this protable?
-    return (key_expiry <= now + EXPIRE_THRESHOLD_DELTA_S);
-  }
-
-  static void lol();
-};
-
 
 class McData {
  public:
@@ -41,6 +26,7 @@ class McData {
 
   std::string& key() { return key_; }
   int32_t expiry() { return expiry_; }
+  int32_t flags() { return flags_; }
 
   char* Value() { return data_->mutable_data(); }
   size_t ValueLength() { return value_len_; }
@@ -71,6 +57,44 @@ class McData {
   bool complete_;
   int get_attempts_;
 };
+
+
+typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
+
+class MemcachedUtils {
+ public:
+  static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
+
+  // Returns a string of the following format for 'key':
+  // <keylen (2-bytes)> <key> <expiry (4-bytes)> <flag (4-bytes)> <datalen (4-bytes)>
+  static std::string CraftMetadataString(McData* key) {
+    std::string final_str;
+    final_str.append(MemcachedUtils::ConvertIntToBytes(key->key().length(), 2));
+    final_str.append(key->key().c_str());
+    final_str.append(MemcachedUtils::ConvertIntToBytes(key->expiry(), 4));
+    final_str.append(MemcachedUtils::ConvertIntToBytes(key->flags(), 4));
+    final_str.append(MemcachedUtils::ConvertIntToBytes(key->ValueLength(), 4));
+
+    return final_str;
+  }
+
+  static bool KeyExpiresSoon(time_t now, long int key_expiry) {
+    // TODO: Is this protable?
+    return (key_expiry <= now + EXPIRE_THRESHOLD_DELTA_S);
+  }
+
+  // Converts 'int_param' to its byte representation in a string, and returns
+  // a string with 'out_bytes' number of bytes.
+  static std::string ConvertIntToBytes(int int_param, int out_bytes) {
+    std::vector<unsigned char> byte_array(out_bytes);
+    for (int i = 0; i < out_bytes; i++) {
+      byte_array[out_bytes - i - 1] = (int_param >> (i * 8));
+    }
+    std::string s(byte_array.begin(), byte_array.end());
+    return s;
+  }
+};
+
 
 class MetaBufferSlice : public Slice {
  public:

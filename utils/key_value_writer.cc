@@ -66,6 +66,11 @@ Status KeyValueWriter::WriteCompletedEntries() {
   uint32_t n_iovecs = std::min(
       static_cast<uint32_t>(1024), n_unwritten_processed_keys_ * 2);
   struct iovec iovecs[n_iovecs];
+
+  // We allocate memory on the stack to hold the key metadata strings until
+  // we've written it our through WriteV().
+  std::string key_mds[n_iovecs / 2];
+
   McDataMap::iterator it = mcdata_entries_processing_.begin();
 
   uint32_t iovec_idx = 0;
@@ -79,10 +84,10 @@ Status KeyValueWriter::WriteCompletedEntries() {
       continue;
     }
 
-    std::string& key_ref = mcdata_entry->key();
-    std::string key_raw(key_ref);
-    iovecs[iovec_idx].iov_base = const_cast<char*>(key_ref.c_str());
-    iovecs[iovec_idx].iov_len = key_ref.length();
+    int key_mds_idx = iovec_idx / 2;
+    key_mds[key_mds_idx] = MemcachedUtils::CraftMetadataString(mcdata_entry);
+    iovecs[iovec_idx].iov_base = const_cast<char*>(key_mds[key_mds_idx].c_str());
+    iovecs[iovec_idx].iov_len = key_mds[key_mds_idx].length();
 
     iovecs[iovec_idx + 1].iov_base = mcdata_entry->Value();
     iovecs[iovec_idx + 1].iov_len = mcdata_entry->ValueLength();

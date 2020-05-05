@@ -46,5 +46,4 @@ std::string MemcachedUtils::CraftBulkGetCommand(
   return bulk_get_cmd.str();
 }
 
-
 } // namespace memcachedumper
