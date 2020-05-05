@@ -11,8 +11,9 @@
 
 namespace memcachedumper {
 
-ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
-  : filename_(filename) {
+ProcessMetabufTask::ProcessMetabufTask(const std::string& filename, int keyfile_idx)
+  : filename_(filename),
+    keyfile_idx_(keyfile_idx) {
 }
 
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
@@ -92,7 +93,8 @@ void ProcessMetabufTask::Execute() {
 
   uint8_t* data_writer_buf = owning_thread()->mem_mgr()->GetBuffer();
   assert(data_writer_buf != nullptr);
-  data_writer_.reset(new KeyValueWriter(std::string("DATAFILE_" + filename_),
+  data_writer_.reset(new KeyValueWriter(
+      MemcachedUtils::DataFilePrefix() + "_" + std::to_string(keyfile_idx_),
       owning_thread()->thread_name(),
       data_writer_buf, owning_thread()->mem_mgr()->chunk_size(),
       owning_thread()->task_scheduler()->dumper()->max_data_file_size(), mc_sock));
@@ -100,6 +102,8 @@ void ProcessMetabufTask::Execute() {
   // TODO: Check return status
   Status init_status = data_writer_->Init();
   if (!init_status.ok()) {
+    std::cout << "Failed to initialize KeyValueWriter. "
+              << init_status.ToString() << std::endl;
     LOG_ERROR("FAILED TO INITIALIZE KeyValueWriter");
     return;
   }
@@ -138,6 +142,7 @@ void ProcessMetabufTask::Execute() {
   data_writer_->Finalize();
 
   owning_thread()->account_keys_processed(data_writer_->num_processed_keys());
+  owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
   metafile.close();
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);

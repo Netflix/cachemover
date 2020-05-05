@@ -63,6 +63,18 @@ typedef std::unordered_map<std::string, std::unique_ptr<McData>> McDataMap;
 
 class MemcachedUtils {
  public:
+
+  static void SetOutputDirPath(std::string output_dir_path);
+  static std::string output_dir_path() { return MemcachedUtils::output_dir_path_; }
+  static std::string GetKeyFilePath();
+  static std::string GetDataStagingPath();
+  static std::string GetDataFinalPath();
+
+  static std::string KeyFilePrefix();
+  static std::string DataFilePrefix();
+
+  // Craft a bulk get command with the first 'max_keys' keys in 'pending_keys' to
+  // send memcached.
   static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
 
   // Returns a string of the following format for 'key':
@@ -93,6 +105,9 @@ class MemcachedUtils {
     std::string s(byte_array.begin(), byte_array.end());
     return s;
   }
+
+ private:
+  static std::string output_dir_path_;
 };
 
 

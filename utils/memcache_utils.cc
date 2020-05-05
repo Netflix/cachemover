@@ -1,5 +1,6 @@
 
 #include "utils/memcache_utils.h"
+#include "utils/net_util.h"
 
 #include <iostream>
 #include <sstream>
@@ -22,6 +23,54 @@ void McData::setValue(const char* data, size_t size) {
 
 void McData::printValue() {
   //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
+}
+
+std::string MemcachedUtils::output_dir_path_;
+
+void MemcachedUtils::SetOutputDirPath(std::string output_dir_path) {
+  MemcachedUtils::output_dir_path_ = output_dir_path;
+}
+
+std::string MemcachedUtils::GetKeyFilePath() {
+  return MemcachedUtils::output_dir_path_ + "/keyfile/";
+}
+std::string MemcachedUtils::GetDataStagingPath() {
+  return MemcachedUtils::output_dir_path_ + "/datafiles_staging/";
+}
+std::string MemcachedUtils::GetDataFinalPath() {
+  return MemcachedUtils::output_dir_path_ + "/datafiles_completed/";
+}
+
+std::string MemcachedUtils::KeyFilePrefix() {
+  std::string* ip_addr = nullptr;
+  Status s = GetIPAddrAsString(&ip_addr);
+  if (!s.ok()) {
+    std::cout << "Could not get IP Address: " << s.ToString() << std::endl;
+    // If we could not get the IP Address, use "localhost".
+    // TODO: Might be confusing?
+    return "key_localhost_";
+  }
+  std::string kprefix;
+  kprefix.append("key_");
+  kprefix.append(*ip_addr);
+  kprefix.append("_");
+  return kprefix;
+}
+
+std::string MemcachedUtils::DataFilePrefix() {
+  std::string* ip_addr = nullptr;
+  Status s = GetIPAddrAsString(&ip_addr);
+  if (!s.ok()) {
+    std::cout << "Could not get IP Address: " << s.ToString() << std::endl;
+    // If we could not get the IP Address, use "localhost".
+    // TODO: Might be confusing?
+    return "data_localhost_";
+  }
+  std::string dprefix;
+  dprefix.append("data_");
+  dprefix.append(*ip_addr);
+  dprefix.append("_");
+  return dprefix;
 }
 
 std::string MemcachedUtils::CraftBulkGetCommand(

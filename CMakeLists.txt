@@ -17,6 +17,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 # Add dependency for pthreads.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+# Add dependency for std::experimental::filesystem.
+# TODO: Move to c++17 to use std::filesystem instead.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++fs")
 # Add gprof.
 # TODO: Make configurable
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
@@ -40,7 +43,7 @@ find_package(CURL REQUIRED)
 include_directories(SYSTEM ${CURL_INCLUDE_DIR})
 
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
-target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils ${CURL_LIBRARIES})
+target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils ${CURL_LIBRARIES} stdc++fs)
 
 add_subdirectory(common)
 add_subdirectory(dumper)

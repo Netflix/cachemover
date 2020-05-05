@@ -29,6 +29,7 @@ class KeyValueWriter {
   void PrintKeys();
 
   uint64_t num_processed_keys() { return num_processed_keys_; }
+  uint64_t num_missing_keys() { return num_missing_keys_; }
 
  private:
 

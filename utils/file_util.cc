@@ -6,9 +6,32 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <experimental/filesystem>
 #include <iostream>
 
 namespace memcachedumper {
+
+
+Status FileUtils::CreateDirectory(std::string dir_path) {
+  namespace fs = std::experimental::filesystem;
+
+  if (fs::exists(dir_path)) {
+    if (!fs::is_empty(dir_path)) {
+      return Status::IOError(dir_path, "Given output path is not empty.");
+    }
+    return Status::OK();
+  }
+
+  std::cout << "Creating directory: " << dir_path << std::endl;
+  if (fs::create_directory(dir_path)) return Status::OK();
+
+  return Status::IOError(dir_path, "Could not create directory.");
+}
+
+void FileUtils::MoveFile(std::string file_path, std::string dest_path) {
+  namespace fs = std::experimental::filesystem;
+  fs::rename(file_path, dest_path);
+}
 
 PosixFile::PosixFile(std::string filename)
   : filename_(filename) {
@@ -46,9 +69,24 @@ Status PosixFile::Close() {
   return Status::OK();
 }
 
-RotatingFile::RotatingFile(std::string file_prefix, uint64_t max_file_size)
-  : file_prefix_(file_prefix),
+RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
+    uint64_t max_file_size)
+  : file_path_(file_path),
+    file_prefix_(file_prefix),
     max_file_size_(max_file_size),
+    optional_dest_path_(""),
+    cur_file_(nullptr),
+    nfiles_(0),
+    nwritten_current_(0),
+    nwritten_total_(0) {
+}
+
+RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
+    uint64_t max_file_size, std::string optional_dest_path)
+  : file_path_(file_path),
+    file_prefix_(file_prefix),
+    max_file_size_(max_file_size),
+    optional_dest_path_(optional_dest_path),
     cur_file_(nullptr),
     nfiles_(0),
     nwritten_current_(0),
@@ -56,20 +94,26 @@ RotatingFile::RotatingFile(std::string file_prefix, uint64_t max_file_size)
 }
 
 Status RotatingFile::Init() {
+
+  cur_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
   cur_file_.reset(new PosixFile(
-      std::string(file_prefix_ + "_" + std::to_string(nfiles_))));
+      std::string(file_path_ + cur_file_name_)));
   RETURN_ON_ERROR(cur_file_->Open());
 
   return Status::OK();
 }
 
 Status RotatingFile::RotateFile() {
-  std::cout << "Rotating file " << file_prefix_ << std::endl;
   RETURN_ON_ERROR(cur_file_->Close());
+  if (!optional_dest_path_.empty()) {
+    FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
+    std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
+  }
   ++nfiles_;
 
+  cur_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
   cur_file_.reset(new PosixFile(
-      std::string(file_prefix_ + "_" + std::to_string(nfiles_))));
+      std::string(file_path_ + cur_file_name_)));
   RETURN_ON_ERROR(cur_file_->Open());
   return Status::OK();
 }
@@ -83,8 +127,6 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 
   if (nwritten_current_ > max_file_size_) {
     nwritten_current_ = 0;
-    std::cout << "nwritten_current_: " << nwritten_current_ << " Max file size: " << max_file_size_ << std::endl;
-    nwritten_current_ = 0;
     Status s = RotateFile();
     if (!s.ok()) {
       return Status::IOError("Error while rotating file", s.ToString());
@@ -96,6 +138,10 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 
 Status RotatingFile::Finish() {
   RETURN_ON_ERROR(cur_file_->Close());
+  if (!optional_dest_path_.empty()) {
+    FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
+    std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
+  }
 
   return Status::OK();
 }

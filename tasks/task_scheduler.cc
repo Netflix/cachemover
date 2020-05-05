@@ -4,6 +4,7 @@
 #include "dumper/dumper.h"
 #include "tasks/task_thread.h"
 
+#include <chrono>
 #include <iostream>
 
 namespace memcachedumper {
@@ -86,9 +87,18 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
   }
 }
 
+void TaskScheduler::PrintSummary() {
+  std::cout << "Summary -> Dumped: " << total_keys_processed()
+      << ". Ignored: " << total_keys_ignored()
+      << ". Missing: " << total_keys_missing() << std::endl;
+}
+
 void TaskScheduler::WaitUntilTasksComplete() {
+  std::chrono::minutes min(1);
   std::unique_lock<std::mutex> mlock(metrics_mutex_);
-  tasks_completed_cv_.wait(mlock);
+  while (tasks_completed_cv_.wait_for(mlock, min) == std::cv_status::timeout) {
+    PrintSummary();
+  }
 }
 
 Socket* TaskScheduler::GetMemcachedSocket() {
@@ -115,4 +125,11 @@ uint64_t TaskScheduler::total_keys_ignored() {
   return total_keys_ignored;
 }
 
+uint64_t TaskScheduler::total_keys_missing() {
+  uint64_t total_keys_missing = 0;
+  for (auto&& thread : threads_) {
+    total_keys_missing += thread->num_keys_missing();
+  }
+  return total_keys_missing;
+}
 } // namespace memcachedumper

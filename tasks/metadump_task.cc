@@ -23,10 +23,11 @@ namespace memcachedumper {
 
 //TODO: Clean up code.
 
-MetadumpTask::MetadumpTask(int slab_class, const std::string& file_prefix,
+MetadumpTask::MetadumpTask(int slab_class, const std::string& file_path,
     uint64_t max_file_size, MemoryManager *mem_mgr)
   : slab_class_(slab_class),
-    file_prefix_(file_prefix),
+    file_path_(file_path),
+    file_prefix_(MemcachedUtils::KeyFilePrefix()),
     max_file_size_(max_file_size),
     mem_mgr_(mem_mgr) {
 }
@@ -79,8 +80,8 @@ Status MetadumpTask::RecvResponse() {
   uint64_t bytes_written_to_file = 0;
   int num_files = 0;
   std::ofstream chunk_file;
-  std::string chunk_file_name(file_prefix_ + std::to_string(num_files));
-  chunk_file.open(file_prefix_ + std::to_string(num_files));
+  std::string chunk_file_name(file_path_ + file_prefix_ + std::to_string(num_files));
+  chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
 
   bool reached_end = false;
   do {
@@ -121,17 +122,17 @@ Status MetadumpTask::RecvResponse() {
       // Start a task to print contents of the file.
       // TODO: This is only for testing the framework. Change later on.
       ProcessMetabufTask *ptask = new ProcessMetabufTask(
-          file_prefix_ + std::to_string(num_files));
+          file_path_ + file_prefix_ + std::to_string(num_files), num_files);
 
       TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
       task_scheduler->SubmitTask(ptask);
 
       num_files++;
       {
-        std::string temp_str = file_prefix_ + std::to_string(num_files);
+        std::string temp_str = file_path_ + file_prefix_ + std::to_string(num_files);
         chunk_file_name.replace(0, temp_str.length(), temp_str);
       }
-      chunk_file.open(file_prefix_ + std::to_string(num_files));
+      chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
       bytes_written_to_file = 0;
 
       // Write the last partial line if it exists.
@@ -148,7 +149,7 @@ Status MetadumpTask::RecvResponse() {
 
   //printf("Scheduling ProcessMetabufTask: test_prefix%d", num_files);
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
-      file_prefix_ + std::to_string(num_files));
+      file_path_ + file_prefix_ + std::to_string(num_files), num_files);
 
   TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
   task_scheduler->SubmitTask(ptask);

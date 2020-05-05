@@ -12,7 +12,7 @@ class Socket;
 
 class MetadumpTask : public Task {
  public:
-  MetadumpTask(int slab_class, const std::string& file_prefix,
+  MetadumpTask(int slab_class, const std::string& file_path,
       uint64_t max_file_size, MemoryManager *mem_mgr);
   ~MetadumpTask() = default;
 
@@ -27,6 +27,9 @@ class MetadumpTask : public Task {
   // The slab class to dump.
   // '0' indicates "all".
   int slab_class_;
+
+  // Path to use for files while dumping data.
+  std::string file_path_;
 
   // Prefix to use for files while dumping data.
   std::string file_prefix_;

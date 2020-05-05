@@ -6,7 +6,7 @@
 
 namespace memcachedumper {
 
-Status GetIPAddrAsString(const std::string** ip_addr);
+Status GetIPAddrAsString(std::string** ip_addr);
 
 } // namespace memcachedumper
 

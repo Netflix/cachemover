@@ -15,7 +15,7 @@ class Socket;
 
 class ProcessMetabufTask : public Task {
  public:
-  ProcessMetabufTask(const std::string& filename);
+  ProcessMetabufTask(const std::string& filename, int num_files);
   ~ProcessMetabufTask() = default;
 
   void ProcessMetaBuffer(MetaBufferSlice* mslice);
@@ -24,6 +24,9 @@ class ProcessMetabufTask : public Task {
 
  private:
   std::string filename_;
+
+  // Index of the keyfile that we're processing.
+  int keyfile_idx_;
 
   std::unique_ptr<KeyValueWriter> data_writer_;
 

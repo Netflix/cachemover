@@ -42,6 +42,7 @@ KeyValueWriter::KeyValueWriter(std::string data_file_prefix,
     n_unwritten_processed_keys_(0),
     total_keys_to_process_(0),
     num_processed_keys_(0),
+    num_missing_keys_(0),
     need_drain_socket_(false) {
   mcdata_entries_pending_.reserve(BULK_GET_THRESHOLD);
 }
@@ -51,7 +52,9 @@ void stupid_debug_func() {
 }
 
 Status KeyValueWriter::Init() {
-  rotating_data_files_.reset(new RotatingFile(data_file_prefix_, max_file_size_));
+  rotating_data_files_.reset(new RotatingFile(
+      MemcachedUtils::GetDataStagingPath(), data_file_prefix_, max_file_size_,
+      MemcachedUtils::GetDataFinalPath()));
   RETURN_ON_ERROR(rotating_data_files_->Init());
 
   return Status::OK();
