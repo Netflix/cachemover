@@ -30,10 +30,12 @@ option(GPROF_ENABLED "Enable GPROF instrumentation" OFF)
 option(ASAN_ENABLED "Enable ASAN" OFF)
 
 if (GPROF_ENABLED)
+  message("NOTE: Building with GPROF")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 endif(GPROF_ENABLED)
 
 if(ASAN_ENABLED)
+  message("NOTE: Building with ASAN")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 endif(ASAN_ENABLED)
 
