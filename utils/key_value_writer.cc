@@ -178,7 +178,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
       //stupid_debug_func();
 
       // TODO: Handle partial buffer case.
-      std::cout << "Breaking coz no whitespace_after_key" << std::endl;
+      //std::cout << "Breaking coz no whitespace_after_key" << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
@@ -198,7 +198,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
 
       McData* mc = entry->second.get();
       // TODO: Handle partial buffer case.
-      std::cout << "Breaking coz no whitespace_after_flags for key " << mc->key() << std::endl;
+      //std::cout << "Breaking coz no whitespace_after_flags for key " << mc->key() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
@@ -226,7 +226,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
     newline_after_data = response_slice.process_value(datalen);
     if (newline_after_data == nullptr) {
       // TODO: Handle partial buffer case.
-      std::cout << "Breaking coz no newline_after_DATA" << std::endl;
+      //std::cout << "Breaking coz no newline_after_DATA" << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
 
       break;

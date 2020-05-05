@@ -23,7 +23,7 @@ Status FileUtils::CreateDirectory(std::string dir_path) {
   }
 
   std::cout << "Creating directory: " << dir_path << std::endl;
-  if (fs::create_directory(dir_path)) return Status::OK();
+  if (fs::create_directories(dir_path)) return Status::OK();
 
   return Status::IOError(dir_path, "Could not create directory.");
 }
