@@ -6,6 +6,7 @@
 
 From the project root directory, create a new directory called build, and run cmake from there:
 ```
+$> ./scripts/build_scripts/install_deps.sh
 $> mkdir build
 $> cd build/
 $> cmake ..
