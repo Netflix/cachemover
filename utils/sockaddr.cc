@@ -14,6 +14,15 @@ Sockaddr::Sockaddr() {
   sockaddr_.sin_addr.s_addr = INADDR_ANY;
 }
 
+Sockaddr& Sockaddr::operator=(const struct sockaddr_in &addr) {
+  if (&addr == &sockaddr_) {
+    std::cout << "THEY'RE THE SAME!!!" << std::endl;
+    return *this;
+  }
+  memcpy(&sockaddr_, &addr, sizeof(struct sockaddr_in));
+  return *this;
+}
+
 Status Sockaddr::ResolveAndPopulateSockaddr(const std::string& hostname, int port) {
   struct hostent *server;
 

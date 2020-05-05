@@ -4,10 +4,17 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <iostream>
 
 namespace memcachedumper {
+
+#define RETRY_ON_EINTR(err, expr) do {                \
+  static_assert(std::is_signed<decltype(err)>::value, \
+                #err " must be a signed integer");    \
+  (err) = (expr);                                     \
+} while ((err) == -1 && errno == EINTR)
 
 Socket::Socket()
   : fd_(-1) {
@@ -42,8 +49,10 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
   }
 
   // Copy before reinterpreting.
-  memcpy(&addr, &remote_addr.raw_struct_ref(), sizeof(sockaddr_in));
-  int ret = connect(fd_, reinterpret_cast<const struct sockaddr*>(&addr),
+  //memcpy(&addr, &remote_addr.raw_struct_ref(), sizeof(sockaddr_in));
+  remote_addr_ = remote_addr;
+  int ret = connect(fd_,
+      reinterpret_cast<const struct sockaddr*>(&remote_addr_.raw_struct_ref()),
       sizeof(addr));
 
   if (ret < 0) {
@@ -56,7 +65,7 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
 Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
   int32_t nbytes;
 
-  nbytes = recv(fd_, buf, len, 0);
+  RETRY_ON_EINTR(nbytes, recv(fd_, buf, len, 0));
   if (nbytes < 0) {
     return Status::NetworkError("Recv error", strerror(errno));
   } else if (nbytes == 0) {
@@ -77,6 +86,42 @@ Status Socket::Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent) {
 
   *nbytes_sent = nbytes;
   return Status::OK();
+}
+
+Status Socket::Close() {
+  if (fd_ < 0) return Status::OK();
+
+  int fd = fd_;
+  int ret;
+  RETRY_ON_EINTR(ret, close(fd));
+  if (ret < 0) {
+    return Status::NetworkError("Close error", strerror(errno));
+  }
+  fd_ = -1;
+  return Status::OK();
+}
+
+Status Socket::Refresh() {
+  RETURN_ON_ERROR(Close());
+  RETURN_ON_ERROR(Create());
+  // TODO: Make configurable if necessary.
+  RETURN_ON_ERROR(SetRecvTimeout(2));
+
+  int num_retries = 0;
+  int sleep_duration_s = 5;
+  Status connect_status = Status::OK();
+  do {
+    connect_status = Connect(remote_addr_);
+    if (connect_status.ok()) return Status::OK();
+
+    std::cout << "Connect() failed. Sleeping for " << sleep_duration_s << " seconds." << std::endl;
+    sleep(sleep_duration_s);
+    // TODO: Make configurable
+    sleep_duration_s += 10;
+    ++num_retries;
+  } while (num_retries < 3);
+
+  return connect_status;
 }
 
 } // namespace memcachedumper

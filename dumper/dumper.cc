@@ -4,8 +4,12 @@
 #include "tasks/metadump_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
+#include "utils/file_util.h"
 #include "utils/mem_mgr.h"
+#include "utils/memcache_utils.h"
+#include "utils/net_util.h"
 #include "utils/socket_pool.h"
+#include "utils/stopwatch.h"
 
 #include <iostream>
 #include <sstream>
@@ -41,11 +45,29 @@ void DumperOptions::set_max_memory_limit(uint64_t max_memory_limit) {
   max_memory_limit_ = max_memory_limit;
 }
 
-void DumperOptions::set_logfile_path(string_view logfile_path) {
-  logfile_path_ = logfile_path;
+void DumperOptions::set_max_key_file_size(uint64_t max_key_file_size) {
+  max_key_file_size_ = max_key_file_size;
 }
 
-Dumper::Dumper(DumperOptions& opts) {
+void DumperOptions::set_max_data_file_size(uint64_t max_data_file_size) {
+  max_data_file_size_ = max_data_file_size;
+}
+
+void DumperOptions::set_log_file_path(string_view log_file_path) {
+  log_file_path_ = log_file_path;
+}
+
+void DumperOptions::set_output_dir_path(string_view output_dir_path) {
+  output_dir_path_ = output_dir_path;
+}
+
+Dumper::Dumper(DumperOptions& opts)
+  : memcached_hostname_(opts.hostname()),
+    memcached_port_(opts.port()),
+    num_threads_(opts.num_threads()),
+    max_key_file_size_(opts.max_key_file_size()),
+    max_data_file_size_(opts.max_data_file_size()),
+    output_dir_path_(opts.output_dir_path()) {
   std::stringstream options_log;
   options_log << "Starting dumper with options: " << std::endl
             << "Hostname: " << opts.hostname() << std::endl
@@ -53,22 +75,38 @@ Dumper::Dumper(DumperOptions& opts) {
             << "Num threads: " << opts.num_threads() << std::endl
             << "Chunk size: " << opts.chunk_size() << std::endl
             << "Max memory limit: " << opts.max_memory_limit() << std::endl
-            << "Max file size: " << opts.max_file_size() << std::endl
+            << "Max key file size: " << opts.max_key_file_size() << std::endl
+            << "Max data file size: " << opts.max_data_file_size() << std::endl
+            << "Output directory: " << opts.output_dir_path() << std::endl
             << std::endl;
   LOG(options_log.str());
-  memcached_hostname_ = opts.hostname();
-  memcached_port_ = opts.port();
-  num_threads_ = opts.num_threads();
+  std::cout << options_log.str() << std::endl;
 
-  socket_pool_.reset(new SocketPool(memcached_hostname_, memcached_port_, num_threads_));
+  socket_pool_.reset(
+      new SocketPool(memcached_hostname_, memcached_port_, num_threads_ + 1));
   mem_mgr_.reset(new MemoryManager(
       opts.chunk_size(), opts.max_memory_limit() / opts.chunk_size()));
 }
 
 Dumper::~Dumper() = default;
 
+Status Dumper::CreateAndValidateOutputDirs() {
+  RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::output_dir_path()));
+  RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::GetKeyFilePath()));
+  RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::GetDataStagingPath()));
+  RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::GetDataFinalPath()));
+
+  return Status::OK();
+}
+
 Status Dumper::Init() {
 
+  MemcachedUtils::SetOutputDirPath(output_dir_path_);
+  std::cout << "Keyfile path: " << MemcachedUtils::GetKeyFilePath() << std::endl;
+  std::cout << "Data staging path: " << MemcachedUtils::GetDataStagingPath() << std::endl;
+  std::cout << "Data final path: " << MemcachedUtils::GetDataFinalPath() << std::endl;
+
+  RETURN_ON_ERROR(CreateAndValidateOutputDirs());
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
   RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
@@ -82,16 +120,28 @@ Socket* Dumper::GetMemcachedSocket() {
   return socket_pool_->GetSocket();
 }
 
+void Dumper::ReleaseMemcachedSocket(Socket *sock) {
+  return socket_pool_->ReleaseSocket(sock);
+}
+
 void Dumper::Run() {
 
-  PrintTask *ptask = new PrintTask("Testing PrintTask!!", 77);
-  task_scheduler_->SubmitTask(ptask);
+  MonotonicStopWatch dumping_msw;
+  {
+    SCOPED_STOP_WATCH(&dumping_msw);
+    MetadumpTask *mtask = new MetadumpTask(
+        0, MemcachedUtils::GetKeyFilePath(), max_key_file_size_, mem_mgr_.get());
+    task_scheduler_->SubmitTask(mtask);
 
-  Socket *sock = GetMemcachedSocket();
-  MetadumpTask *mtask = new MetadumpTask(sock, 0, "test_prefix", 1024 * 1024, mem_mgr_.get());
-  task_scheduler_->SubmitTask(mtask);
-
-  task_scheduler_->WaitUntilTasksComplete();
+    task_scheduler_->WaitUntilTasksComplete();
+  }
+  std::cout << std::endl
+      << "All tasks completed..." << std::endl
+      << "-------------------------" << std::endl
+      << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
+      << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
+      << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
+      << " -Time taken: " << dumping_msw.HumanElapsedStr() << std::endl;
   LOG("Status: All tasks completed. Exiting...");
 }
 

@@ -18,7 +18,7 @@ class SocketPool {
 
   Socket* GetSocket();
 
-  void ReleaseSocket();
+  void ReleaseSocket(Socket *sock);
 
  private:
   std::string hostname_;

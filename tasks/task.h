@@ -10,6 +10,7 @@ class TaskThread;
 
 class Task {
 public:
+  virtual ~Task() = default;
   //virtual ~Task();
   TaskThread* owning_thread() { return owning_thread_; }
 
@@ -37,13 +38,12 @@ class PrintTask : public Task {
 
 class PrintKeysFromFileTask : public Task {
  public:
-  PrintKeysFromFileTask(const std::string& filename, MemoryManager *mem_mgr);
-
+  PrintKeysFromFileTask(const std::string& filename);
+  ~PrintKeysFromFileTask() = default;
   void Execute() override;
 
  private:
   std::string filename_;
-  MemoryManager *mem_mgr_;
 };
 
 } // namespace memcachedumper

@@ -2,9 +2,11 @@
 
 #include <string>
 #include <thread>
+#include <iostream>
 
 namespace memcachedumper {
 
+class MemoryManager;
 class Socket;
 class Task;
 class TaskScheduler;
@@ -16,10 +18,25 @@ class TaskThread {
 
   TaskScheduler *task_scheduler() { return task_scheduler_; }
 
+  std::string thread_name() { return thread_name_; }
+
+  MemoryManager *mem_mgr();
+
   int Init();
 
   void Join();
 
+  void account_keys_processed(uint64_t num_keys) { num_keys_processed_ += num_keys; }
+  void increment_keys_ignored() { num_keys_ignored_++; }
+  void account_keys_missing(uint64_t num_keys) { num_keys_missing_ += num_keys; }
+
+  uint64_t num_keys_processed() { return num_keys_processed_; }
+  uint64_t num_keys_ignored() { return num_keys_ignored_; }
+  uint64_t num_keys_missing() { return num_keys_missing_; }
+
+  void PrintNumKeysProcessed() {
+    std::cout << "Thread (" << thread_name_.c_str() << ") - Num keys: " << num_keys_processed_ << std::endl;
+  }
  private:
 
   void WorkerLoop();
@@ -36,8 +53,9 @@ class TaskThread {
 
   std::thread thread_;
 
-  // Socket to talk to memcached. Not owned.
-  //Socket *sock_;
+  uint64_t num_keys_processed_;
+  uint64_t num_keys_ignored_;
+  uint64_t num_keys_missing_;
 
 };
 

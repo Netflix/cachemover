@@ -1,24 +1,56 @@
 # Native Memcached dumper
 
-**Note: Still under development. Not ready for use.**
+**Note: Still under development.**
 
 - Build instructions:
 
 From the project root directory, create a new directory called build, and run cmake from there:
 ```
-mkdir build
-cd build/
-cmake ..
-make
+$> mkdir build
+$> cd build/
+$> cmake ..
+$> make
 ```
 
-This will create a bin/ directory under the root project directory. To run:
+To build with GPROF:
 ```
-cd ../bin/
-./memcache-dumper
+...
+$> cmake -DGPROF_ENABLED=1 ..
+$> make
 ```
 
-It currently runs with a dummy configuration that expets a memcached process running in localhost:11211.
-It currently only does a key metadata dump.
+To build with ASAN:
+```
+...
+$> cmake -DASAN_ENABLED=1 ..
+$> make
+```
 
-*More details to follow soon*
+This will create a bin/ directory under the root project directory. To run, pass in the appropriate arguments:
+```
+$> cd ../bin/
+$> ./memcache-dumper -h
+Memcached dumper options
+Usage: ../bin/memcache-dumper [OPTIONS] [ip] [port] [threads] [bufsize] [memlimit] [key_file_size] [data_file_size] [output_dir]
+
+Positionals:
+  ip TEXT                     Memcached IP.
+  port INT                    Memcached port.
+  threads INT                 Num. threads
+  bufsize UINT                Size of single memory buffer (in bytes).
+  memlimit UINT               Maximum allowable memory usage (in bytes).
+  key_file_size UINT          The maximum size for each key file (in bytes).
+  data_file_size UINT         The maximum size for each date file (in bytes).
+  output_dir TEXT             Desired output directory path.
+
+Options:
+  -h,--help                   Print this help message and exit
+  -i,--ip TEXT                Memcached IP.
+  -p,--port INT               Memcached port.
+  -t,--threads INT            Num. threads
+  -b,--bufsize UINT           Size of single memory buffer (in bytes).
+  -m,--memlimit UINT          Maximum allowable memory usage (in bytes).
+  -k,--key_file_size UINT     The maximum size for each key file (in bytes).
+  -d,--data_file_size UINT    The maximum size for each date file (in bytes).
+  -o,--output_dir TEXT        Desired output directory path.
+```

@@ -22,6 +22,10 @@ class TaskScheduler {
 
   ~TaskScheduler();
 
+  MemoryManager* mem_mgr();
+
+  Dumper* dumper() { return dumper_; }
+
   int Init();
 
   void SubmitTask(Task *task);
@@ -30,11 +34,24 @@ class TaskScheduler {
 
   void WaitUntilTasksComplete();
 
- private:
-  friend class TaskThread;
-
   // Get a socket to memcached.
   Socket* GetMemcachedSocket();
+
+  // Release a memcached socket.
+  void ReleaseMemcachedSocket(Socket *sock);
+
+  // The total number of keys processed by all the threads.
+  uint64_t total_keys_processed();
+
+  // The total number of keys ignored (due to imminent expiry) by all the
+  // threads.
+  uint64_t total_keys_ignored();
+
+  // The total number of keys missing (due to expiry or eviction) by all the
+  // threads.
+  uint64_t total_keys_missing();
+ private:
+  friend class TaskThread;
 
   // Returns the next task in the queue of it's present.
   // Returns nullptr otherwise. Not thread-safe.
@@ -44,6 +61,9 @@ class TaskScheduler {
   bool AllTasksComplete() { return all_tasks_complete_; }
 
   void MarkTaskComplete(Task *task);
+
+  // Print a small summary.
+  void PrintSummary();
 
   // A queue of tasks to work on.
   std::queue<Task*> task_queue_;

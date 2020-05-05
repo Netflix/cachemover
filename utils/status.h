@@ -22,6 +22,8 @@
   if (!_s.ok()) return _s;                  \
   } while (0);
 
+#define IGNORE_RET_VAL(x) (void)x;
+
 namespace memcachedumper {
 
 class Status {

@@ -4,6 +4,7 @@
 #include "dumper/dumper.h"
 #include "tasks/task_thread.h"
 
+#include <chrono>
 #include <iostream>
 
 namespace memcachedumper {
@@ -24,6 +25,10 @@ int TaskScheduler::Init() {
         std::make_unique<TaskThread>(this, "task_thread_" + std::to_string(i + 1)));
   }
   return 0;
+}
+
+MemoryManager* TaskScheduler::mem_mgr() {
+  return dumper_->mem_mgr();
 }
 
 void TaskScheduler::SubmitTask(Task *task) {
@@ -72,6 +77,7 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
   std::lock_guard<std::mutex> mlock(metrics_mutex_);
   num_running_--;
 
+  delete task;
   // If all tasks completed, notify everyone waiting on the task queue
   // and everyone waiting for all tasks to complete.
   if (num_running_ == 0 && num_waiting_ == 0) {
@@ -81,13 +87,49 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
   }
 }
 
+void TaskScheduler::PrintSummary() {
+  std::cout << "Summary -> Dumped: " << total_keys_processed()
+      << ". Ignored: " << total_keys_ignored()
+      << ". Missing: " << total_keys_missing() << std::endl;
+}
+
 void TaskScheduler::WaitUntilTasksComplete() {
+  std::chrono::minutes min(1);
   std::unique_lock<std::mutex> mlock(metrics_mutex_);
-  tasks_completed_cv_.wait(mlock);
+  while (tasks_completed_cv_.wait_for(mlock, min) == std::cv_status::timeout) {
+    PrintSummary();
+  }
 }
 
 Socket* TaskScheduler::GetMemcachedSocket() {
   return dumper_->GetMemcachedSocket();
 }
 
+void TaskScheduler::ReleaseMemcachedSocket(Socket *sock) {
+  return dumper_->ReleaseMemcachedSocket(sock);
+}
+
+uint64_t TaskScheduler::total_keys_processed() {
+  uint64_t total_keys_processed = 0;
+  for (auto&& thread : threads_) {
+    total_keys_processed += thread->num_keys_processed();
+  }
+  return total_keys_processed;
+}
+
+uint64_t TaskScheduler::total_keys_ignored() {
+  uint64_t total_keys_ignored = 0;
+  for (auto&& thread : threads_) {
+    total_keys_ignored += thread->num_keys_ignored();
+  }
+  return total_keys_ignored;
+}
+
+uint64_t TaskScheduler::total_keys_missing() {
+  uint64_t total_keys_missing = 0;
+  for (auto&& thread : threads_) {
+    total_keys_missing += thread->num_keys_missing();
+  }
+  return total_keys_missing;
+}
 } // namespace memcachedumper
