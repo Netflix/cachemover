@@ -1,0 +1,7 @@
+Once we copy the scripts to bastion, run the following scripts
+
+1. ./copy_scripts.sh <asg-name>
+2. ./create_attach_ebs.sh <asg-name> <vol-size-in-gb>
+3. ./list_ebs.sh <asg-name>
+4. ./detach_ebs.sh <asg-name>
+5. ./delete_ebs.sh <asg-name>
