@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-    echo "need two arguments starting with evcache"
+if [ $# -ne 2 ]; then
+    echo "need two arguments - dest asg, src asg"
     exit 1
 fi
 
@@ -13,8 +13,7 @@ for i in `cat upgrade_$1.txt`;
 do
         ((count++))
         #echo $i
-	cmd="oq-ssh $i (python /tmp/nc_dump_ebs.py --action_type list-vol --asg $1)"
+	cmd="oq-ssh $i (python /tmp/nc_dump_ebs.py --action_type attach-vol-ro --asg $2)"
 	$cmd
-	break
 done
 echo "done listing ebs volumes in all the instances"

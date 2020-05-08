@@ -13,7 +13,7 @@ for i in `cat upgrade_$1.txt`;
 do
         ((count++))
         echo $i
-        oq-scp /home/pkarumanchi/scripts/ebs/nc_dump_ebs.py $i:/tmp &
+        oq-scp /home/pkarumanchi/scripts/ebs/to_checkin/nc_dump_ebs.py $i:/tmp &
 	BACK_PID=$!
 	echo "process id is $BACK_PID"
         if [ $(($count % 20)) == 0 ]; then

@@ -8,7 +8,8 @@ from argparse import *
 region=os.environ.get('EC2_REGION')
 az=os.environ.get('EC2_AVAILABILITY_ZONE')
 instanceid=os.environ.get('EC2_INSTANCE_ID')
-app=os.environ.get('NETFLIX_APP')
+asg=os.environ.get('NETFLIX_AUTO_SCALE_GROUP')
+
 ebs_alias='xvdf'
 ebs_path = '/tmp/ebs-vol-exists'
 
@@ -21,13 +22,14 @@ class EbsHelper():
     currently the mapping information is not stored.
     """
 
-    def __init__(self, action_type, vol_id=None, size=50):
+    def __init__(self, action_type, vol_id=None, size=50, asg=None):
         self.action_type = action_type
         self.vol_id = vol_id
 	self.size = size
 	if self.size == None:
 	    self.size = 50
 	self.iops = min(self.size*50, 64000)
+        self.asg = asg
 
     def takeAction(self):
         if self.action_type == "create-attach-vol":
@@ -78,8 +80,7 @@ class EbsHelper():
                                     ResourceType="volume",
                                     Tags=[
                                        dict(Key="cde:technology", Value="evcache"),
-                                       dict(Key="cde:application", Value=app),
-                                       dict(Key="cde:owner_instance", Value=instanceid),
+                                       dict(Key="cde:asg", Value=asg)
                             ])]
                     )
         print(response)
@@ -249,6 +250,9 @@ class EbsHelper():
             with open(ebs_path, 'r') as f:
                 fileinfo = f.read()
                 volume_from_path = fileinfo.split()[0]
+        else:
+            # need to get a volume which is not already attached.
+            volume_from_path = self.getFreeEBS()
 
         ec2 = boto3.resource('ec2', region_name=region)
         volume = ec2.Volume(volume_from_path)
@@ -268,6 +272,7 @@ class EbsHelper():
 
         print("attachment of volume is done", volume.state)
         time.sleep(5)
+        os.system("sudo mkdir -p /t/ebs-mnt")
         os.system("sudo mount -o ro /dev/"+ebs_alias +" /t/ebs-mnt")
         print("mounted the device at /t/ebs-mnt")
 
@@ -324,11 +329,14 @@ class EbsHelper():
         print(response)
 
         volume.load()
+        num_of_attachments = len(volume.attachments)
         # Poll whether the volume transitioned to 'in-use' or not.
         while volume.state != 'available':
             print("still detaching..", volume.state)
             time.sleep(5)
             volume.load()
+            if num_of_attachments-1 == len(volume.attachments):
+                break
 
         print("detachment of volume is done", volume.state)
         return volume.volume_id
@@ -378,11 +386,55 @@ class EbsHelper():
                             'Values': [
                                     'evcache',
                             ]   
+                        },
+                        {
+                            'Name': 'tag:cde:asg',
+                            'Values': [
+                                    self.asg,
+                            ]   
                         }
                 ])
         for vol in vols['Volumes']:
-            print vol['VolumeId']
+            print vol
+            if vol['Attachments'] != None:
+                num_attachments = len(vol['Attachments'])
+                print(vol['VolumeId'] + " is attached to " + str(num_attachments) + " instance(s)")
+                num_attachments = num_attachments-1
+                while (num_attachments >= 0):
+                    print(vol['Attachments'][num_attachments]['InstanceId'])
+                    num_attachments = num_attachments-1
+            else:
+                print(vol['VolumeId'] + "is not attached to any instance(s)")
 
+    def getFreeEBS(self):
+        ec2 = boto3.client('ec2', region_name=region)
+        vols=ec2.describe_volumes(
+                Filters=[
+                        {
+                            'Name': 'tag:cde:technology',
+                            'Values': [
+                                    'evcache',
+                            ]   
+                        },
+                        {
+                            'Name': 'tag:cde:asg',
+                            'Values': [
+                                    self.asg,
+                            ]   
+                        }
+                ])
+        for vol in vols['Volumes']:
+            if vol['Attachments'] != None:
+                num_attachments = len(vol['Attachments'])
+                print(vol['VolumeId'] + " is attached to " + str(num_attachments) + " instance(s)")
+                if num_attachments == 1:
+                    return vol['VolumeId']
+                num_attachments = num_attachments-1
+                while (num_attachments >= 0):
+                    print(vol['Attachments'][num_attachments]['InstanceId'])
+                    num_attachments = num_attachments-1
+            else:
+                print(vol['VolumeId'] + "is not attached to any instance(s)")
 
 
 def main():
@@ -393,9 +445,15 @@ def main():
       help='name of the volume', required=False)
     parser.add_argument('--size', type=int,
       help='size of the volume in gb', required=False)
+    parser.add_argument('--asg', type=str,
+      help='source asg', required=False)
     args = parser.parse_args()
 
-    ebsh = EbsHelper(args.action_type, args.volume_name, args.size)
+    if args.action_type == "attach-vol-ro" and args.asg == None:
+        print("source asg needs to be specified when mounting the ebs as ro")
+        sys.exit(1)
+
+    ebsh = EbsHelper(args.action_type, args.volume_name, args.size, args.asg)
     ebsh.takeAction()
     return
 
