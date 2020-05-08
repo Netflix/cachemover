@@ -9,7 +9,6 @@ region=os.environ.get('EC2_REGION')
 az=os.environ.get('EC2_AVAILABILITY_ZONE')
 instanceid=os.environ.get('EC2_INSTANCE_ID')
 asg=os.environ.get('NETFLIX_AUTO_SCALE_GROUP')
-
 ebs_alias='xvdf'
 ebs_path = '/tmp/ebs-vol-exists'
 

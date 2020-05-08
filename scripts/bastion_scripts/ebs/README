@@ -10,5 +10,3 @@ On source ASG
 On destination ASG
 - ./copy_scripts.sh <dest-asg-name>
 - ./attach_ebs_ro.sh <dest-asg-name> <src-asg-name>
-
-
