@@ -96,9 +96,7 @@ void TaskScheduler::PrintSummary() {
 void TaskScheduler::WaitUntilTasksComplete() {
   std::chrono::minutes min(1);
   std::unique_lock<std::mutex> mlock(metrics_mutex_);
-  while (tasks_completed_cv_.wait_for(mlock, min) == std::cv_status::timeout) {
-    PrintSummary();
-  }
+  tasks_completed_cv_.wait(mlock);
 }
 
 Socket* TaskScheduler::GetMemcachedSocket() {
