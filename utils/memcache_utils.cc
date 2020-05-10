@@ -25,10 +25,19 @@ void McData::printValue() {
   //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
 }
 
+// Static member declarations
 std::string MemcachedUtils::output_dir_path_;
+uint32_t MemcachedUtils::bulk_get_threshold_ = DEFAULT_BULK_GET_THRESHOLD;
+uint64_t MemcachedUtils::max_data_file_size_;
 
 void MemcachedUtils::SetOutputDirPath(std::string output_dir_path) {
   MemcachedUtils::output_dir_path_ = output_dir_path;
+}
+void MemcachedUtils::SetBulkGetThreshold(uint32_t bulk_get_threshold) {
+  MemcachedUtils::bulk_get_threshold_ = bulk_get_threshold;
+}
+void MemcachedUtils::SetMaxDataFileSize(uint64_t max_data_file_size) {
+  MemcachedUtils::max_data_file_size_ = max_data_file_size;
 }
 
 std::string MemcachedUtils::GetKeyFilePath() {
@@ -74,17 +83,17 @@ std::string MemcachedUtils::DataFilePrefix() {
 }
 
 std::string MemcachedUtils::CraftBulkGetCommand(
-    McDataMap* pending_keys, const int max_keys) {
+    McDataMap* pending_keys) {
   std::stringstream bulk_get_cmd;
   bulk_get_cmd << "get ";
-  int32_t num_keys_to_get = 0;
+  uint32_t num_keys_to_get = 0;
 
   McDataMap::iterator it = pending_keys->begin();
   while (it != pending_keys->end()) {
     if (!it->second->get_complete()) {
       bulk_get_cmd << it->first << " ";
       ++num_keys_to_get;
-      if (num_keys_to_get == max_keys) break;
+      if (num_keys_to_get == bulk_get_threshold_) break;
     }
     it++;
   }

@@ -35,6 +35,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   std::string ip;
   int port;
   int num_threads;
+  int bulk_get_threshold;
   uint64_t bufsize;
   uint64_t memlimit;
   uint64_t keyfilesize;
@@ -57,11 +58,13 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       "The maximum size for each date file (in bytes)."));
   IGNORE_RET_VAL(app.add_option("-o,--output_dir,output_dir", output_dir_path,
       "Desired output directory path."));
+  IGNORE_RET_VAL(app.add_option("-g,--bulk_get_threshold,bulk_get_threshold",
+      bulk_get_threshold, "Number of keys to bulk get."));
 
   CLI11_PARSE(app, argc, argv);
 
-  opts.set_hostname(ip);
-  opts.set_port(port);
+  opts.set_memcached_hostname(ip);
+  opts.set_memcached_port(port);
   opts.set_num_threads(num_threads);
   opts.set_chunk_size(bufsize); // 1MB
   opts.set_max_memory_limit(memlimit); // 64MB
@@ -69,6 +72,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_max_data_file_size(datafilesize); // 1MB
   opts.set_log_file_path("logfile.txt");
   opts.set_output_dir_path(output_dir_path);
+  opts.set_bulk_get_threshold(bulk_get_threshold);
 
   return 0;
 }

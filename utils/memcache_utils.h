@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
+// Default number of items to bulk get at a time
+#define DEFAULT_BULK_GET_THRESHOLD 30
+
 // Items that are expiring in these many seconds will not be dumped.
 #define EXPIRE_THRESHOLD_DELTA_S 9000
 
@@ -65,7 +68,12 @@ class MemcachedUtils {
  public:
 
   static void SetOutputDirPath(std::string output_dir_path);
-  static std::string output_dir_path() { return MemcachedUtils::output_dir_path_; }
+  static void SetBulkGetThreshold(uint32_t bulk_get_threshold);
+  static void SetMaxDataFileSize(uint64_t max_data_file_size);
+
+  static std::string OutputDirPath() { return MemcachedUtils::output_dir_path_; }
+  static uint32_t BulkGetThreshold() { return MemcachedUtils::bulk_get_threshold_; }
+  static uint64_t MaxDataFileSize() { return MemcachedUtils::max_data_file_size_; }
   static std::string GetKeyFilePath();
   static std::string GetDataStagingPath();
   static std::string GetDataFinalPath();
@@ -73,9 +81,9 @@ class MemcachedUtils {
   static std::string KeyFilePrefix();
   static std::string DataFilePrefix();
 
-  // Craft a bulk get command with the first 'max_keys' keys in 'pending_keys' to
-  // send memcached.
-  static std::string CraftBulkGetCommand(McDataMap* pending_keys, const int max_keys);
+  // Craft a bulk get command with the first 'BulkGetThreshold()' keys in
+  // 'pending_keys' to send memcached.
+  static std::string CraftBulkGetCommand(McDataMap* pending_keys);
 
   // Returns a string of the following format for 'key':
   // <keylen (2-bytes)> <key> <expiry (4-bytes)> <flag (4-bytes)> <datalen (4-bytes)>
@@ -108,6 +116,8 @@ class MemcachedUtils {
 
  private:
   static std::string output_dir_path_;
+  static uint32_t bulk_get_threshold_;
+  static uint64_t max_data_file_size_;
 };
 
 

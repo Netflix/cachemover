@@ -12,7 +12,6 @@
 #include <sstream>
 #include <string>
 
-#define BULK_GET_THRESHOLD 30
 #define MC_VALUE_DELIM "VALUE "
 
 #define INJECT_EAGAIN_EVERY_N 0
@@ -44,7 +43,7 @@ KeyValueWriter::KeyValueWriter(std::string data_file_prefix,
     num_processed_keys_(0),
     num_missing_keys_(0),
     need_drain_socket_(false) {
-  mcdata_entries_pending_.reserve(BULK_GET_THRESHOLD);
+  mcdata_entries_pending_.reserve(MemcachedUtils::BulkGetThreshold());
 }
 
 void stupid_debug_func() {
@@ -196,7 +195,6 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
     if (whitespace_after_flags == nullptr) {
       //stupid_debug_func();
 
-      McData* mc = entry->second.get();
       // TODO: Handle partial buffer case.
       //std::cout << "Breaking coz no whitespace_after_flags for key " << mc->key() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
@@ -327,7 +325,7 @@ Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
 
     // Craft a bulk get command with all the pending keys.
     std::string bulk_get_cmd = MemcachedUtils::CraftBulkGetCommand(
-        &mcdata_entries_pending_, BULK_GET_THRESHOLD);
+        &mcdata_entries_pending_);
 
     if (bulk_get_cmd.empty()) return Status::OK();
 
@@ -475,7 +473,7 @@ void KeyValueWriter::QueueForProcessing(McData* mc_key) {
   //std::cout << "Added key: " << mc_key->key() << std::endl;
   // Time to do a bulk get of all keys gathered so far and write their values to a file.
   //if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
-  if (n_keys_pending_ >= BULK_GET_THRESHOLD) {
+  if (n_keys_pending_ >= MemcachedUtils::BulkGetThreshold()) {
     ProcessKeys(false);
   }
 }
