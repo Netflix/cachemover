@@ -10,9 +10,6 @@
 // Default number of items to bulk get at a time
 #define DEFAULT_BULK_GET_THRESHOLD 30
 
-// Items that are expiring in these many seconds will not be dumped.
-#define EXPIRE_THRESHOLD_DELTA_S 9000
-
 // Ignore a key if we tried to get it these many times unsuccessfully.
 #define MAX_GET_ATTEMPTS 3
 
@@ -70,10 +67,12 @@ class MemcachedUtils {
   static void SetOutputDirPath(std::string output_dir_path);
   static void SetBulkGetThreshold(uint32_t bulk_get_threshold);
   static void SetMaxDataFileSize(uint64_t max_data_file_size);
+  static void SetOnlyExpireAfter(int only_expire_after);
 
   static std::string OutputDirPath() { return MemcachedUtils::output_dir_path_; }
   static uint32_t BulkGetThreshold() { return MemcachedUtils::bulk_get_threshold_; }
   static uint64_t MaxDataFileSize() { return MemcachedUtils::max_data_file_size_; }
+  static uint64_t OnlyExpireAfter() { return MemcachedUtils::only_expire_after_; }
   static std::string GetKeyFilePath();
   static std::string GetDataStagingPath();
   static std::string GetDataFinalPath();
@@ -98,9 +97,9 @@ class MemcachedUtils {
     return final_str;
   }
 
-  static bool KeyExpiresSoon(time_t now, long int key_expiry) {
+  static bool KeyExpiresSoon(time_t now, uint32_t key_expiry) {
     // TODO: Is this protable?
-    return (key_expiry <= now + EXPIRE_THRESHOLD_DELTA_S);
+    return (key_expiry <= now + OnlyExpireAfter());
   }
 
   // Converts 'int_param' to its byte representation in a string, and returns
@@ -118,6 +117,7 @@ class MemcachedUtils {
   static std::string output_dir_path_;
   static uint32_t bulk_get_threshold_;
   static uint64_t max_data_file_size_;
+  static int only_expire_after_;
 };
 
 

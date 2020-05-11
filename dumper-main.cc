@@ -40,6 +40,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   uint64_t memlimit;
   uint64_t keyfilesize;
   uint64_t datafilesize;
+  int only_expire_after;
   std::string output_dir_path;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
@@ -60,6 +61,8 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       "Desired output directory path."));
   IGNORE_RET_VAL(app.add_option("-g,--bulk_get_threshold,bulk_get_threshold",
       bulk_get_threshold, "Number of keys to bulk get."));
+  IGNORE_RET_VAL(app.add_option("-e,--only_expire_after_s,only_expire_after_s",
+      only_expire_after, "Only dump keys that expire after these many seconds."));
 
   CLI11_PARSE(app, argc, argv);
 
@@ -73,6 +76,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_log_file_path("logfile.txt");
   opts.set_output_dir_path(output_dir_path);
   opts.set_bulk_get_threshold(bulk_get_threshold);
+  opts.set_only_expire_after(only_expire_after);
 
   return 0;
 }

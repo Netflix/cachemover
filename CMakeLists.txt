@@ -50,17 +50,17 @@ include_directories(${PISTACHE_INCLUDE_DIR})
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
 target_link_libraries(
   memcache-dumper
-  common
   dumper
   tasks
   utils
+  common
   stdc++fs
   ${CURL_LIBRARIES}
   ${PISTACHE_LIBRARY}
   spdlog::spdlog)
 
+add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(dumper)
 add_subdirectory(extern/spdlog)
 add_subdirectory(tasks)
-add_subdirectory(utils)

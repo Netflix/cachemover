@@ -66,6 +66,10 @@ void DumperOptions::set_bulk_get_threshold(uint32_t bulk_get_threshold) {
   bulk_get_threshold_ = bulk_get_threshold;
 }
 
+void DumperOptions::set_only_expire_after(int only_expire_after) {
+  only_expire_after_ = only_expire_after;
+}
+
 Dumper::Dumper(DumperOptions& opts)
   : opts_(opts) {
   std::stringstream options_log;
@@ -82,9 +86,8 @@ Dumper::Dumper(DumperOptions& opts)
   LOG(options_log.str());
   std::cout << options_log.str() << std::endl;
 
-  socket_pool_.reset(
-      new SocketPool(
-          opts_.memcached_hostname(), opts_.memcached_port(), opts_.num_threads() + 1));
+  socket_pool_.reset(new SocketPool(
+      opts_.memcached_hostname(), opts_.memcached_port(), opts_.num_threads() + 1));
   mem_mgr_.reset(new MemoryManager(
       opts_.chunk_size(), opts_.max_memory_limit() / opts_.chunk_size()));
 }
@@ -105,6 +108,9 @@ Status Dumper::Init() {
   MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
   if (opts_.bulk_get_threshold() > 0) {
     MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
+  }
+  if (opts_.only_expire_after() > 0) {
+    MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
   }
   std::cout << "Keyfile path: " << MemcachedUtils::GetKeyFilePath() << std::endl;
   std::cout << "Data staging path: " << MemcachedUtils::GetDataStagingPath() << std::endl;

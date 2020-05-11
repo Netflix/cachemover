@@ -29,6 +29,7 @@ void McData::printValue() {
 std::string MemcachedUtils::output_dir_path_;
 uint32_t MemcachedUtils::bulk_get_threshold_ = DEFAULT_BULK_GET_THRESHOLD;
 uint64_t MemcachedUtils::max_data_file_size_;
+int MemcachedUtils::only_expire_after_;
 
 void MemcachedUtils::SetOutputDirPath(std::string output_dir_path) {
   MemcachedUtils::output_dir_path_ = output_dir_path;
@@ -38,6 +39,9 @@ void MemcachedUtils::SetBulkGetThreshold(uint32_t bulk_get_threshold) {
 }
 void MemcachedUtils::SetMaxDataFileSize(uint64_t max_data_file_size) {
   MemcachedUtils::max_data_file_size_ = max_data_file_size;
+}
+void MemcachedUtils::SetOnlyExpireAfter(int only_expire_after) {
+  MemcachedUtils::only_expire_after_ = only_expire_after;
 }
 
 std::string MemcachedUtils::GetKeyFilePath() {

@@ -27,6 +27,7 @@ class DumperOptions {
   void set_max_data_file_size(uint64_t max_data_file_size);
   void set_log_file_path(std::string_view logfile_path);
   void set_output_dir_path(std::string_view output_dir_path);
+  void set_only_expire_after(int only_expire_after);
 
   std::string memcached_hostname() { return memcached_hostname_; }
   int memcached_port() { return memcached_port_; }
@@ -38,6 +39,7 @@ class DumperOptions {
   uint64_t max_data_file_size() { return max_data_file_size_; }
   std::string log_file_path() { return log_file_path_; }
   std::string output_dir_path() { return output_dir_path_; }
+  int only_expire_after() { return only_expire_after_; }
 
  private:
   // Hostname that contains target memecached.
@@ -47,7 +49,7 @@ class DumperOptions {
   // Number of worker threads for this cache dumper.
   int num_threads_;
   // Number of keys to bulk get.
-  uint32_t bulk_get_threshold_;
+  uint32_t bulk_get_threshold_ = 0;
   // The size to use for each allocated buffer (in bytes).
   uint64_t chunk_size_;
   // The maximum amount of memory to use (in bytes).
@@ -60,6 +62,8 @@ class DumperOptions {
   std::string log_file_path_;
   // Path to the output directory.
   std::string output_dir_path_;
+  // Ignore keys that expire within these many seconds.
+  int only_expire_after_ = 0;
 };
 
 class Dumper {
