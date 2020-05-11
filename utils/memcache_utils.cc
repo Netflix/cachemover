@@ -35,7 +35,11 @@ void MemcachedUtils::SetOutputDirPath(std::string output_dir_path) {
   MemcachedUtils::output_dir_path_ = output_dir_path;
 }
 void MemcachedUtils::SetBulkGetThreshold(uint32_t bulk_get_threshold) {
-  MemcachedUtils::bulk_get_threshold_ = bulk_get_threshold;
+  if (bulk_get_threshold == 0) {
+    MemcachedUtils::bulk_get_threshold_ = DEFAULT_BULK_GET_THRESHOLD;
+  } else {
+    MemcachedUtils::bulk_get_threshold_ = bulk_get_threshold;
+  }
 }
 void MemcachedUtils::SetMaxDataFileSize(uint64_t max_data_file_size) {
   MemcachedUtils::max_data_file_size_ = max_data_file_size;

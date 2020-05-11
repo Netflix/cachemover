@@ -106,12 +106,11 @@ Status Dumper::CreateAndValidateOutputDirs() {
 Status Dumper::Init() {
 
   MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
-  if (opts_.bulk_get_threshold() > 0) {
-    MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
-  }
+  MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
   if (opts_.only_expire_after() > 0) {
     MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
   }
+  MemcachedUtils::SetMaxDataFileSize(opts_.max_data_file_size());
   std::cout << "Keyfile path: " << MemcachedUtils::GetKeyFilePath() << std::endl;
   std::cout << "Data staging path: " << MemcachedUtils::GetDataStagingPath() << std::endl;
   std::cout << "Data final path: " << MemcachedUtils::GetDataFinalPath() << std::endl;
