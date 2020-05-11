@@ -124,7 +124,6 @@ Status Dumper::Init() {
   task_scheduler_->Init();
 
   rest_server_.reset(new RESTServer(task_scheduler_.get()));
-  rest_server_->Init();
 
   return Status::OK();
 }
@@ -148,6 +147,13 @@ void Dumper::Run() {
 
     task_scheduler_->WaitUntilTasksComplete();
   }
+
+  // Output the "DONE" file.
+  // TODO: (nit) Ideally would be submitted to the task scheduler.
+  DoneTask dtask;
+  dtask.Execute();
+
+  rest_server_->Shutdown();
   std::cout << std::endl
       << "All tasks completed..." << std::endl
       << "-------------------------" << std::endl

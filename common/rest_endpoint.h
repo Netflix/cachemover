@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 
 using namespace Pistache;
 using namespace Rest;
@@ -17,6 +18,7 @@ class RESTServer {
   RESTServer(TaskScheduler* task_scheduler);
   void Init();
   void HandleGet(const Rest::Request&, Http::ResponseWriter response);
+  void Shutdown();
 
  private:
   Pistache::Port port_;
@@ -29,6 +31,8 @@ class RESTServer {
   // Pointer to the task scheduler (for metrics)
   // TODO: Abstract away metrics to separate class
   TaskScheduler* task_scheduler_;
+
+  std::thread server_thread_;
 };
 
 } // namespace memcachedumper

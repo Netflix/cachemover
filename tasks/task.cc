@@ -15,6 +15,19 @@
 
 namespace memcachedumper {
 
+DoneTask::~DoneTask() = default;
+
+DoneTask::DoneTask() {
+}
+
+void DoneTask::Execute() {
+  std::ofstream done_file;
+  done_file.open(MemcachedUtils::GetDataFinalPath() + "/DONE");
+  done_file.write("DONE\n", 5);
+  done_file.close();
+}
+
+
 PrintTask::~PrintTask() = default;
 
 PrintTask::PrintTask(std::string print_str, int num)

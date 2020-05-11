@@ -24,6 +24,13 @@ public:
 
 };
 
+class DoneTask : public Task {
+ public:
+  DoneTask();
+  ~DoneTask();
+
+  void Execute() override;
+};
 
 /* -- For debugging -- */
 class PrintTask : public Task {

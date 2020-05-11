@@ -16,7 +16,8 @@ RESTServer::RESTServer(TaskScheduler* task_scheduler)
   : port_(7777),
     addr_(Pistache::Ipv4::any(), port_),
     rest_server_(addr_),
-    task_scheduler_(task_scheduler) {
+    task_scheduler_(task_scheduler),
+    server_thread_(&RESTServer::Init, this) {
 }
 
 void RESTServer::Init() {
@@ -25,6 +26,7 @@ void RESTServer::Init() {
 
   Routes::Get(router_, "/metrics", Routes::bind(&RESTServer::HandleGet, this));
   rest_server_.setHandler(router_.handler());
+
   rest_server_.serve();
 
 }
@@ -54,6 +56,11 @@ void RESTServer::HandleGet(const Rest::Request& request,
 
   std::cout << "Metrics requested: " << strbuf.GetString() << std::endl;
   response.send(Http::Code::Ok, strbuf.GetString());
+}
+
+void RESTServer::Shutdown() {
+  rest_server_.shutdown();
+  server_thread_.join();
 }
 
 } // namespace memcachedumper
