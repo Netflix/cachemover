@@ -1,11 +1,11 @@
-#include "tasks/task_scheduler.h"
-
 #include "common/logger.h"
 #include "dumper/dumper.h"
+#include "tasks/task_scheduler.h"
 #include "tasks/task_thread.h"
 
 #include <chrono>
 #include <iostream>
+#include <sstream>
 
 namespace memcachedumper {
 
@@ -87,10 +87,13 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
   }
 }
 
-void TaskScheduler::PrintSummary() {
-  std::cout << "Summary -> Dumped: " << total_keys_processed()
+std::string TaskScheduler::MetricsAsString() {
+  std::stringstream ss;
+  ss  << "Metrics -> Dumped: " << total_keys_processed()
       << ". Ignored: " << total_keys_ignored()
       << ". Missing: " << total_keys_missing() << std::endl;
+
+  return ss.str();
 }
 
 void TaskScheduler::WaitUntilTasksComplete() {

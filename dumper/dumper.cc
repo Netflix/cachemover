@@ -1,6 +1,7 @@
 #include "dumper/dumper.h"
 
 #include "common/logger.h"
+#include "common/rest_endpoint.h"
 #include "tasks/metadump_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
@@ -115,6 +116,9 @@ Status Dumper::Init() {
 
   task_scheduler_.reset(new TaskScheduler(opts_.num_threads(), this));
   task_scheduler_->Init();
+
+  rest_server_.reset(new RESTServer(task_scheduler_.get()));
+  rest_server_->Init();
 
   return Status::OK();
 }

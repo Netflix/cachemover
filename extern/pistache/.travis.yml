@@ -1,0 +1,146 @@
+language: cpp
+
+dist: bionic
+sudo: true
+
+branches:
+  only:
+    - master
+
+arch:
+  - amd64
+  - ppc64le
+  - s390x
+  - arm64
+
+matrix:
+  include:
+  # Linux clang builds
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-4.0
+      - COV_TOOL=llvm-cov-4.0
+      - COV_TOOL_ARGS=gcov
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+        packages: [ 'apport', 'cmake', 'clang-4.0', 'llvm-4.0-tools', 'libstdc++-6-dev', 'libssl-dev', 'libcurl4-openssl-dev', 'gdb', 'lcov', 'cppcheck' ]
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-5.0
+      - COV_TOOL=llvm-cov-5.0
+      - COV_TOOL_ARGS=gcov
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+        packages: [ 'apport', 'cmake', 'clang-5.0', 'llvm-5.0-tools', 'libstdc++-6-dev', 'libssl-dev', 'libcurl4-openssl-dev', 'gdb', 'lcov', 'cppcheck' ]
+
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-6.0
+      - COV_TOOL=llvm-cov-6.0
+      - COV_TOOL_ARGS=gcov
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        packages: [ 'apport', 'cmake', 'clang-6.0', 'llvm-6.0-tools', 'libstdc++-6-dev', 'libssl-dev', 'libcurl4-openssl-dev', 'gdb', 'lcov', 'cppcheck' ]
+
+  # Linux GCC builds
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-7
+      - COV_TOOL=gcov-7
+      - COV_TOOL_ARGS=
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['apport', 'g++-7', 'libssl-dev', 'libcurl4-openssl-dev', 'gdb', 'lcov', 'cppcheck']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+      - COV_TOOL=gcov-8
+      - COV_TOOL_ARGS=
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['apport', 'g++-8', 'libssl-dev', 'libcurl4-openssl-dev', 'gdb', 'lcov', 'cppcheck']
+
+install:
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+
+before_script:
+  - export CXX=${COMPILER}
+  - cd ${TRAVIS_BUILD_DIR}
+
+  # Enable core dumps
+  - ulimit -c
+  - ulimit -a -S
+  - ulimit -a -H
+
+  # Print debug system information
+  - cat /proc/sys/kernel/core_pattern
+  - cat /etc/default/apport || true
+  - service --status-all || true
+  - initctl list || true
+
+  # Debug build
+  - cmake -H.
+    -BBuild-Debug
+    -DCMAKE_BUILD_TYPE=Debug
+    -DPISTACHE_BUILD_EXAMPLES=true
+    -DPISTACHE_BUILD_TESTS=true
+    -DPISTACHE_USE_SSL=true
+
+  # Debug build, no SSL
+  - cmake -H.
+    -BBuild-Debug-nossl
+    -DCMAKE_BUILD_TYPE=Debug
+    -DPISTACHE_BUILD_EXAMPLES=true
+    -DPISTACHE_BUILD_TESTS=true
+    -DPISTACHE_USE_SSL=false
+
+  # Release build
+  - cmake -H.
+    -BBuild-Release
+    -DCMAKE_BUILD_TYPE=Release
+    -DPISTACHE_USE_SSL=true
+
+script:
+  # Set the ulimit
+  - ulimit -c unlimited -S
+
+  # Debug build
+  - cd Build-Debug
+  - make -j 2 all test ARGS="-V"
+
+  # Debug build, no SSL
+  - cd ../Build-Debug-nossl
+  - make -j 2 all test ARGS="-V"
+
+  # Release build
+  - cd ../Build-Release
+  - make -j 2
+
+after_failure:
+  - ls -lta /var/crash
+  - COREFILE=$(find ./ -maxdepth 1 -name "core*" -print | head -n 1) 
+  - if [[ -f "$COREFILE" ]]; then
+    gdb -c "$COREFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch;
+    fi
+
+
+after_success:
+- cd ../Build-Debug
+- sudo su -c "echo 'if [ \"\$1\" = \"-v\" ] ; then $COV_TOOL --version ; else $COV_TOOL $COV_TOOL_ARGS \$@ ; fi' > /usr/local/bin/cov-tool" && sudo chmod +x /usr/local/bin/cov-tool
+- lcov --capture --gcov-tool cov-tool --directory . --output-file coverage.info
+- lcov --remove coverage.info '/usr/*' '*tests/*' '*third-party/*' --output-file coverage.info
+- lcov --list coverage.info
+- bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"

@@ -26,4 +26,15 @@ void PrintTask::Execute() {
   LOG("PrintTask: " + print_str_ + " || " + std::to_string(num_));
 }
 
+
+InfiniteTask::~InfiniteTask() = default;
+
+InfiniteTask::InfiniteTask() {
+}
+
+void InfiniteTask::Execute() {
+  while(1);
+}
+
+
 } // namespace memcachedumper

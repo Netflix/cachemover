@@ -24,6 +24,8 @@ public:
 
 };
 
+
+/* -- For debugging -- */
 class PrintTask : public Task {
  public:
   PrintTask(std::string print_str, int num);
@@ -36,14 +38,12 @@ class PrintTask : public Task {
   int num_;
 };
 
-class PrintKeysFromFileTask : public Task {
+class InfiniteTask : public Task {
  public:
-  PrintKeysFromFileTask(const std::string& filename);
-  ~PrintKeysFromFileTask() = default;
-  void Execute() override;
+  InfiniteTask();
+  ~InfiniteTask();
 
- private:
-  std::string filename_;
+  void Execute() override;
 };
 
 } // namespace memcachedumper

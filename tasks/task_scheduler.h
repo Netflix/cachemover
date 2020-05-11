@@ -50,6 +50,9 @@ class TaskScheduler {
   // The total number of keys missing (due to expiry or eviction) by all the
   // threads.
   uint64_t total_keys_missing();
+
+  // Return a string containing metrics.
+  std::string MetricsAsString();
  private:
   friend class TaskThread;
 
@@ -61,9 +64,6 @@ class TaskScheduler {
   bool AllTasksComplete() { return all_tasks_complete_; }
 
   void MarkTaskComplete(Task *task);
-
-  // Print a small summary.
-  void PrintSummary();
 
   // A queue of tasks to work on.
   std::queue<Task*> task_queue_;

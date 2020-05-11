@@ -8,6 +8,7 @@
 namespace memcachedumper {
 
 class MemoryManager;
+class RESTServer;
 class Socket;
 class SocketPool;
 class TaskScheduler;
@@ -98,6 +99,9 @@ class Dumper {
 
   // The task scheduler that will carry out all the work.
   std::unique_ptr<TaskScheduler> task_scheduler_;
+
+  // A REST Server to report metrics.
+  std::unique_ptr<RESTServer> rest_server_;
 };
 
 } // namespace memcachedumper

@@ -1,2 +1,2 @@
 apt update
-yes | apt install cmake g++ libcurl4-openssl-dev
+yes | apt install cmake g++ libcurl4-openssl-dev rapidjson-dev

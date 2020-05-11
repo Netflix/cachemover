@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.9)
 project(MemcacheDumper)
 
 # Set the output folder for executables
@@ -20,11 +20,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 # Add dependency for std::experimental::filesystem.
 # TODO: Move to c++17 to use std::filesystem instead.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++fs")
-# Add gprof.
-# TODO: Make configurable
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
-# Add dependency for pthreads.
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 option(GPROF_ENABLED "Enable GPROF instrumentation" OFF)
 option(ASAN_ENABLED "Enable ASAN" OFF)
@@ -41,11 +36,28 @@ endif(ASAN_ENABLED)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+# RapidJSON for metrics reporting
+find_package(RapidJSON REQUIRED)
+# Curl for URL decoding
 find_package(CURL REQUIRED)
 include_directories(SYSTEM ${CURL_INCLUDE_DIR})
 
+# Pistache for an async REST Server
+set(PISTACHE_INCLUDE_DIR "extern/pistache/include")
+set(PISTACHE_LIBRARY "${PROJECT_SOURCE_DIR}/extern/pistache/libpistache.a")
+include_directories(${PISTACHE_INCLUDE_DIR})
+
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
-target_link_libraries(memcache-dumper common dumper spdlog::spdlog tasks utils ${CURL_LIBRARIES} stdc++fs)
+target_link_libraries(
+  memcache-dumper
+  common
+  dumper
+  tasks
+  utils
+  stdc++fs
+  ${CURL_LIBRARIES}
+  ${PISTACHE_LIBRARY}
+  spdlog::spdlog)
 
 add_subdirectory(common)
 add_subdirectory(dumper)
