@@ -76,7 +76,8 @@ void DumperOptions::set_resume_mode(bool resume_mode) {
 }
 
 Dumper::Dumper(DumperOptions& opts)
-  : opts_(opts) {
+  : opts_(opts),
+    s3_client_(s3_config_) {
   std::stringstream options_log;
   options_log << "Starting dumper with options: " << std::endl
             << "Hostname: " << opts_.memcached_hostname() << std::endl

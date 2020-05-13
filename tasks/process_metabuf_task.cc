@@ -1,6 +1,7 @@
 #include "common/logger.h"
 #include "dumper/dumper.h"
 #include "tasks/process_metabuf_task.h"
+#include "tasks/s3_upload_task.h"
 #include "tasks/task_scheduler.h"
 #include "tasks/task_thread.h"
 #include "utils/mem_mgr.h"
@@ -163,6 +164,10 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->account_keys_processed(data_writer_->num_processed_keys());
   owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
   metafile.close();
+
+  S3UploadTask* upload_task = new S3UploadTask("evcache-test", MemcachedUtils::GetDataFinalPath(),
+      MemcachedUtils::DataFilePrefix() + "_" + std::to_string(keyfile_idx_));
+  owning_thread()->task_scheduler()->SubmitTask(upload_task);
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));

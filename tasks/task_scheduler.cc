@@ -11,6 +11,8 @@ namespace memcachedumper {
 
 TaskScheduler::TaskScheduler(int num_threads, Dumper* dumper)
   : num_threads_(num_threads),
+    num_running_(0),
+    num_waiting_(0),
     dumper_(dumper),
     all_tasks_complete_(false) {
   threads_.reserve(num_threads_);

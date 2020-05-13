@@ -4,6 +4,7 @@
 #include "extern/CLI/CLI.hpp"
 #include <iostream>
 #include <string>
+#include <experimental/filesystem>
 
 using std::string;
 namespace memcachedumper {
@@ -87,10 +88,17 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
 
 int main(int argc, char** argv) {
 
+  // Init the AWS SDK.
+  Aws::SDKOptions options;
+  Aws::InitAPI(options);
+
   memcachedumper::DumperOptions opts;
   IGNORE_RET_VAL(ParseCLIOptions(argc, argv, opts));
 
   memcachedumper::DumperMain(opts);
+
+  // Shutdown the AWS SDK.
+  Aws::ShutdownAPI(options);
 
   LOG("Exiting program!");
   return 0;

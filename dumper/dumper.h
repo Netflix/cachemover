@@ -5,6 +5,9 @@
 #include <memory>
 #include <string>
 
+#include <aws/core/Aws.h>
+#include <aws/s3/S3Client.h>
+
 namespace memcachedumper {
 
 class MemoryManager;
@@ -77,6 +80,8 @@ class Dumper {
 
   ~Dumper();
 
+  Aws::S3::S3Client* GetS3Client() { return &s3_client_; }
+
   MemoryManager *mem_mgr() { return mem_mgr_.get(); }
 
   // Initializes the dumper by connecting to memcached.
@@ -111,6 +116,10 @@ class Dumper {
 
   // A REST Server to report metrics.
   std::unique_ptr<RESTServer> rest_server_;
+
+  Aws::Client::ClientConfiguration s3_config_;
+  Aws::S3::S3Client s3_client_;
+
 };
 
 } // namespace memcachedumper
