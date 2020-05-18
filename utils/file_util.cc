@@ -103,7 +103,20 @@ Status RotatingFile::Init() {
   return Status::OK();
 }
 
+Status RotatingFile::Fsync() {
+  int ret = fsync(cur_file_->fd());
+  if (ret < 0) {
+    int err = errno;
+    return Status::IOError("Could not fsync() file " + cur_file_name_, strerror(err));
+  }
+
+  return Status::OK();
+}
+
 Status RotatingFile::RotateFile() {
+
+  // Explicitly fsync()
+  Fsync();
   RETURN_ON_ERROR(cur_file_->Close());
   if (!optional_dest_path_.empty()) {
     FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
@@ -137,6 +150,8 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 }
 
 Status RotatingFile::Finish() {
+  // Explicitly fsync()
+  Fsync();
   RETURN_ON_ERROR(cur_file_->Close());
   if (!optional_dest_path_.empty()) {
     FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
