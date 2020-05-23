@@ -1,0 +1,20 @@
+app-type: debian-package
+jenkins-master: merch
+jenkins-default-job: evcache-native-dumper
+
+package-name: evcache-native-dumper
+package-requires:
+  # check if pistache can be added here as opposed to pulling it into the repo
+package-version: "1.0"
+
+build-image: dockerregistry.test.netflix.net:7002/engtools/newt-common-builder/bionic:latest
+
+build-setup:
+  - sudo apt-get update
+  - sudo apt-get install -y cmake g++ libcurl4-openssl-dev rapidjson-dev
+build-steps:
+  - rm -rf ./build/
+  - mkdir -p ./build/
+  - cd ./build/ && cmake .. && make && cp ../bin/memcache-dumper ../root/apps/memcache-native-dumper/.
+
+#package-postinstall-file: scripts/postinstall.sh
