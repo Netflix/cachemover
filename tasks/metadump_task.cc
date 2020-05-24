@@ -7,6 +7,7 @@
 #include "utils/mem_mgr.h"
 #include "utils/socket.h"
 
+#include <poll.h>
 #include <string.h>
 
 #include <string>
@@ -73,7 +74,7 @@ Status MetadumpTask::SendCommand(const std::string& metadump_cmd) {
 
 Status MetadumpTask::RecvResponse() {
 
-  LOG("Starting RecvResponse()");
+  fprintf(stdout, "Starting RecvResponse() \n");
   uint8_t *buf = mem_mgr_->GetBuffer();
   uint64_t chunk_size = mem_mgr_->chunk_size();
   int32_t bytes_read = 0;
@@ -82,9 +83,31 @@ Status MetadumpTask::RecvResponse() {
   std::ofstream chunk_file;
   std::string chunk_file_name(file_path_ + file_prefix_ + std::to_string(num_files));
   chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
+  
+  struct pollfd pfds[1]; 
+  pfds[0].fd = memcached_socket_->GetFd();          // Standard input
+  pfds[0].events = POLLIN; // Tell me when ready to read
 
   bool reached_end = false;
+  bool timeout = false;
   do {
+    
+    int events = poll(pfds, 1, 5000);
+    timeout = true;
+    if (events == 0) {
+        fprintf(stdout,"Poll timed out!\n");
+        continue;
+    } else {
+        int pollin_happened = pfds[0].revents & POLLIN;
+
+        if (pollin_happened) {
+            fprintf(stdout,"File descriptor %d is ready to read\n", pfds[0].fd);
+        } else {
+            fprintf(stderr,"Unexpected event occurred: %d\n", pfds[0].revents);
+            continue;
+        }
+    }
+    timeout = false;
     RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
 
 
@@ -143,7 +166,7 @@ Status MetadumpTask::RecvResponse() {
         bytes_written_to_file = remaining_bytes;
       }
     }
-  } while (bytes_read != 0 && !reached_end);
+  } while (timeout || (bytes_read != 0 && !reached_end));
 
   chunk_file.close();
 

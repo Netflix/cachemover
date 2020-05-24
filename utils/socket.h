@@ -20,6 +20,7 @@ class Socket {
   Status Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent);
   Status Close();
   Status Refresh();
+  int GetFd();
 
  private:
   int fd_;

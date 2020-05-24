@@ -124,4 +124,8 @@ Status Socket::Refresh() {
   return connect_status;
 }
 
+int Socket::GetFd() {
+  return fd_;
+}
+
 } // namespace memcachedumper
