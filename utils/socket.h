@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <poll.h>
 
 namespace memcachedumper {
 
@@ -20,11 +21,12 @@ class Socket {
   Status Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent);
   Status Close();
   Status Refresh();
-  int GetFd();
 
  private:
   int fd_;
   Sockaddr remote_addr_;
+  struct pollfd pfds_[1];
+  int timeout_;
 };
 
 } // namespace memcachedumper

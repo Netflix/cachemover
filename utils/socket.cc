@@ -1,5 +1,6 @@
 #include "utils/sockaddr.h"
 #include "utils/socket.h"
+#include "common/logger.h"
 
 #include <errno.h>
 #include <string.h>
@@ -17,7 +18,7 @@ namespace memcachedumper {
 } while ((err) == -1 && errno == EINTR)
 
 Socket::Socket()
-  : fd_(-1) {
+  : fd_(-1), timeout_(1) {
 }
 
 Status Socket::Create() {
@@ -31,6 +32,7 @@ Status Socket::Create() {
 }
 
 Status Socket::SetRecvTimeout(int seconds) {
+  timeout_ = seconds;
   struct timeval tv;
   tv.tv_sec = seconds;
   tv.tv_usec = 0;
@@ -64,6 +66,22 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
 
 Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
   int32_t nbytes;
+  int retry_count = 0;
+  int pollin_happened = 0;
+  pfds_[0].fd = fd_;
+  pfds_[0].events = POLLIN;
+  while (!pollin_happened && retry_count < 10) { // TODO make the retry count configurable
+    int events = poll(pfds_, 1, timeout_ * 1000);
+    if (events == 0) {
+      LOG("Poll timed out, retrying..\n");
+      retry_count++;
+    } else {
+      pollin_happened = pfds_[0].revents & POLLIN;
+      if (!pollin_happened) {
+        return Status::NetworkError("Socket timeout", strerror(pollin_happened));
+      }
+    }
+  }
 
   RETRY_ON_EINTR(nbytes, recv(fd_, buf, len, 0));
   if (nbytes < 0) {
@@ -122,10 +140,6 @@ Status Socket::Refresh() {
   } while (num_retries < 3);
 
   return connect_status;
-}
-
-int Socket::GetFd() {
-  return fd_;
 }
 
 } // namespace memcachedumper
