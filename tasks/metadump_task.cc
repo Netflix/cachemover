@@ -72,6 +72,8 @@ Status MetadumpTask::SendCommand(const std::string& metadump_cmd) {
 }
 
 Status MetadumpTask::RecvResponse() {
+
+  LOG("Starting RecvResponse()");
   uint8_t *buf = mem_mgr_->GetBuffer();
   uint64_t chunk_size = mem_mgr_->chunk_size();
   int32_t bytes_read = 0;
@@ -80,10 +82,8 @@ Status MetadumpTask::RecvResponse() {
   std::ofstream chunk_file;
   std::string chunk_file_name(file_path_ + file_prefix_ + std::to_string(num_files));
   chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
-  
   bool reached_end = false;
   do {
-    
     RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
 
 
