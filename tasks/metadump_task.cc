@@ -82,6 +82,7 @@ Status MetadumpTask::RecvResponse() {
   std::ofstream chunk_file;
   std::string chunk_file_name(file_path_ + file_prefix_ + std::to_string(num_files));
   chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
+
   bool reached_end = false;
   do {
     RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
