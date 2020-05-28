@@ -193,40 +193,30 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
 
     const char* whitespace_after_flags = response_slice.next_whitespace();
     if (whitespace_after_flags == nullptr) {
-      //stupid_debug_func();
-
-      // TODO: Handle partial buffer case.
-      //std::cout << "Breaking coz no whitespace_after_flags for key " << mc->key() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
 
-    int32_t flags = std::stoi(std::string(whitespace_after_key + 1, whitespace_after_flags - whitespace_after_key - 1));
+    McData* mcdata_entry = entry->second.get();
+    uint16_t flags = std::stoul(
+        std::string(whitespace_after_key + 1,
+            whitespace_after_flags - whitespace_after_key - 1));
+    mcdata_entry->setFlags(flags);
 
     const char* newline_after_datalen = response_slice.next_crlf();
     if (newline_after_datalen == nullptr) {
-      //stupid_debug_func();
-
-       std::cout << "KEY INFO TRUNCATED: " << cur_key_.c_str() << " | " << flags <<  std::endl;
-      // TODO: Handle partial buffer case.
-      //std::cout << "Creaking coz no newline_after_datalen" << std::endl << response_slice.data() << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
 
-    int32_t datalen = std::stoi(std::string(whitespace_after_flags + 1, newline_after_datalen - whitespace_after_flags - 1));
-
-    McData* mcdata_entry = entry->second.get();
+    int32_t datalen = std::stoi(
+        std::string(whitespace_after_flags + 1,
+            newline_after_datalen - whitespace_after_flags - 1));
     mcdata_entry->setValueLength(datalen);
 
-
-    //newline_after_data = response_slice.next_crlf();
     newline_after_data = response_slice.process_value(datalen);
     if (newline_after_data == nullptr) {
-      // TODO: Handle partial buffer case.
-      //std::cout << "Breaking coz no newline_after_DATA" << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
-
       break;
     }
 

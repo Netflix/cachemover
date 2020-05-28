@@ -20,13 +20,13 @@ class McData {
   McData(char *key, size_t keylen, int32_t expiry);
   void setValue(const char* data_ptr, size_t size);
   void setValueLength(size_t value_len) { value_len_ = value_len; }
-  void setFlags(int32_t flags) { flags_ = flags; }
+  void setFlags(uint16_t flags) { flags_ = flags; }
 
   void printValue();
 
   std::string& key() { return key_; }
   int32_t expiry() { return expiry_; }
-  int32_t flags() { return flags_; }
+  uint16_t flags() { return flags_; }
 
   char* Value() { return data_->mutable_data(); }
   size_t ValueLength() { return value_len_; }
@@ -49,7 +49,7 @@ class McData {
  private:
   std::string key_;
   int32_t expiry_;
-  int32_t flags_;
+  uint16_t flags_;
   size_t value_len_;
   std::unique_ptr<Slice> data_;
 
