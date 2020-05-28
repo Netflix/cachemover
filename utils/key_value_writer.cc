@@ -272,7 +272,7 @@ Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nr
     }
   }
 
-  if (err == EAGAIN || err = ESHUTDOWN) *broken_connection = true;
+  if (err == EAGAIN || err == ESHUTDOWN) *broken_connection = true;
   return recv_status;
 }
 

@@ -81,6 +81,7 @@ Dumper::Dumper(DumperOptions& opts)
             << "Max memory limit: " << opts_.max_memory_limit() << std::endl
             << "Max key file size: " << opts_.max_key_file_size() << std::endl
             << "Max data file size: " << opts_.max_data_file_size() << std::endl
+            << "Bulk get threshold: " << opts_.bulk_get_threshold() << std::endl
             << "Output directory: " << opts_.output_dir_path() << std::endl
             << std::endl;
   LOG(options_log.str());
