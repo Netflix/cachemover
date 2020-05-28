@@ -91,7 +91,7 @@ class MemcachedUtils {
     final_str.append(MemcachedUtils::ConvertIntToBytes(key->key().length(), 2));
     final_str.append(key->key().c_str());
     final_str.append(MemcachedUtils::ConvertIntToBytes(key->expiry(), 4));
-    final_str.append(MemcachedUtils::ConvertIntToBytes(key->flags(), 4));
+    final_str.append(MemcachedUtils::ConvertUInt16ToBytes(key->flags(), 4));
     final_str.append(MemcachedUtils::ConvertIntToBytes(key->ValueLength(), 4));
 
     return final_str;
@@ -108,6 +108,17 @@ class MemcachedUtils {
     std::vector<unsigned char> byte_array(out_bytes);
     for (int i = 0; i < out_bytes; i++) {
       byte_array[out_bytes - i - 1] = (int_param >> (i * 8));
+    }
+    std::string s(byte_array.begin(), byte_array.end());
+    return s;
+  }
+
+  // Converts 'uint16_param' to its byte representation in a string, and returns
+  // a string with 'out_bytes' number of bytes.
+  static std::string ConvertUInt16ToBytes(uint16_t uint16_param, int out_bytes) {
+    std::vector<unsigned char> byte_array(out_bytes);
+    for (int i = 0; i < out_bytes; i++) {
+      byte_array[out_bytes - i - 1] = (uint16_param >> (i * 8));
     }
     std::string s(byte_array.begin(), byte_array.end());
     return s;
