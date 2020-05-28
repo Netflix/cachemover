@@ -263,7 +263,7 @@ Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nr
     recv_status = mc_sock_->Recv(buf, size, nread);
     if (recv_status.ok()) { return Status::OK(); }
     err = errno;
-    if (err == EAGAIN) {
+    if (err == EAGAIN || err == ESHUTDOWN) {
       std::cout << owning_thread_name_ << ": Got EAGAIN. num_eagain_retries left: "
                 << num_eagain_retries << std::endl;
       --num_eagain_retries;
@@ -272,7 +272,7 @@ Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nr
     }
   }
 
-  if (err == EAGAIN) *broken_connection = true;
+  if (err == EAGAIN || err = ESHUTDOWN) *broken_connection = true;
   return recv_status;
 }
 
