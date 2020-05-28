@@ -13,13 +13,15 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <random>
 
 
 #define METADUMP_END_STR "END\r\n"
+#define METADUMP_BUSY_STR "BUSY currently processing crawler request\r\n"
 #define METADUMP_END_STRLEN 5
+#define METADUMP_BUSY_STRLEN 43
 
 namespace memcachedumper {
-
 
 //TODO: Clean up code.
 
@@ -39,19 +41,36 @@ void MetadumpTask::Execute() {
   // TODO: Change to assert()
   if (memcached_socket_ == nullptr) abort();
 
-  std::string metadump_cmd("lru_crawler metadump all\n");
-  Status send_status = SendCommand(metadump_cmd);
-  if (!send_status.ok()) {
-    LOG_ERROR(send_status.ToString());
-    std::cout << "RecvResponse() failed: " << send_status.ToString() << std::endl;
-    assert(false);
-  }
+  bool busy_crawler = true;
+  std::random_device rand_device;
+  std::mt19937 rand_generator(rand_device());
+  std::uniform_int_distribution<> uniform_distribution(3, 19);
 
-  Status stat = RecvResponse();
-  if (!stat.ok()) {
-    LOG_ERROR(stat.ToString());
-    std::cout << "RecvResponse() failed: " << stat.ToString() << std::endl;
-    assert(false);
+  while (busy_crawler) {
+
+    busy_crawler = false;
+    std::string metadump_cmd("lru_crawler metadump all\n");
+    Status send_status = SendCommand(metadump_cmd);
+    if (!send_status.ok()) {
+      LOG_ERROR(send_status.ToString());
+      std::cout << "RecvResponse() failed when sending: " << send_status.ToString() << std::endl;
+      assert(false);
+    }
+
+    Status stat = RecvResponse();
+
+    if (stat.IsBusyLRUCrawler()) {
+      int sleep_duration_s = uniform_distribution(rand_generator);
+      std::cout << "LRU crawler is busy. Retrying after " << sleep_duration_s << " seconds." << std::endl;
+      sleep(sleep_duration_s);
+      busy_crawler = true;
+      continue;
+    } else if (!stat.ok()) {
+      LOG_ERROR(stat.ToString());
+      std::cout << "RecvResponse() failed when reading: " << stat.ToString() << std::endl;
+      assert(false);
+    }
+
   }
 
   // Return socket.
@@ -84,12 +103,24 @@ Status MetadumpTask::RecvResponse() {
   chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
 
   bool reached_end = false;
+  int busy_crawler = 0;
+
   do {
     RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
 
 
     uint8_t *unwritten_tail = nullptr;
     size_t bytes_to_write = bytes_read;
+
+    busy_crawler = strncmp(reinterpret_cast<const char*>(&buf[bytes_read - METADUMP_BUSY_STRLEN]),
+            METADUMP_BUSY_STR, METADUMP_BUSY_STRLEN);
+
+
+    if (busy_crawler == 0) {
+      chunk_file.close();
+      mem_mgr_->ReturnBuffer(buf);
+      return Status::BusyLRUCrawler("LRU crawler is busy");
+    }
 
     reached_end =
         !strncmp(reinterpret_cast<const char*>(&buf[bytes_read - METADUMP_END_STRLEN]),

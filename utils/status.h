@@ -63,6 +63,9 @@ class Status {
   static Status OutOfMemoryError(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kOutOfMemoryError, msg, msg2);
   }
+  static Status BusyLRUCrawler(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kBusyLRUCrawler, msg, msg2);
+  }
 
   // Returns true iff the status indicates success.
   bool ok() const { return (state_ == nullptr); }
@@ -88,6 +91,9 @@ class Status {
   // Returns true iff the status indicates an OOM error.
   bool IsOutOfMemoryError() const { return code() == kOutOfMemoryError; }
 
+  // Returns true if the lru crawler is busy
+  bool IsBusyLRUCrawler() const {return  code() == kBusyLRUCrawler; }
+
   // Return a string representation of this status suitable for printing.
   // Returns the string "OK" for success.
   std::string ToString() const;
@@ -101,7 +107,8 @@ class Status {
     kInvalidArgument = 4,
     kIOError = 5,
     kNetworkError = 6,
-    kOutOfMemoryError = 7
+    kOutOfMemoryError = 7,
+    kBusyLRUCrawler = 8
   };
 
   Code code() const {
