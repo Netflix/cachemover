@@ -91,7 +91,6 @@ Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
     return Status::NetworkError("Recv EOF", strerror(errno));
   }
 
-    errno = ESHUTDOWN;
   *nbytes_read = nbytes;
   return Status::OK();
 }
