@@ -118,6 +118,7 @@ Status MetadumpTask::RecvResponse() {
 
     if (busy_crawler == 0) {
       chunk_file.close();
+      mem_mgr_->ReturnBuffer(buf);
       return Status::BusyLRUCrawler("LRU crawler is busy");
     }
 
