@@ -2,6 +2,7 @@
 set(TASKS_SRCS
   metadump_task.cc
   process_metabuf_task.cc
+  resume_task.cc
   task.cc
   task_thread.cc
   task_scheduler.cc
