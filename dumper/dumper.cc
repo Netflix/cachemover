@@ -25,8 +25,6 @@
 using std::string;
 using std::string_view;
 
-#define RESUME_MODE 1
-
 namespace memcachedumper {
 
 void DumperOptions::set_memcached_hostname(string_view memcached_hostname) {
@@ -151,7 +149,7 @@ void Dumper::Run() {
   {
     SCOPED_STOP_WATCH(&dumping_msw);
 
-    if (RESUME_MODE) {
+    if (opts_.is_resume_mode()) {
       // TODO
       ResumeTask *rtask = new ResumeTask();
       task_scheduler_->SubmitTask(rtask);
