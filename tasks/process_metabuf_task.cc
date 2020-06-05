@@ -15,6 +15,27 @@ ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
   : filename_(filename) {
 }
 
+std::string ProcessMetabufTask::UrlDecode(std::string& str){
+    std::string ret;
+    char ch;
+    int i, ii, len = str.length();
+
+    for (i=0; i < len; i++){
+        if(str[i] != '%'){
+            if(str[i] == '+')
+                ret += ' ';
+            else
+                ret += str[i];
+        }else{
+            sscanf(str.substr(i + 1, 2).c_str(), "%x", &ii);
+            ch = static_cast<char>(ii);
+            ret += ch;
+            i = i + 2;
+        }
+    }
+    return ret;
+}
+
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
   time_t now = std::time(0);
@@ -51,14 +72,19 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
     char *unused;
     int32_t expiry = strtol(exp_pos + 4, &unused, 10);
 
-    int decoded_keylen = 0;
-    char* decoded_key = curl_easy_unescape(
-        curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(
-            exp_pos - key_pos - 4 - 1), &decoded_keylen);
-    if (decoded_key == nullptr) {
-      std::cout << "Could not decode key! " << std::endl;
-      abort();
-    }
+    //int decoded_keylen = 0;
+    std::string encoded_key(const_cast<char*>(key_pos) + 4, static_cast<int>(
+            exp_pos - key_pos - 4 - 1));
+
+    std::string decoded_key = UrlDecode(encoded_key);
+
+    //char* decoded_key = curl_easy_unescape(
+    //    curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(
+    //        exp_pos - key_pos - 4 - 1), &decoded_keylen);
+    //if (decoded_key == nullptr) {
+    //  std::cout << "Could not decode key! " << std::endl;
+    //  abort();
+    //}
 
     if (expiry != -1 && MemcachedUtils::KeyExpiresSoon(now,
         static_cast<uint32_t>(expiry))) {
@@ -66,9 +92,11 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
       continue;
     }
 
-    McData *new_key = new McData(
-        decoded_key, static_cast<size_t>(decoded_keylen), expiry);
-    curl_free(decoded_key);
+    //McData *new_key = new McData(
+    //    decoded_key, static_cast<size_t>(decoded_keylen), expiry);
+    //curl_free(decoded_key);
+    McData *new_key = new McData(decoded_key, expiry);
+    
     data_writer_->QueueForProcessing(new_key);
   } while ((newline_pos = const_cast<char*>(mslice->next_newline())) != nullptr);
 
@@ -96,11 +124,11 @@ void ProcessMetabufTask::Execute() {
 	  return;
   }*/
 
-  curl_ = curl_easy_init();
-  if (curl_ == NULL) {
-    std::cout << "Could not initialize CURL library; exiting..." << std::endl;
-    abort();
-  }
+  // curl_ = curl_easy_init();
+  // if (curl_ == NULL) {
+  //   std::cout << "Could not initialize CURL library; exiting..." << std::endl;
+  //   abort();
+  // }
 
   Socket *mc_sock = owning_thread()->task_scheduler()->GetMemcachedSocket();
   assert(mc_sock != nullptr);
@@ -170,9 +198,8 @@ void ProcessMetabufTask::Execute() {
 
   owning_thread()->PrintNumKeysProcessed();
 
-  curl_easy_cleanup(curl_);
+  //curl_easy_cleanup(curl_);
   MarkCheckpoint();
-
 }
 
 } // namespace memcachedumper
