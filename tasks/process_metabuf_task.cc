@@ -8,6 +8,7 @@
 #include "utils/socket.h"
 
 #include <fstream>
+#include <sstream>
 
 namespace memcachedumper {
 
@@ -16,24 +17,24 @@ ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
 }
 
 std::string ProcessMetabufTask::UrlDecode(std::string& str){
-    std::string ret;
+    std::ostringstream oss;
     char ch;
     int i, ii, len = str.length();
 
     for (i=0; i < len; i++){
         if(str[i] != '%'){
             if(str[i] == '+')
-                ret += ' ';
+                oss << ' ';
             else
-                ret += str[i];
+                oss << str[i];
         }else{
             sscanf(str.substr(i + 1, 2).c_str(), "%x", &ii);
             ch = static_cast<char>(ii);
-            ret += ch;
+            oss << ch;
             i = i + 2;
         }
     }
-    return ret;
+    return oss.str();
 }
 
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
