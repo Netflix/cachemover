@@ -25,7 +25,7 @@ Status MemoryManager::PreallocateChunks() {
   for (int i = 0; i < num_chunks_; ++i) {
     uint8_t *buf = main_buff;
     free_buffers_.push_back(buf);
-    main_buff += chunk_size_;
+    main_buff += chunk_size_ + 1;
   }
 
   return Status::OK();
