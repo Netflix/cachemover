@@ -46,9 +46,7 @@ void WriteCompleteMarker(int num_files) {
 void MetadumpTask::Execute() {
 
   memcached_socket_ = owning_thread()->task_scheduler()->GetMemcachedSocket();
-
-  // TODO: Change to assert()
-  if (memcached_socket_ == nullptr) abort();
+  assert(memcached_socket_ != nullptr);
 
   bool busy_crawler = true;
   std::random_device rand_device;
@@ -62,7 +60,7 @@ void MetadumpTask::Execute() {
     Status send_status = SendCommand(metadump_cmd);
     if (!send_status.ok()) {
       LOG_ERROR(send_status.ToString());
-      std::cout << "RecvResponse() failed when sending: " << send_status.ToString() << std::endl;
+      std::cout << "SendCommand() failed: " << send_status.ToString() << std::endl;
       assert(false);
     }
 
@@ -103,16 +101,17 @@ Status MetadumpTask::RecvResponse() {
 
   LOG("Starting RecvResponse()");
   uint8_t *buf = mem_mgr_->GetBuffer();
+  assert(buf != nullptr);
   uint64_t chunk_size = mem_mgr_->chunk_size();
   int32_t bytes_read = 0;
   uint64_t bytes_written_to_file = 0;
   int num_files = 0;
   std::ofstream chunk_file;
   std::string chunk_file_name(file_path_ + file_prefix_ + std::to_string(num_files));
-  chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
+  chunk_file.open(chunk_file_name);
 
   bool reached_end = false;
-  int busy_crawler = 0;
+  bool busy_crawler = false;
 
   do {
     RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
@@ -121,11 +120,11 @@ Status MetadumpTask::RecvResponse() {
     uint8_t *unwritten_tail = nullptr;
     size_t bytes_to_write = bytes_read;
 
-    busy_crawler = strncmp(reinterpret_cast<const char*>(&buf[bytes_read - METADUMP_BUSY_STRLEN]),
-            METADUMP_BUSY_STR, METADUMP_BUSY_STRLEN);
+    busy_crawler = (strncmp(reinterpret_cast<const char*>(&buf[bytes_read - METADUMP_BUSY_STRLEN]),
+            METADUMP_BUSY_STR, METADUMP_BUSY_STRLEN) == 0) ? true:false;
 
 
-    if (busy_crawler == 0) {
+    if (busy_crawler) {
       chunk_file.close();
       mem_mgr_->ReturnBuffer(buf);
       return Status::BusyLRUCrawler("LRU crawler is busy");
@@ -170,14 +169,14 @@ Status MetadumpTask::RecvResponse() {
         std::string temp_str = file_path_ + file_prefix_ + std::to_string(num_files);
         chunk_file_name.replace(0, temp_str.length(), temp_str);
       }
-      chunk_file.open(file_path_ + file_prefix_ + std::to_string(num_files));
+      chunk_file.open(chunk_file_name);
       bytes_written_to_file = 0;
 
       // Write the last partial line if it exists.
       if (unwritten_tail) {
         size_t remaining_bytes = bytes_read - bytes_to_write;
         chunk_file.write(
-            reinterpret_cast<char*>(unwritten_tail), bytes_read - bytes_to_write);
+            reinterpret_cast<char*>(unwritten_tail), remaining_bytes);
         bytes_written_to_file = remaining_bytes;
       }
     }
