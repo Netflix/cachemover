@@ -32,7 +32,7 @@ This will create a bin/ directory under the root project directory. To run, pass
 $> cd ../bin/
 $> ./memcache-dumper -h
 Memcached dumper options
-Usage: ../bin/memcache-dumper [OPTIONS] [ip] [port] [threads] [bufsize] [memlimit] [key_file_size] [data_file_size] [output_dir] [bulk_get_threshold] [only_expire_after_s]
+Usage: ../bin/memcache-dumper [OPTIONS] [ip] [port] [threads] [bufsize] [memlimit] [key_file_size] [data_file_size] [output_dir] [bulk_get_threshold] [only_expire_after_s] [checkpoint_resume]
 
 Positionals:
   ip TEXT                     Memcached IP.
@@ -45,6 +45,7 @@ Positionals:
   output_dir TEXT             Desired output directory path.
   bulk_get_threshold INT      Number of keys to bulk get.
   only_expire_after_s INT     Only dump keys that expire after these many seconds.
+  checkpoint_resume BOOLEAN   Resume dump from previous incomplete run.
 
 Options:
   -h,--help                   Print this help message and exit
@@ -59,5 +60,8 @@ Options:
   -g,--bulk_get_threshold INT Number of keys to bulk get.
   -e,--only_expire_after_s INT
                               Only dump keys that expire after these many seconds.
+  -c,--checkpoint_resume BOOLEAN
+                              Resume dump from previous incomplete run.
+
 
 ```

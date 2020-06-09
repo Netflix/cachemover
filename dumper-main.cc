@@ -42,6 +42,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   uint64_t datafilesize;
   int only_expire_after;
   std::string output_dir_path;
+  bool checkpoint_resume;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
       "Memcached IP."));
@@ -63,6 +64,8 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       bulk_get_threshold, "Number of keys to bulk get."));
   IGNORE_RET_VAL(app.add_option("-e,--only_expire_after_s,only_expire_after_s",
       only_expire_after, "Only dump keys that expire after these many seconds."));
+  IGNORE_RET_VAL(app.add_option("-c,--checkpoint_resume,checkpoint_resume",
+      checkpoint_resume, "Resume dump from previous incomplete run."));
 
   CLI11_PARSE(app, argc, argv);
 
@@ -77,6 +80,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_output_dir_path(output_dir_path);
   opts.set_bulk_get_threshold(bulk_get_threshold);
   opts.set_only_expire_after(only_expire_after);
+  opts.set_resume_mode(checkpoint_resume);
 
   if (num_threads * 2 * bufsize > memlimit) {
         std::cout << "Total memory provisioned is not enough for the total threads and buffers !" << std::endl;

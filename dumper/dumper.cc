@@ -3,6 +3,7 @@
 #include "common/logger.h"
 #include "common/rest_endpoint.h"
 #include "tasks/metadump_task.h"
+#include "tasks/resume_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
 #include "utils/file_util.h"
@@ -70,6 +71,10 @@ void DumperOptions::set_only_expire_after(int only_expire_after) {
   only_expire_after_ = only_expire_after;
 }
 
+void DumperOptions::set_resume_mode(bool resume_mode) {
+  resume_mode_ = resume_mode;
+}
+
 Dumper::Dumper(DumperOptions& opts)
   : opts_(opts) {
   std::stringstream options_log;
@@ -116,7 +121,9 @@ Status Dumper::Init() {
   std::cout << "Data staging path: " << MemcachedUtils::GetDataStagingPath() << std::endl;
   std::cout << "Data final path: " << MemcachedUtils::GetDataFinalPath() << std::endl;
 
-  RETURN_ON_ERROR(CreateAndValidateOutputDirs());
+  if (!opts_.is_resume_mode()) {
+    RETURN_ON_ERROR(CreateAndValidateOutputDirs());
+  }
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
   RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
@@ -141,9 +148,16 @@ void Dumper::Run() {
   MonotonicStopWatch dumping_msw;
   {
     SCOPED_STOP_WATCH(&dumping_msw);
-    MetadumpTask *mtask = new MetadumpTask(
-        0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get());
-    task_scheduler_->SubmitTask(mtask);
+
+    if (opts_.is_resume_mode()) {
+      // TODO
+      ResumeTask *rtask = new ResumeTask();
+      task_scheduler_->SubmitTask(rtask);
+    } else {
+      MetadumpTask *mtask = new MetadumpTask(
+          0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get());
+      task_scheduler_->SubmitTask(mtask);
+    }
 
     task_scheduler_->WaitUntilTasksComplete();
   }

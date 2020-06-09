@@ -11,9 +11,8 @@
 
 namespace memcachedumper {
 
-ProcessMetabufTask::ProcessMetabufTask(const std::string& filename, int keyfile_idx)
-  : filename_(filename),
-    keyfile_idx_(keyfile_idx) {
+ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
+  : filename_(filename) {
 }
 
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
@@ -75,6 +74,20 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
 }
 
+void ProcessMetabufTask::MarkCheckpoint() {
+  std::ofstream checkpoint_file;
+
+  std::string chkpt_file_path =
+      MemcachedUtils::GetKeyFilePath() + "CHECKPOINTS_" + owning_thread()->thread_name();
+  checkpoint_file.open(chkpt_file_path, std::ofstream::app);
+
+  // Omit the path while writing the file name.
+  // Also add a new line after every file name.
+  std::string file_sans_path = filename_.substr(filename_.rfind("/") + 1) + "\n";
+  checkpoint_file.write(file_sans_path.c_str(), file_sans_path.length());
+  checkpoint_file.close();
+}
+
 void ProcessMetabufTask::Execute() {
 
   /*if (!(strcmp(filename_.c_str(), "test_prefix11") == 0)) {
@@ -94,8 +107,13 @@ void ProcessMetabufTask::Execute() {
 
   uint8_t* data_writer_buf = owning_thread()->mem_mgr()->GetBuffer();
   assert(data_writer_buf != nullptr);
+
+  // Extract the key file's index from its name, so that we can use the same index
+  // for data files.
+  std::string keyfile_idx_str = filename_.substr(filename_.rfind("_") + 1);
+
   data_writer_.reset(new KeyValueWriter(
-      MemcachedUtils::DataFilePrefix() + "_" + std::to_string(keyfile_idx_),
+      MemcachedUtils::DataFilePrefix() + "_" + keyfile_idx_str,
       owning_thread()->thread_name(),
       data_writer_buf, owning_thread()->mem_mgr()->chunk_size(),
       MemcachedUtils::MaxDataFileSize(), mc_sock));
@@ -154,6 +172,8 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
   owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
   curl_easy_cleanup(curl_);
+  MarkCheckpoint();
+
 }
 
 } // namespace memcachedumper

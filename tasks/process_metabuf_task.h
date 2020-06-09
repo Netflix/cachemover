@@ -15,7 +15,7 @@ class Socket;
 
 class ProcessMetabufTask : public Task {
  public:
-  ProcessMetabufTask(const std::string& filename, int num_files);
+  ProcessMetabufTask(const std::string& filename);
   ~ProcessMetabufTask() = default;
 
   void ProcessMetaBuffer(MetaBufferSlice* mslice);
@@ -23,10 +23,12 @@ class ProcessMetabufTask : public Task {
   void Execute() override;
 
  private:
-  std::string filename_;
 
-  // Index of the keyfile that we're processing.
-  int keyfile_idx_;
+  // Writes out 'filename_' to a thread specific checkpoint file to indicate that
+  // we've already processed that keyfile.
+  void MarkCheckpoint();
+
+  std::string filename_;
 
   std::unique_ptr<KeyValueWriter> data_writer_;
 

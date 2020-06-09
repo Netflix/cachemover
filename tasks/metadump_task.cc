@@ -34,6 +34,14 @@ MetadumpTask::MetadumpTask(int slab_class, const std::string& file_path,
     mem_mgr_(mem_mgr) {
 }
 
+void WriteCompleteMarker(int num_files) {
+  std::ofstream complete_marker_file;
+  complete_marker_file.open(MemcachedUtils::GetKeyFilePath() + "/ALL_KEYFILES_DUMPED");
+  std::string info_str = std::to_string(num_files) + " key files dumped.\n";
+  complete_marker_file.write(info_str.c_str(), info_str.length());
+  complete_marker_file.close();
+}
+
 void MetadumpTask::Execute() {
 
   memcached_socket_ = owning_thread()->task_scheduler()->GetMemcachedSocket();
@@ -149,9 +157,8 @@ Status MetadumpTask::RecvResponse() {
       chunk_file.close();
       chunk_file.clear();
       
-      // Start a task to process the keyfile.
       ProcessMetabufTask *ptask = new ProcessMetabufTask(
-          file_path_ + file_prefix_ + std::to_string(num_files), num_files);
+          file_path_ + file_prefix_ + std::to_string(num_files));
 
       TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
       task_scheduler->SubmitTask(ptask);
@@ -178,7 +185,7 @@ Status MetadumpTask::RecvResponse() {
 
   //printf("Scheduling ProcessMetabufTask: test_prefix%d", num_files);
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
-      file_path_ + file_prefix_ + std::to_string(num_files), num_files);
+      file_path_ + file_prefix_ + std::to_string(num_files));
 
   TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
   task_scheduler->SubmitTask(ptask);
@@ -186,6 +193,8 @@ Status MetadumpTask::RecvResponse() {
   num_files++;
 
   mem_mgr_->ReturnBuffer(buf);
+
+  WriteCompleteMarker(num_files);
   return Status::OK();
 }
 
