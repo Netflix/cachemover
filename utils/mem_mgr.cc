@@ -12,9 +12,8 @@ MemoryManager::MemoryManager(uint64_t chunk_size, int num_chunks)
 }
 
 Status MemoryManager::PreallocateChunks() {
-  std::lock_guard<std::mutex> lock(list_mutex_);
 
-  for (int i = 0; i < num_chunks_; ++i) {
+  for (size_t i = 0; i < num_chunks_; ++i) {
     uint8_t *buf = static_cast<uint8_t*>(malloc(chunk_size_));
     if (buf == nullptr) {
       return Status::OutOfMemoryError("Could not pre-allocate chunks");
@@ -41,6 +40,7 @@ uint8_t* MemoryManager::GetBuffer() {
 
 void MemoryManager::ReturnBuffer(uint8_t *buf) {
   std::lock_guard<std::mutex> lock(list_mutex_);
+  assert(free_buffers_.size() < num_chunks_);
   free_buffers_.push_back(buf);
 }
 

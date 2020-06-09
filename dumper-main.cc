@@ -78,6 +78,12 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_bulk_get_threshold(bulk_get_threshold);
   opts.set_only_expire_after(only_expire_after);
 
+  if (num_threads * 2 * bufsize > memlimit) {
+        std::cout << "Total memory provisioned is not enough for the total threads and buffers !" << std::endl;
+        LOG_ERROR("Received fatal error: Total memory provisioned is not enough for the total threads and buffers ! ");
+        exit(-1);
+  }
+
   return 0;
 }
 
