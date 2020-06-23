@@ -32,6 +32,7 @@ class DumperOptions {
   void set_output_dir_path(std::string_view output_dir_path);
   void set_only_expire_after(int only_expire_after);
   void set_resume_mode(bool resume_mode);
+  void set_is_s3_dump(bool is_s3_dump);
 
   std::string memcached_hostname() { return memcached_hostname_; }
   int memcached_port() { return memcached_port_; }
@@ -45,6 +46,7 @@ class DumperOptions {
   std::string output_dir_path() { return output_dir_path_; }
   int only_expire_after() { return only_expire_after_; }
   bool is_resume_mode() { return resume_mode_; }
+  bool is_s3_dump() { return is_s3_dump_; }
 
  private:
   // Hostname that contains target memecached.
@@ -72,6 +74,8 @@ class DumperOptions {
   // Indicates that we have to resume from a checkpoint and not start dumping
   // from scratch.
   bool resume_mode_;
+  // Uploads to S3 if set.
+  bool is_s3_dump_;
 };
 
 class Dumper {

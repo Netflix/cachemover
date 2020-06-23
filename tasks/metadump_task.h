@@ -13,7 +13,7 @@ class Socket;
 class MetadumpTask : public Task {
  public:
   MetadumpTask(int slab_class, const std::string& file_path,
-      uint64_t max_file_size, MemoryManager *mem_mgr);
+      uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump);
   ~MetadumpTask() = default;
 
   void Execute() override;
@@ -39,6 +39,9 @@ class MetadumpTask : public Task {
 
   // Pointer to a memory manager.
   MemoryManager *mem_mgr_;
+
+  // Passes on this value to a ProcessMetabufTask.
+  bool is_s3_dump_;
 
 };
 

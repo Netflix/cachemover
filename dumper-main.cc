@@ -43,7 +43,8 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   uint64_t datafilesize;
   int only_expire_after;
   std::string output_dir_path;
-  bool checkpoint_resume;
+  bool checkpoint_resume = false;
+  bool is_s3_dump = false;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
       "Memcached IP."));
@@ -67,6 +68,8 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       only_expire_after, "Only dump keys that expire after these many seconds."));
   IGNORE_RET_VAL(app.add_option("-c,--checkpoint_resume,checkpoint_resume",
       checkpoint_resume, "Resume dump from previous incomplete run."));
+  IGNORE_RET_VAL(app.add_option("-s,--s3_dump",
+      is_s3_dump, "Uploads dumped files to S3 if set."));
 
   CLI11_PARSE(app, argc, argv);
 
@@ -82,6 +85,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_bulk_get_threshold(bulk_get_threshold);
   opts.set_only_expire_after(only_expire_after);
   opts.set_resume_mode(checkpoint_resume);
+  opts.set_is_s3_dump(is_s3_dump);
 
   return 0;
 }

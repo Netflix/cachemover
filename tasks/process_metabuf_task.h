@@ -15,7 +15,7 @@ class Socket;
 
 class ProcessMetabufTask : public Task {
  public:
-  ProcessMetabufTask(const std::string& filename);
+  ProcessMetabufTask(const std::string& filename, bool is_s3_dump);
   ~ProcessMetabufTask() = default;
 
   void ProcessMetaBuffer(MetaBufferSlice* mslice);
@@ -34,6 +34,9 @@ class ProcessMetabufTask : public Task {
 
   // CURL object used for decoding URL encoded keys.
   CURL* curl_;
+
+  // Queues up an S3UploadTask on 'filename_' if true.
+  bool is_s3_dump_;
 };
 
 } // namespace memcachedumper

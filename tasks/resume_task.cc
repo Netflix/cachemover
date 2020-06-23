@@ -13,7 +13,8 @@
 namespace fs = std::experimental::filesystem;
 namespace memcachedumper {
 
-ResumeTask::ResumeTask() {
+ResumeTask::ResumeTask(bool is_s3_dump)
+  : is_s3_dump_(is_s3_dump){
 }
 
 
@@ -59,7 +60,7 @@ void ResumeTask::QueueUnprocessedFiles() {
   for (auto& file : unprocessed_files_) {
     std::cout << "Queueing " << file << std::endl;
     ProcessMetabufTask *ptask = new ProcessMetabufTask(
-        MemcachedUtils::GetKeyFilePath() + file);
+        MemcachedUtils::GetKeyFilePath() + file, is_s3_dump_);
     task_scheduler->SubmitTask(ptask);
   }
 }

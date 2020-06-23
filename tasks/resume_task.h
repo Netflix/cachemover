@@ -10,7 +10,7 @@ namespace memcachedumper {
 
 class ResumeTask : public Task {
  public:
-  ResumeTask();
+  ResumeTask(bool is_s3_dump);
   ~ResumeTask() = default;
 
   void Execute() override;
@@ -23,6 +23,9 @@ class ResumeTask : public Task {
 
  private:
   std::set<std::string> unprocessed_files_;
+
+  // Passes on this value to a ProcessMetabufTask.
+  bool is_s3_dump_;
 };
 
 } // namespace memcachedumper

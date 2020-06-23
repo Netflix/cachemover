@@ -12,8 +12,9 @@
 
 namespace memcachedumper {
 
-ProcessMetabufTask::ProcessMetabufTask(const std::string& filename)
-  : filename_(filename) {
+ProcessMetabufTask::ProcessMetabufTask(const std::string& filename, bool is_s3_dump)
+  : filename_(filename),
+    is_s3_dump_(is_s3_dump) {
 }
 
 void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
@@ -165,9 +166,11 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
   metafile.close();
 
-  S3UploadTask* upload_task = new S3UploadTask("evcache-test", MemcachedUtils::GetDataFinalPath(),
-      MemcachedUtils::DataFilePrefix() + "_" + std::to_string(keyfile_idx_));
-  owning_thread()->task_scheduler()->SubmitTask(upload_task);
+  if (is_s3_dump_) {
+    S3UploadTask* upload_task = new S3UploadTask("evcache-test", MemcachedUtils::GetDataFinalPath(),
+        MemcachedUtils::DataFilePrefix() + "_" + keyfile_idx_str);
+    owning_thread()->task_scheduler()->SubmitTask(upload_task);
+  }
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));

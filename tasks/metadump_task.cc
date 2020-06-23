@@ -26,12 +26,13 @@ namespace memcachedumper {
 //TODO: Clean up code.
 
 MetadumpTask::MetadumpTask(int slab_class, const std::string& file_path,
-    uint64_t max_file_size, MemoryManager *mem_mgr)
+    uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump)
   : slab_class_(slab_class),
     file_path_(file_path),
     file_prefix_(MemcachedUtils::KeyFilePrefix()),
     max_file_size_(max_file_size),
-    mem_mgr_(mem_mgr) {
+    mem_mgr_(mem_mgr),
+    is_s3_dump_(is_s3_dump) {
 }
 
 void WriteCompleteMarker(int num_files) {
@@ -159,7 +160,7 @@ Status MetadumpTask::RecvResponse() {
       chunk_file.clear();
       
       ProcessMetabufTask *ptask = new ProcessMetabufTask(
-          file_path_ + file_prefix_ + std::to_string(num_files));
+          file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);
 
       TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
       task_scheduler->SubmitTask(ptask);
@@ -186,7 +187,7 @@ Status MetadumpTask::RecvResponse() {
 
   //printf("Scheduling ProcessMetabufTask: test_prefix%d", num_files);
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
-      file_path_ + file_prefix_ + std::to_string(num_files));
+      file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);
 
   TaskScheduler *task_scheduler = owning_thread()->task_scheduler();
   task_scheduler->SubmitTask(ptask);

@@ -75,6 +75,10 @@ void DumperOptions::set_resume_mode(bool resume_mode) {
   resume_mode_ = resume_mode;
 }
 
+void DumperOptions::set_is_s3_dump(bool is_s3_dump) {
+  is_s3_dump_ = is_s3_dump;
+}
+
 Dumper::Dumper(DumperOptions& opts)
   : opts_(opts),
     s3_client_(s3_config_) {
@@ -152,11 +156,12 @@ void Dumper::Run() {
 
     if (opts_.is_resume_mode()) {
       // TODO
-      ResumeTask *rtask = new ResumeTask();
+      ResumeTask *rtask = new ResumeTask(opts_.is_s3_dump());
       task_scheduler_->SubmitTask(rtask);
     } else {
       MetadumpTask *mtask = new MetadumpTask(
-          0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get());
+          0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get(),
+          opts_.is_s3_dump());
       task_scheduler_->SubmitTask(mtask);
     }
 
