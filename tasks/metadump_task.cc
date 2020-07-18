@@ -122,7 +122,12 @@ Status MetadumpTask::RecvResponse() {
   int busy_crawler = 0;
 
   do {
-    RETURN_ON_ERROR(memcached_socket_->Recv(buf, chunk_size-1, &bytes_read));
+    Status stat = memcached_socket_->Recv(buf, chunk_size-1, &bytes_read);
+    if (stat.ok()) {
+      chunk_file.close();
+      mem_mgr_->ReturnBuffer(buf);
+      return stat;
+    }
 
 
     uint8_t *unwritten_tail = nullptr;
