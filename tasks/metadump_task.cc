@@ -123,7 +123,7 @@ Status MetadumpTask::RecvResponse() {
 
   do {
     Status stat = memcached_socket_->Recv(buf, chunk_size-1, &bytes_read);
-    if (stat.ok()) {
+    if (!stat.ok()) {
       chunk_file.close();
       mem_mgr_->ReturnBuffer(buf);
       return stat;
