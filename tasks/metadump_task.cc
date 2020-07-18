@@ -73,6 +73,14 @@ void MetadumpTask::Execute() {
       sleep(sleep_duration_s);
       busy_crawler = true;
       continue;
+    } else if (stat.IsNetworkError()) {
+      // This is a temporary way to deal with EAGAIN.
+      // TODO: This was done as a quick patch. Clean up later.
+      int sleep_duration_s = uniform_distribution(rand_generator);
+      std::cout << "Memcached not responding. Retrying after " << sleep_duration_s << " seconds." << std::endl;
+      sleep(sleep_duration_s);
+      // Treat as busy crawler for now.
+      busy_crawler = true;
     } else if (!stat.ok()) {
       LOG_ERROR(stat.ToString());
       std::cout << "RecvResponse() failed when reading: " << stat.ToString() << std::endl;
