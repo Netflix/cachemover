@@ -17,6 +17,15 @@ McData::McData(char *key, size_t keylen, int32_t expiry)
     get_attempts_(0) {
 }
 
+McData::McData(std::string& key, int32_t expiry)
+  : key_(key),
+    expiry_(expiry),
+    value_len_(0),
+    get_complete_(false),
+    complete_(false),
+    get_attempts_(0) {
+}
+
 void McData::setValue(const char* data, size_t size) {
   data_.reset(new Slice(data, size));
 }

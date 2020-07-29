@@ -18,6 +18,8 @@ class ProcessMetabufTask : public Task {
   ProcessMetabufTask(const std::string& filename, bool is_s3_dump);
   ~ProcessMetabufTask() = default;
 
+  std::string UrlDecode(std::string& str);
+
   void ProcessMetaBuffer(MetaBufferSlice* mslice);
 
   void Execute() override;
