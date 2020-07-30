@@ -40,14 +40,12 @@ uint8_t* MemoryManager::GetBuffer() {
 
   uint8_t *buf = free_buffers_.back();
   free_buffers_.pop_back();
-  std::cout << "Getting " <<  free_buffers_.size() << std::endl;
   return buf;
 }
 
 void MemoryManager::ReturnBuffer(uint8_t *buf) {
   std::lock_guard<std::mutex> lock(list_mutex_);
   free_buffers_.push_back(buf);
-  std::cout << "Returned " <<  free_buffers_.size() << std::endl;
 }
 
 } // namespace memcachedumper

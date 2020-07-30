@@ -205,7 +205,7 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
   owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
 
-  owning_thread()->PrintNumKeysProcessed();
+  //owning_thread()->PrintNumKeysProcessed();
 
   //curl_easy_cleanup(curl_);
   MarkCheckpoint();
