@@ -12,7 +12,7 @@ namespace memcachedumper {
 void DumperMain(DumperOptions& opts) {
 
   // Initialize our global logger.
-  Logger::InitGlobalLogger("global_logger", opts.log_file_path());
+  Logger::InitGlobalLogger("logger", opts.log_file_path());
 
   // Set up the dumper with the provided options.
   Dumper dumper(opts);

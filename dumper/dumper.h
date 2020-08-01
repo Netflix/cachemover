@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/status.h"
+#include "utils/stopwatch.h"
 
 #include <memory>
 #include <string>
@@ -88,6 +89,8 @@ class Dumper {
 
   MemoryManager *mem_mgr() { return mem_mgr_.get(); }
 
+  std::string TimeElapsed() { return total_msw_.HumanElapsedStr(); }
+
   // Initializes the dumper by connecting to memcached.
   Status Init();
 
@@ -123,6 +126,9 @@ class Dumper {
 
   Aws::Client::ClientConfiguration s3_config_;
   Aws::S3::S3Client s3_client_;
+
+  // Stopwatch to run for the entire duration of the dumper.
+  MonotonicStopWatch total_msw_;
 
 };
 

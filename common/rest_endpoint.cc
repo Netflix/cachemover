@@ -1,4 +1,5 @@
 #include "common/rest_endpoint.h"
+#include "dumper/dumper.h"
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -40,15 +41,19 @@ void RESTServer::HandleGet(const Rest::Request& request,
   // Allocator for object
   rapidjson::Document::AllocatorType& allocator = root.GetAllocator();
 
-  rapidjson::Value metrics_obj(rapidjson::kObjectType);
-  metrics_obj.AddMember("dumped",
+  rapidjson::Value kv_metrics_obj(rapidjson::kObjectType);
+  kv_metrics_obj.AddMember("dumped",
       task_scheduler_->total_keys_processed(), allocator);
-  metrics_obj.AddMember("missed",
+  kv_metrics_obj.AddMember("not_found",
       task_scheduler_->total_keys_missing(), allocator);
-  metrics_obj.AddMember("ignored",
+  kv_metrics_obj.AddMember("skipped",
       task_scheduler_->total_keys_ignored(), allocator);
+  root.AddMember("keyvalue_metrics", kv_metrics_obj, allocator);
 
-  root.AddMember("metrics", metrics_obj, allocator);
+  std::string elapsed_str = task_scheduler_->dumper()->TimeElapsed();
+  Value elapsed_val;
+  elapsed_val.SetString(elapsed_str.c_str(), elapsed_str.length(), allocator);
+  root.AddMember("time_elapsed", elapsed_val, allocator);
 
   rapidjson::StringBuffer strbuf;
   rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);

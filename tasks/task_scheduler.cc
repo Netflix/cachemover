@@ -92,8 +92,8 @@ void TaskScheduler::MarkTaskComplete(Task *task) {
 std::string TaskScheduler::MetricsAsString() {
   std::stringstream ss;
   ss  << "Metrics -> Dumped: " << total_keys_processed()
-      << ". Ignored: " << total_keys_ignored()
-      << ". Missing: " << total_keys_missing() << std::endl;
+      << ". Not found: " << total_keys_ignored()
+      << ". Skipped (expires soon): " << total_keys_missing() << std::endl;
 
   return ss.str();
 }

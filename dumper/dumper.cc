@@ -11,7 +11,6 @@
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 #include "utils/socket_pool.h"
-#include "utils/stopwatch.h"
 
 #include <iostream>
 #include <sstream>
@@ -150,9 +149,8 @@ void Dumper::ReleaseMemcachedSocket(Socket *sock) {
 
 void Dumper::Run() {
 
-  MonotonicStopWatch dumping_msw;
   {
-    SCOPED_STOP_WATCH(&dumping_msw);
+    SCOPED_STOP_WATCH(&total_msw_);
 
     if (opts_.is_resume_mode()) {
       // TODO
@@ -180,7 +178,7 @@ void Dumper::Run() {
       << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
       << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
       << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
-      << " -Time taken: " << dumping_msw.HumanElapsedStr() << std::endl;
+      << " -Time taken: " << total_msw_.HumanElapsedStr() << std::endl;
   LOG("Status: All tasks completed. Exiting...");
 }
 
