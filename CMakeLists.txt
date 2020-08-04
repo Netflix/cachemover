@@ -36,6 +36,7 @@ endif(ASAN_ENABLED)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+find_package(OpenSSL 1.1.0 REQUIRED)
 # RapidJSON for metrics reporting
 find_package(RapidJSON REQUIRED)
 # Curl for URL decoding

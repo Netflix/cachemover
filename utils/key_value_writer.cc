@@ -51,9 +51,13 @@ void stupid_debug_func() {
 }
 
 Status KeyValueWriter::Init() {
-  rotating_data_files_.reset(new RotatingFile(
-      MemcachedUtils::GetDataStagingPath(), data_file_prefix_, max_file_size_,
-      MemcachedUtils::GetDataFinalPath()));
+  rotating_data_files_.reset(
+      new RotatingFile(
+        MemcachedUtils::GetDataStagingPath(),
+        data_file_prefix_,
+        max_file_size_,
+        MemcachedUtils::GetDataFinalPath(),
+        true /* suffix checksum */));
   RETURN_ON_ERROR(rotating_data_files_->Init());
 
   return Status::OK();
@@ -64,7 +68,6 @@ Status KeyValueWriter::WriteCompletedEntries() {
   MonotonicStopWatch total_msw;
 
   total_msw.Start();
-  //uint32_t n_iovecs = num_complete_entries * PER_KEY_DATAPOINTS;
   uint32_t n_iovecs = std::min(
       static_cast<uint32_t>(1024), n_unwritten_processed_keys_ * 2);
   struct iovec iovecs[n_iovecs];
@@ -93,8 +96,6 @@ Status KeyValueWriter::WriteCompletedEntries() {
 
     iovecs[iovec_idx + 1].iov_base = mcdata_entry->Value();
     iovecs[iovec_idx + 1].iov_len = mcdata_entry->ValueLength();
-    //std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
-    //std::cout << "Iovec writing KEY: " << mcdata_entry->key() << std::endl;
     ++num_processed_keys_;
     ++it;
     iovec_idx += 2;

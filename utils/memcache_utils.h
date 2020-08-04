@@ -18,6 +18,7 @@ namespace memcachedumper {
 class McData {
  public:
   McData(char *key, size_t keylen, int32_t expiry);
+  McData(std::string& key, int32_t expiry);
   void setValue(const char* data_ptr, size_t size);
   void setValueLength(size_t value_len) { value_len_ = value_len; }
   void setFlags(uint16_t flags) { flags_ = flags; }

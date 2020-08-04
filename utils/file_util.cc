@@ -71,11 +71,12 @@ Status PosixFile::Close() {
 }
 
 RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
-    uint64_t max_file_size)
+    uint64_t max_file_size, bool suffix_checksum)
   : file_path_(file_path),
     file_prefix_(file_prefix),
     max_file_size_(max_file_size),
     optional_dest_path_(""),
+    suffix_checksum_(suffix_checksum),
     cur_file_(nullptr),
     nfiles_(0),
     nwritten_current_(0),
@@ -83,11 +84,13 @@ RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
 }
 
 RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
-    uint64_t max_file_size, std::string optional_dest_path)
+    uint64_t max_file_size, std::string optional_dest_path,
+    bool suffix_checksum)
   : file_path_(file_path),
     file_prefix_(file_prefix),
     max_file_size_(max_file_size),
     optional_dest_path_(optional_dest_path),
+    suffix_checksum_(suffix_checksum),
     cur_file_(nullptr),
     nfiles_(0),
     nwritten_current_(0),
@@ -96,10 +99,16 @@ RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
 
 Status RotatingFile::Init() {
 
-  cur_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
+  staging_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
   cur_file_.reset(new PosixFile(
-      std::string(file_path_ + cur_file_name_)));
+      std::string(file_path_ + staging_file_name_)));
   RETURN_ON_ERROR(cur_file_->Open());
+
+  if (suffix_checksum_) {
+    md5_ctx_.reset(new MD5_CTX());
+    int ret = MD5_Init(md5_ctx_.get());
+    if (ret != 1) return Status::IOError("MD5_Update failed");
+  }
 
   return Status::OK();
 }
@@ -108,12 +117,13 @@ Status RotatingFile::Fsync() {
   int ret = fsync(cur_file_->fd());
   if (ret < 0) {
     int err = errno;
-    return Status::IOError("Could not fsync() file " + cur_file_name_, strerror(err));
+    return Status::IOError("Could not fsync() file " + staging_file_name_, strerror(err));
   }
 
   return Status::OK();
 }
 
+<<<<<<< HEAD
 Status RotatingFile::FsyncDestDir() {
   std::string dest_dir = MemcachedUtils::GetDataFinalPath();
   int dir_fd = open(dest_dir.c_str(), O_RDONLY);
@@ -133,25 +143,75 @@ Status RotatingFile::FsyncDestDir() {
 }
 
 Status RotatingFile::RotateFile() {
+=======
+Status RotatingFile::FinalizeCurrentFile() {
+
+  std::string final_filename_fq;
+
+  // If requested, append the file checksum to the filename.
+  if (suffix_checksum_) {
+    unsigned char digest[MD5_DIGEST_LENGTH];
+    int ret = MD5_Final(digest, md5_ctx_.get());
+    if (ret != 1) return Status::IOError("MD5_Final failed");
+
+    std::string digest_hex;
+    digest_hex.reserve(MD5_DIGEST_LENGTH);
+
+    for (std::size_t i = 0; i != 16; ++i) {
+      digest_hex += "0123456789ABCDEF"[digest[i] / 16];
+      digest_hex += "0123456789ABCDEF"[digest[i] % 16];
+    }
+
+    md5_ctx_.reset(new MD5_CTX());
+
+    final_filename_fq = optional_dest_path_ + file_prefix_ + "_" + digest_hex;
+  } else {
+
+    // Use the staging file name if a checksum wasn't requested.
+    final_filename_fq = optional_dest_path_ + "_" + staging_file_name_;
+  }
+>>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
 
   // Explicitly fsync()
-  Fsync();
+  RETURN_ON_ERROR(Fsync());
   RETURN_ON_ERROR(cur_file_->Close());
+
+  // If requested, move the file to the final path.
   if (!optional_dest_path_.empty()) {
+<<<<<<< HEAD
     FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
     std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
     RETURN_ON_ERROR(FsyncDestDir());
+=======
+    FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
+    std::cout << "File: " << final_filename_fq << " complete." << std::endl;
+>>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
   }
+
+  return Status::OK();
+}
+
+Status RotatingFile::RotateFile() {
+
+  RETURN_ON_ERROR(FinalizeCurrentFile());
   ++nfiles_;
 
-  cur_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
+  staging_file_name_ = file_prefix_ + "_" + std::to_string(nfiles_);
   cur_file_.reset(new PosixFile(
-      std::string(file_path_ + cur_file_name_)));
+      std::string(file_path_ + staging_file_name_)));
   RETURN_ON_ERROR(cur_file_->Open());
   return Status::OK();
 }
 
 Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritten) {
+
+  if (suffix_checksum_) {
+    for (int i = 0; i < n_iovecs; ++i) {
+      int ret = MD5_Update(md5_ctx_.get(), iovecs[i].iov_base, iovecs[i].iov_len);
+      if (ret != 1) return Status::IOError("MD5_Update failed");
+    }
+  }
+
   RETURN_ON_ERROR(cur_file_->WriteV(iovecs, n_iovecs, nwritten));
   assert(nwritten >= 0);
 
@@ -170,6 +230,7 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 }
 
 Status RotatingFile::Finish() {
+<<<<<<< HEAD
   // Explicitly fsync()
   Fsync();
   RETURN_ON_ERROR(cur_file_->Close());
@@ -178,7 +239,10 @@ Status RotatingFile::Finish() {
     std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
     RETURN_ON_ERROR(FsyncDestDir());
   }
+=======
+>>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
 
+  RETURN_ON_ERROR(FinalizeCurrentFile());
   return Status::OK();
 }
 

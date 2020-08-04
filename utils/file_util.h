@@ -9,6 +9,8 @@
 #include <memory>
 #include <string>
 
+#include <openssl/md5.h>
+
 namespace memcachedumper {
 
 class FileUtils {
@@ -42,9 +44,12 @@ class PosixFile {
 /// is met.
 class RotatingFile {
  public:
-  RotatingFile(std::string file_path, std::string file_prefix, uint64_t max_file_size);
-  RotatingFile(std::string file_path, std::string file_prefix, uint64_t max_file_size,
-    std::string optional_dest_path);
+  RotatingFile(std::string file_path, std::string file_prefix,
+      uint64_t max_file_size, bool suffix_checksum);
+
+  RotatingFile(std::string file_path, std::string file_prefix,
+      uint64_t max_file_size, std::string optional_dest_path,
+      bool suffix_checksum);
 
   // Initialize by creating the first file.
   Status Init();
@@ -63,10 +68,27 @@ class RotatingFile {
   // Optional path to move the files to after closing them.
   std::string optional_dest_path_;
 
+  // Calculate checksum and append to end of final filename if 'true'.
+  bool suffix_checksum_;
+  // Used for calculating the checksum of the current file.
+  // Used a unique pointer here so we can reset it for every new file after
+  // every call to RotateFile().
+  std::unique_ptr<MD5_CTX> md5_ctx_;
+
+  // 'Epilogue' of current file, where we take all necessary actions before
+  // before it is ready for closing.
+  //
+  // For now, we calculate the md5 hash (if suffix_checksum_ == true) and
+  // move the file to the 'optional_dest_path_' if provided.
+  //
+  // Must be called AFTER all writes to file are done but BEFORE closing it.
+  Status FinalizeCurrentFile();
+
+  // Closes the current file and opens a new one.
   Status RotateFile();
 
-  // Current filename.
-  std::string cur_file_name_;
+  // The filname of the file before moving it to 'optional_dest_path_'.
+  std::string staging_file_name_;
   // Current file handler.
   std::unique_ptr<PosixFile> cur_file_;
   // Number of files written to totally.
