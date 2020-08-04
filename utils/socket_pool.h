@@ -23,7 +23,7 @@ class SocketPool {
  private:
   std::string hostname_;
   int port_;
-  int num_sockets_;
+  size_t num_sockets_;
 
   Sockaddr sockaddr_;
   std::vector<Socket*> sockets_;

@@ -56,6 +56,7 @@ class RotatingFile {
 
   Status WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritten);
   Status Fsync();
+  Status FsyncDestDir();
 
   Status Finish();
 

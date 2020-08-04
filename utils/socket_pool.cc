@@ -17,7 +17,7 @@ SocketPool::SocketPool(std::string_view hostname, int port, int num_sockets)
 Status SocketPool::PrimeConnections() {
   RETURN_ON_ERROR(sockaddr_.ResolveAndPopulateSockaddr(hostname_, port_));
 
-  for (int i = 0; i < num_sockets_; ++i) {
+  for (size_t i = 0; i < num_sockets_; ++i) {
     sockets_.push_back(new Socket());
     Socket *sock = sockets_[i];
     RETURN_ON_ERROR(sock->Create());
@@ -48,6 +48,7 @@ Socket* SocketPool::GetSocket() {
 
 void SocketPool::ReleaseSocket(Socket *sock) {
   std::lock_guard<std::mutex> lock(mutex_);
+  assert(sockets_.size() < num_sockets_);
   sockets_.push_back(sock);
 }
 

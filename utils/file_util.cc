@@ -1,4 +1,5 @@
 #include "utils/file_util.h"
+#include "utils/memcache_utils.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -122,6 +123,26 @@ Status RotatingFile::Fsync() {
   return Status::OK();
 }
 
+
+Status RotatingFile::FsyncDestDir() {
+  std::string dest_dir = MemcachedUtils::GetDataFinalPath();
+  int dir_fd = open(dest_dir.c_str(), O_RDONLY);
+  if (dir_fd < 0) {
+    return Status::IOError(dest_dir, strerror(errno));
+  }
+
+  if (fsync(dir_fd) < 0) {
+    return Status::IOError("Could not fsync() directory " + dest_dir, strerror(errno));
+  }
+
+  if (close(dir_fd) < 0) {
+    return Status::IOError(dest_dir, strerror(errno));
+  }
+
+  return Status::OK();
+}
+
+
 Status RotatingFile::FinalizeCurrentFile() {
 
   std::string final_filename_fq;
@@ -157,6 +178,7 @@ Status RotatingFile::FinalizeCurrentFile() {
   if (!optional_dest_path_.empty()) {
     FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
     std::cout << "File: " << final_filename_fq << " complete." << std::endl;
+    RETURN_ON_ERROR(FsyncDestDir());
   }
 
   return Status::OK();
