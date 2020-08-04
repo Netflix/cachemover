@@ -176,8 +176,8 @@ Status RotatingFile::FinalizeCurrentFile() {
 
   // If requested, move the file to the final path.
   if (!optional_dest_path_.empty()) {
-    FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
-    std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
+    FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
+    std::cout << "File: " << final_filename_fq << " complete." << std::endl;
     RETURN_ON_ERROR(FsyncDestDir());
   }
 
