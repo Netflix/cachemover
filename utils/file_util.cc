@@ -123,7 +123,7 @@ Status RotatingFile::Fsync() {
   return Status::OK();
 }
 
-<<<<<<< HEAD
+
 Status RotatingFile::FsyncDestDir() {
   std::string dest_dir = MemcachedUtils::GetDataFinalPath();
   int dir_fd = open(dest_dir.c_str(), O_RDONLY);
@@ -142,8 +142,7 @@ Status RotatingFile::FsyncDestDir() {
   return Status::OK();
 }
 
-Status RotatingFile::RotateFile() {
-=======
+
 Status RotatingFile::FinalizeCurrentFile() {
 
   std::string final_filename_fq;
@@ -170,7 +169,6 @@ Status RotatingFile::FinalizeCurrentFile() {
     // Use the staging file name if a checksum wasn't requested.
     final_filename_fq = optional_dest_path_ + "_" + staging_file_name_;
   }
->>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
 
   // Explicitly fsync()
   RETURN_ON_ERROR(Fsync());
@@ -178,14 +176,9 @@ Status RotatingFile::FinalizeCurrentFile() {
 
   // If requested, move the file to the final path.
   if (!optional_dest_path_.empty()) {
-<<<<<<< HEAD
     FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
     std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
     RETURN_ON_ERROR(FsyncDestDir());
-=======
-    FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
-    std::cout << "File: " << final_filename_fq << " complete." << std::endl;
->>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
   }
 
   return Status::OK();
@@ -230,17 +223,6 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 }
 
 Status RotatingFile::Finish() {
-<<<<<<< HEAD
-  // Explicitly fsync()
-  Fsync();
-  RETURN_ON_ERROR(cur_file_->Close());
-  if (!optional_dest_path_.empty()) {
-    FileUtils::MoveFile(cur_file_->filename(), optional_dest_path_ + cur_file_name_);
-    std::cout << "File: " << cur_file_name_ << " complete." << std::endl;
-    RETURN_ON_ERROR(FsyncDestDir());
-  }
-=======
->>>>>>> 20ebe08dbb1133b452ca9466c2132e11341b902d
 
   RETURN_ON_ERROR(FinalizeCurrentFile());
   return Status::OK();
