@@ -11,7 +11,9 @@ build-image: dockerregistry.test.netflix.net:7002/engtools/newt-common-builder/b
 
 build-setup:
   - sudo apt-get update
-  - sudo apt-get install -y cmake g++ libcurl4-openssl-dev rapidjson-dev
+  - sudo apt-get install -y cmake g++ libcurl4-openssl-dev rapidjson-dev libssl-dev uuid-dev zlib1g-dev libpulse-dev
+  - CWD=$(pwd)
+  - cd ./extern/ && git clone --branch 1.7.332 https://github.com/aws/aws-sdk-cpp.git && mkdir -p aws-sdk-cpp/build && cd aws-sdk-cpp/build && cmake -DBUILD_ONLY="s3" -DAUTORUN_UNIT_TESTS=OFF -DBUILD_SHARED_LIBS=OFF .. && sudo make && sudo make install && cd $CWD
 build-steps:
   - rm -rf ./build/
   - mkdir -p ./build/
