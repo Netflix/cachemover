@@ -107,7 +107,7 @@ Status RotatingFile::Init() {
   if (suffix_checksum_) {
     md5_ctx_.reset(new MD5_CTX());
     int ret = MD5_Init(md5_ctx_.get());
-    if (ret != 1) return Status::IOError("MD5_Update failed");
+    if (ret != 1) return Status::IOError("MD5_Init failed");
   }
 
   return Status::OK();
@@ -162,6 +162,8 @@ Status RotatingFile::FinalizeCurrentFile() {
     }
 
     md5_ctx_.reset(new MD5_CTX());
+    ret = MD5_Init(md5_ctx_.get());
+    if (ret != 1) return Status::IOError("MD5_Init failed");
 
     final_filename_fq = optional_dest_path_ + file_prefix_ + "_" + digest_hex;
   } else {
@@ -200,6 +202,7 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
 
   if (suffix_checksum_) {
     for (int i = 0; i < n_iovecs; ++i) {
+
       int ret = MD5_Update(md5_ctx_.get(), iovecs[i].iov_base, iovecs[i].iov_len);
       if (ret != 1) return Status::IOError("MD5_Update failed");
     }

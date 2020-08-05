@@ -157,7 +157,7 @@ void ProcessMetabufTask::Execute() {
     LOG_ERROR("FAILED TO INITIALIZE KeyValueWriter");
     owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
     owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
-    curl_easy_cleanup(curl_);
+    //curl_easy_cleanup(curl_);
     return;
   }
 
@@ -208,7 +208,7 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
   owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
-  curl_easy_cleanup(curl_);
+  //curl_easy_cleanup(curl_);
   MarkCheckpoint();
 }
 
