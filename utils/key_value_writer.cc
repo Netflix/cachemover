@@ -109,10 +109,6 @@ Status KeyValueWriter::WriteCompletedEntries() {
         RETURN_ON_ERROR(rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten));
       }
 
-      /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
-                << ") IOVEC Writing elapsed: "
-                << msw.ElapsedTime() << " | Nwritten: " << nwritten << std::endl;*/
-
       iovec_idx = 0;
       n_unwritten_processed_keys_ -= (n_iovecs / 2);
     }
@@ -124,14 +120,6 @@ Status KeyValueWriter::WriteCompletedEntries() {
     RETURN_ON_ERROR(rotating_data_files_->WriteV(iovecs, iovec_idx, &nwritten));
     n_unwritten_processed_keys_ -= (iovec_idx / 2);
   }
-  //std::cout << "GOING TO WRITE " << iovec_idx << " DATA!!!" << std::endl;
-
-  //RotatingFile* out_files = new RotatingFile(data_file_prefix_, max_file_size_);
-  //out_files->Init();
-
-  //std::cout << "Wrote " << nwritten << " bytes." << std::endl << std::endl;
-
-  //out_files->Finish();
 
   // TODO: Find better way to erase written entries from map.
   it = mcdata_entries_processing_.begin();
@@ -147,8 +135,6 @@ Status KeyValueWriter::WriteCompletedEntries() {
   }
 
   total_msw.Stop();
-  //std::cout << "Total WriteCompletedEntries elapsed: " << total_msw.ElapsedTime()
-  //          << std::endl;
 
   return Status::OK();
 }
@@ -178,7 +164,6 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
       //stupid_debug_func();
 
       // TODO: Handle partial buffer case.
-      //std::cout << "Breaking coz no whitespace_after_key" << std::endl;
       broken_buffer_state_ = response_slice.parse_state();
       break;
     }
@@ -187,7 +172,7 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
 
     auto entry = mcdata_entries_processing_.find(cur_key_.c_str());
     if (entry == mcdata_entries_processing_.end()) {
-      std::cout << "COULD NOT FIND KEY: " << cur_key_.c_str() << std::endl;
+      LOG_ERROR("COULD NOT FIND KEY: {0}", cur_key_.c_str());
       assert(entry != mcdata_entries_processing_.end());
       abort();
     }
@@ -223,15 +208,12 @@ uint32_t KeyValueWriter::ProcessBulkResponse() {
 
     mcdata_entry->setValue(newline_after_datalen + 2, datalen);
 
-    mcdata_entry->printValue();
     mcdata_entry->MarkComplete();
     ++n_complete_entries;
 
   } while (response_slice.bytes_pending() > 0); // TODO: Redundant loop condition; change.
 
   total_msw.Stop();
-  //std::cout << "Total ProcessBulkResponse elapsed: " << total_msw.ElapsedTime()
-  //          << std::endl;
 
   return n_complete_entries;
 }
@@ -255,8 +237,7 @@ Status KeyValueWriter::RecvFromMemcached(uint8_t *buf, int32_t size, int32_t *nr
     if (recv_status.ok()) { return Status::OK(); }
     err = errno;
     if (err == EAGAIN || err == ESHUTDOWN) {
-      std::cout << owning_thread_name_ << ": Got EAGAIN. num_eagain_retries left: "
-                << num_eagain_retries << std::endl;
+      LOG_ERROR("Got EAGAIN. Recv retries left: {0}", num_eagain_retries);
       --num_eagain_retries;
     } else {
       break;
@@ -338,10 +319,6 @@ Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
           broken_connection));
     }
 
-    /*std::cout << "(" << owning_thread_name_ <<  ", " << data_file_prefix_
-          << ") Bulk get elapsed: "
-          << msw.ElapsedTime() << "   ||  Free space: " << remaining_space
-<< "  ||  nread: " << nread << std::endl;*/
     assert(nread > 0);
     buffer_current_ = buffer_current_ + nread;
     remaining_space = buffer_free_bytes();
@@ -349,7 +326,7 @@ Status KeyValueWriter::BulkGetKeys(bool* broken_connection) {
     // Nothing to process.
     // TODO: Is this even possible? See assert(nread > 0) above.
     if (remaining_space == capacity_) {
-      std::cout << "WTF???" << std::endl;
+      LOG("WTF???");
       return Status::OK();
     }
 
@@ -386,7 +363,7 @@ void KeyValueWriter::ProcessKeys(bool flush) {
   do {
     Status bulk_get_status = BulkGetKeys(&broken_connection);
     if (!bulk_get_status.ok() && !broken_connection) {
-      std::cout << "BulkGetKeys failure. " << bulk_get_status.ToString() << std::endl;
+      LOG_ERROR("BulkGetKeys failure. (Status: {0})", bulk_get_status.ToString());
 
       // TODO: Fail gracefully.
       abort();
@@ -406,8 +383,7 @@ void KeyValueWriter::ProcessKeys(bool flush) {
     // Write fully processed entries.
     Status write_status = WriteCompletedEntries();
     if (!write_status.ok()) {
-      std::cout << "WriteCompletedEntries failure. "
-                << write_status.ToString() << std::endl;
+      LOG_ERROR("WriteCompletedEntries failure. (Status: {0})", write_status.ToString());
       // TODO: Fail gracefully.
       abort();
     }
@@ -439,10 +415,10 @@ void KeyValueWriter::ProcessKeys(bool flush) {
   // If our connection was broken, refresh the connection.
   // We will process the keys in the next call to this function.
   if (broken_connection) {
-    std::cout << "Connection is broken, refreshing it." << std::endl;
+    LOG("Connection is broken, refreshing it.");
     Status refresh_status = mc_sock_->Refresh();
     if (!refresh_status.ok()) {
-      std::cout << "Failed to refresh connection" << std::endl;
+      LOG_ERROR("Failed to refresh connection");
       abort();
     }
 
@@ -451,9 +427,6 @@ void KeyValueWriter::ProcessKeys(bool flush) {
     // TODO: Avoid a recursive call.
     ProcessKeys(flush);
   }
-  //std::cout << "Total time (ProcessKeys): " << total_msw.ElapsedTime()
-  //          << "  |(" << owning_thread_name_
-  //          << "): " << data_file_prefix_ << std::endl;
 }
 
 void KeyValueWriter::QueueForProcessing(McData* mc_key) {
@@ -461,7 +434,6 @@ void KeyValueWriter::QueueForProcessing(McData* mc_key) {
   ++n_keys_pending_;
   ++total_keys_to_process_;
 
-  //std::cout << "Added key: " << mc_key->key() << std::endl;
   // Time to do a bulk get of all keys gathered so far and write their values to a file.
   //if (mcdata_entries_.size() == BULK_GET_THRESHOLD) {
   if (n_keys_pending_ >= MemcachedUtils::BulkGetThreshold()) {
@@ -480,21 +452,20 @@ Status KeyValueWriter::Finalize() {
   RETURN_ON_ERROR(rotating_data_files_->Finish());
 
   if (total_keys_to_process_ != num_processed_keys_) {
-    std::cout << "MISMATCH! Finalized. Total keys given: " << total_keys_to_process_
-            << " Total keys processed: " << num_processed_keys_ << std::endl;
+    LOG("MISMATCH! Finalized. Total keys given: {0} Total keys processed: {1}", total_keys_to_process_, num_processed_keys_);
   }
   return Status::OK();
 }
 
 void KeyValueWriter::PrintKeys() {
 
-  std::cout << "PRINTING KEYS!!\n";
+  LOG("[DEBUG] PRINTING KEYS!!");
 
   McDataMap::iterator it = mcdata_entries_processing_.begin();
 
   while (it != mcdata_entries_processing_.end()) {
 
-    std::cout << it->first << " " << it->second->key() << " " << it->second->expiry() << std::endl;
+    LOG("{0} {1} {2}", it->first, it->second->key(), it->second->expiry());
     it++;
   }
 }

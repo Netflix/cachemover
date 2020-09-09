@@ -1,4 +1,4 @@
-
+#include "common/logger.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 
@@ -31,7 +31,7 @@ void McData::setValue(const char* data, size_t size) {
 }
 
 void McData::printValue() {
-  //std::cout << "McData: " << key_.c_str() << " -> " << data_->ToString() << std::endl;
+  LOG("McData: {0} -> {1}", key_.c_str(), data_->ToString());
 }
 
 // Static member declarations
@@ -71,7 +71,7 @@ std::string MemcachedUtils::KeyFilePrefix() {
   std::string* ip_addr = nullptr;
   Status s = GetIPAddrAsString(&ip_addr);
   if (!s.ok()) {
-    std::cout << "Could not get IP Address: " << s.ToString() << std::endl;
+    LOG_ERROR("Could not get IP Address: {0}", s.ToString());
     // If we could not get the IP Address, use "localhost".
     // TODO: Might be confusing?
     return "key_localhost_";
@@ -87,7 +87,7 @@ std::string MemcachedUtils::DataFilePrefix() {
   std::string* ip_addr = nullptr;
   Status s = GetIPAddrAsString(&ip_addr);
   if (!s.ok()) {
-    std::cout << "Could not get IP Address: " << s.ToString() << std::endl;
+    LOG_ERROR("Could not get IP Address: {0}", s.ToString());
     // If we could not get the IP Address, use "localhost".
     // TODO: Might be confusing?
     return "data_localhost_";

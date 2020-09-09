@@ -18,7 +18,6 @@ void DumperMain(DumperOptions& opts) {
   Dumper dumper(opts);
   Status dumper_status = dumper.Init();
   if (!dumper_status.ok()) {
-    std::cout << "Received fatal error: " << dumper_status.ToString() << std::endl;
     LOG_ERROR("Received fatal error: " + dumper_status.ToString());
     exit(-1);
   }
@@ -42,26 +41,29 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   uint64_t keyfilesize;
   uint64_t datafilesize;
   int only_expire_after;
+  std::string log_file_path;
   std::string output_dir_path;
   bool checkpoint_resume = false;
   bool is_s3_dump = false;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
-      "Memcached IP."));
+      "Memcached IP.")->required());
   IGNORE_RET_VAL(app.add_option("-p,--port,port", port,
-      "Memcached port."));
+      "Memcached port.")->required());
   IGNORE_RET_VAL(app.add_option("-t,--threads,threads", num_threads,
-      "Num. threads"));
+      "Num. threads")->required());
   IGNORE_RET_VAL(app.add_option("-b,--bufsize,bufsize", bufsize,
-      "Size of single memory buffer (in bytes)."));
+      "Size of single memory buffer (in bytes).")->required());
   IGNORE_RET_VAL(app.add_option("-m,--memlimit,memlimit", memlimit,
-      "Maximum allowable memory usage (in bytes)."));
+      "Maximum allowable memory usage (in bytes).")->required());
   IGNORE_RET_VAL(app.add_option("-k,--key_file_size,key_file_size", keyfilesize,
-      "The maximum size for each key file (in bytes)."));
+      "The maximum size for each key file (in bytes).")->required());
   IGNORE_RET_VAL(app.add_option("-d,--data_file_size,data_file_size", datafilesize,
-      "The maximum size for each date file (in bytes)."));
+      "The maximum size for each date file (in bytes).")->required());
+  IGNORE_RET_VAL(app.add_option("-l,--log_file_path,log_file_path", log_file_path,
+      "Desired log file path.")->required());
   IGNORE_RET_VAL(app.add_option("-o,--output_dir,output_dir", output_dir_path,
-      "Desired output directory path."));
+      "Desired output directory path.")->required());
   IGNORE_RET_VAL(app.add_option("-g,--bulk_get_threshold,bulk_get_threshold",
       bulk_get_threshold, "Number of keys to bulk get."));
   IGNORE_RET_VAL(app.add_option("-e,--only_expire_after_s,only_expire_after_s",
@@ -80,7 +82,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_max_memory_limit(memlimit); // 64MB
   opts.set_max_key_file_size(keyfilesize); // 1MB
   opts.set_max_data_file_size(datafilesize); // 1MB
-  opts.set_log_file_path("logfile.txt");
+  opts.set_log_file_path(log_file_path);
   opts.set_output_dir_path(output_dir_path);
   opts.set_bulk_get_threshold(bulk_get_threshold);
   opts.set_only_expire_after(only_expire_after);
@@ -88,8 +90,10 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_is_s3_dump(is_s3_dump);
 
   if (num_threads * 2 * bufsize > memlimit) {
-        std::cout << "Total memory provisioned is not enough for the total threads and buffers !" << std::endl;
-        LOG_ERROR("Received fatal error: Total memory provisioned is not enough for the total threads and buffers ! ");
+        LOG_ERROR("Configuration error: Memory given is not enough for all threads.\n\
+            Given: {0} bytes. \
+            Required: {1} bytes for {2} buffers of size {3} (2 buffers per thread)",
+            memlimit, num_threads * 2 * bufsize, 2 * num_threads, bufsize);
         exit(-1);
   }
 
@@ -110,7 +114,7 @@ int main(int argc, char** argv) {
   // Shutdown the AWS SDK.
   Aws::ShutdownAPI(options);
 
-  LOG("Exiting program!");
+  LOG("Dumper exiting...");
   return 0;
 }
 

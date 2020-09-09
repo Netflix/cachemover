@@ -29,7 +29,7 @@ Status SocketPool::PrimeConnections() {
 
   {
     std::stringstream ss;
-    ss << "Successfully primed " << num_sockets_ << " connections";
+    LOG("Successfully primed {0} connections", num_sockets_);
     LOG(ss.str());
   }
   return Status::OK();

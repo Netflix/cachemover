@@ -29,14 +29,13 @@ S3UploadTask::S3UploadTask(std::string bucket_name, std::string path, std::strin
 
 void S3UploadTask::Execute() {
   
-  std::cout << "Uploading file: " << path_ << file_prefix_ << "to " << bucket_name_ << "/" << file_prefix_ << std::endl;
+  LOG("Uploading file: {0}{1} to {2}/{1}.", path_, file_prefix_, bucket_name_);
   for (auto& f : fs::directory_iterator(path_)) {
-      //std::cout << "FILE: " << f.path().string() << std::endl;
     std::string fq_file = f.path().string();
     size_t filename_pos = fq_file.find(file_prefix_);
     if (filename_pos != std::string::npos) {
       std::string filename = fq_file.substr(filename_pos);
-      std::cout << "MATCH FILE: " << filename << std::endl;
+      LOG("MATCH FILE: {0}", filename);
 
       std::string key_name = "native_dumper_upload_test/" + filename;
       const std::shared_ptr<Aws::IOStream> input_data =
@@ -54,8 +53,7 @@ void S3UploadTask::Execute() {
       auto put_object_outcome = owning_thread()->s3_client()->PutObject(object_request);
       if (!put_object_outcome.IsSuccess()) {
           auto error = put_object_outcome.GetError();
-          std::cout << "ERROR: " << error.GetExceptionName() << ": "
-        << error.GetMessage() << std::endl;
+          LOG_ERROR("ERROR: {0}: {1}", error.GetExceptionName(), error.GetMessage());
           return;
       }
     }

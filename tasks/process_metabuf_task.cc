@@ -81,14 +81,6 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     std::string decoded_key = UrlDecode(encoded_key);
 
-    //char* decoded_key = curl_easy_unescape(
-    //    curl_, const_cast<char*>(key_pos) + 4, static_cast<int>(
-    //        exp_pos - key_pos - 4 - 1), &decoded_keylen);
-    //if (decoded_key == nullptr) {
-    //  std::cout << "Could not decode key! " << std::endl;
-    //  abort();
-    //}
-
     if (expiry != -1 && MemcachedUtils::KeyExpiresSoon(now,
         static_cast<uint32_t>(expiry))) {
       owning_thread()->increment_keys_ignored();
@@ -121,18 +113,6 @@ void ProcessMetabufTask::MarkCheckpoint() {
 
 void ProcessMetabufTask::Execute() {
 
-  /*if (!(strcmp(filename_.c_str(), "test_prefix11") == 0)) {
-	  if (strcmp(filename_.c_str(), "test_prefix0") == 0) sleep(5);
-	  std::cout <<" Not 10. Returning... Got: " << filename_.c_str() << std::endl;
-	  return;
-  }*/
-
-  // curl_ = curl_easy_init();
-  // if (curl_ == NULL) {
-  //   std::cout << "Could not initialize CURL library; exiting..." << std::endl;
-  //   abort();
-  // }
-
   Socket *mc_sock = owning_thread()->task_scheduler()->GetMemcachedSocket();
   assert(mc_sock != nullptr);
 
@@ -152,19 +132,16 @@ void ProcessMetabufTask::Execute() {
   // TODO: Check return status
   Status init_status = data_writer_->Init();
   if (!init_status.ok()) {
-    std::cout << "Failed to initialize KeyValueWriter. "
-              << init_status.ToString() << std::endl;
-    LOG_ERROR("FAILED TO INITIALIZE KeyValueWriter");
+    LOG_ERROR("FAILED TO INITIALIZE KeyValueWriter. (Status: {0})", init_status.ToString());
     owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
     owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
-    //curl_easy_cleanup(curl_);
     return;
   }
 
   std::ifstream metafile;
   metafile.open(filename_);
 
-  LOG("Starting PrintKeysFromFileTask: " + filename_);
+  LOG("Processing file: {0}", filename_);
 
   char *metabuf = reinterpret_cast<char*>(owning_thread()->mem_mgr()->GetBuffer());
   uint64_t buf_size = owning_thread()->mem_mgr()->chunk_size();
@@ -196,7 +173,6 @@ void ProcessMetabufTask::Execute() {
 
   owning_thread()->account_keys_processed(data_writer_->num_processed_keys());
   owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
-  owning_thread()->PrintNumKeysProcessed();
   metafile.close();
 
   if (is_s3_dump_) {

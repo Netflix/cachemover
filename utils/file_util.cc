@@ -1,3 +1,4 @@
+#include "common/logger.h"
 #include "utils/file_util.h"
 #include "utils/memcache_utils.h"
 
@@ -23,7 +24,7 @@ Status FileUtils::CreateDirectory(std::string dir_path) {
     return Status::OK();
   }
 
-  std::cout << "Creating directory: " << dir_path << std::endl;
+  LOG("Creating directory: {0}", dir_path);
   if (fs::create_directories(dir_path)) return Status::OK();
 
   return Status::IOError(dir_path, "Could not create directory.");
@@ -179,7 +180,7 @@ Status RotatingFile::FinalizeCurrentFile() {
   // If requested, move the file to the final path.
   if (!optional_dest_path_.empty()) {
     FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
-    std::cout << "File: " << final_filename_fq << " complete." << std::endl;
+    LOG("File: {0} complete.", final_filename_fq);
     RETURN_ON_ERROR(FsyncDestDir());
   }
 

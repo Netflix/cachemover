@@ -59,16 +59,15 @@ void MetadumpTask::Execute() {
     std::string metadump_cmd("lru_crawler metadump all\n");
     Status send_status = SendCommand(metadump_cmd);
     if (!send_status.ok()) {
-      LOG_ERROR(send_status.ToString());
-      std::cout << "SendCommand() failed: " << send_status.ToString() << std::endl;
-      assert(false);
+      LOG_ERROR("SendCommand() failed. (Status: {0})", send_status.ToString());
+      abort();
     }
 
     Status stat = RecvResponse();
 
     if (stat.IsBusyLRUCrawler()) {
       int sleep_duration_s = uniform_distribution(rand_generator);
-      std::cout << "LRU crawler is busy. Retrying after " << sleep_duration_s << " seconds." << std::endl;
+      LOG_ERROR("LRU crawler is busy. Retrying after {0} seconds.", sleep_duration_s);
       sleep(sleep_duration_s);
       busy_crawler = true;
       continue;
@@ -76,13 +75,12 @@ void MetadumpTask::Execute() {
       // This is a temporary way to deal with EAGAIN.
       // TODO: This was done as a quick patch. Clean up later.
       int sleep_duration_s = uniform_distribution(rand_generator);
-      std::cout << "Memcached not responding. Retrying after " << sleep_duration_s << " seconds." << std::endl;
+      LOG_ERROR("Memcached not responding. Retrying after {0} seconds.", sleep_duration_s);
       sleep(sleep_duration_s);
       // Treat as busy crawler for now.
       busy_crawler = true;
     } else if (!stat.ok()) {
-      LOG_ERROR(stat.ToString());
-      std::cout << "RecvResponse() failed when reading: " << stat.ToString() << std::endl;
+      LOG_ERROR("RecvResponse() failed. (Status: {0})", stat.ToString());
       assert(false);
     }
 
@@ -107,7 +105,7 @@ Status MetadumpTask::SendCommand(const std::string& metadump_cmd) {
 
 Status MetadumpTask::RecvResponse() {
 
-  LOG("Starting RecvResponse()");
+  LOG("Beginning to receive metadump...");
   uint8_t *buf = mem_mgr_->GetBuffer();
   assert(buf != nullptr);
   uint64_t chunk_size = mem_mgr_->chunk_size();

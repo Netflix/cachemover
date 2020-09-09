@@ -42,9 +42,6 @@ class TaskThread {
   uint64_t num_keys_ignored() { return num_keys_ignored_; }
   uint64_t num_keys_missing() { return num_keys_missing_; }
 
-  void PrintNumKeysProcessed() {
-    std::cout << "Thread (" << thread_name_.c_str() << ") - Num keys: " << num_keys_processed_ << std::endl;
-  }
  private:
 
   void WorkerLoop();

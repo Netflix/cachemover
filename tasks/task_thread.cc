@@ -33,18 +33,14 @@ bool TaskThread::ShuttingDown() {
 }
 
 Task* TaskThread::WaitForNextTask() {
-  LOG("[" + thread_name_ + "] Waiting for next task...");
   return task_scheduler_->WaitForNextTask();
 }
 
 void TaskThread::WorkerLoop() {
-  LOG("Started thread: " + thread_name_);
-
   while (!ShuttingDown()) {
     Task *task = WaitForNextTask();
 
     if (task != nullptr) {
-      LOG("[" + thread_name_ + "] Got next task");
       task->set_owning_thread(this);
       task->Execute();
       task_scheduler_->MarkTaskComplete(task);
@@ -52,7 +48,7 @@ void TaskThread::WorkerLoop() {
   }
 
   // TODO: There's a race here, the main thread can complete before this thread completes.
-  LOG("Exiting thread: " + thread_name_);
+  LOG("Exiting thread...");
 }
 
 } // namespace memcachedumper

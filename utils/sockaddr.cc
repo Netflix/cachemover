@@ -16,7 +16,6 @@ Sockaddr::Sockaddr() {
 
 Sockaddr& Sockaddr::operator=(const struct sockaddr_in &addr) {
   if (&addr == &sockaddr_) {
-    std::cout << "THEY'RE THE SAME!!!" << std::endl;
     return *this;
   }
   memcpy(&sockaddr_, &addr, sizeof(struct sockaddr_in));

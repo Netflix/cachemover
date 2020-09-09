@@ -1,3 +1,4 @@
+#include "common/logger.h"
 #include "tasks/resume_task.h"
 
 #include "utils/memcache_utils.h"
@@ -29,8 +30,7 @@ void ResumeTask::ProcessCheckpoints() {
       std::string key_filename;
       while (std::getline(chkpt_file, key_filename)) {
         if (unprocessed_files_.find(key_filename) != unprocessed_files_.end()) {
-          std::cout << "Ignoring keyfile since it was already processed: "
-                    << key_filename << std::endl;
+          LOG("Ignoring keyfile since it was already processed: {0}", key_filename);
 
           // Remove files seen in checkpoint files to leave only unprocessed keyfiles.
           unprocessed_files_.erase(key_filename);
@@ -54,11 +54,10 @@ void ResumeTask::GetKeyFileList() {
 
 void ResumeTask::QueueUnprocessedFiles() {
 
-  std::cout << "Going to queue " << unprocessed_files_.size()
-            << " files for processing." << std::endl;
+  LOG("Queuing {0} files for processing.", unprocessed_files_.size());
   TaskScheduler* task_scheduler = owning_thread()->task_scheduler();
   for (auto& file : unprocessed_files_) {
-    std::cout << "Queueing " << file << std::endl;
+    LOG("Queueing {0}.", file);
     ProcessMetabufTask *ptask = new ProcessMetabufTask(
         MemcachedUtils::GetKeyFilePath() + file, is_s3_dump_);
     task_scheduler->SubmitTask(ptask);

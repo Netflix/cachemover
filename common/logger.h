@@ -4,12 +4,12 @@
 
 #include <assert.h>
 
-#define LOG(s) do {   \
-  spdlog::info(s);    \
+#define LOG(s, ...) do {   \
+  spdlog::info(s, ##__VA_ARGS__);    \
   } while(0);
 
-#define LOG_ERROR(s) do {   \
-  spdlog::error(s);    \
+#define LOG_ERROR(s, ...) do {   \
+  spdlog::error(s, ##__VA_ARGS__);    \
   } while(0);
 
 namespace memcachedumper {

@@ -94,7 +94,6 @@ Dumper::Dumper(DumperOptions& opts)
             << "Output directory: " << opts_.output_dir_path() << std::endl
             << std::endl;
   LOG(options_log.str());
-  std::cout << options_log.str() << std::endl;
 
   socket_pool_.reset(new SocketPool(
       opts_.memcached_hostname(), opts_.memcached_port(), opts_.num_threads() + 1));
@@ -121,9 +120,9 @@ Status Dumper::Init() {
     MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
   }
   MemcachedUtils::SetMaxDataFileSize(opts_.max_data_file_size());
-  std::cout << "Keyfile path: " << MemcachedUtils::GetKeyFilePath() << std::endl;
-  std::cout << "Data staging path: " << MemcachedUtils::GetDataStagingPath() << std::endl;
-  std::cout << "Data final path: " << MemcachedUtils::GetDataFinalPath() << std::endl;
+  LOG("Keyfile path: {0}", MemcachedUtils::GetKeyFilePath());
+  LOG("Data staging path: {0}", MemcachedUtils::GetDataStagingPath());
+  LOG("Data final path: {0}", MemcachedUtils::GetDataFinalPath());
 
   if (!opts_.is_resume_mode()) {
     RETURN_ON_ERROR(CreateAndValidateOutputDirs());
@@ -176,13 +175,15 @@ void Dumper::Run() {
   dtask.Execute();
 
   rest_server_->Shutdown();
-  std::cout << std::endl
+  std::stringstream final_metrics;
+  final_metrics << std::endl
       << "All tasks completed..." << std::endl
       << "-------------------------" << std::endl
       << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
       << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
       << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
       << " -Time taken: " << total_msw_.HumanElapsedStr() << std::endl;
+  LOG(final_metrics.str());
   LOG("Status: All tasks completed. Exiting...");
 }
 

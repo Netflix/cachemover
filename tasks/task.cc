@@ -44,19 +44,6 @@ void DoneTask::Execute() {
   done_file.close();
 }
 
-
-PrintTask::~PrintTask() = default;
-
-PrintTask::PrintTask(std::string print_str, int num)
-    : print_str_(print_str),
-      num_(num) {
-}
-
-void PrintTask::Execute() {
-  LOG("PrintTask: " + print_str_ + " || " + std::to_string(num_));
-}
-
-
 InfiniteTask::~InfiniteTask() = default;
 
 InfiniteTask::InfiniteTask() {

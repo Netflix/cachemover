@@ -1,3 +1,4 @@
+#include "common/logger.h"
 #include "common/rest_endpoint.h"
 #include "dumper/dumper.h"
 
@@ -59,7 +60,7 @@ void RESTServer::HandleGet(const Rest::Request& request,
   rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
   root.Accept(writer);
 
-  std::cout << "Metrics requested: " << strbuf.GetString() << std::endl;
+  LOG("Metrics requested: {0}", strbuf.GetString());
   response.send(Http::Code::Ok, strbuf.GetString());
 }
 

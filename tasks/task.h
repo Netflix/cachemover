@@ -41,19 +41,6 @@ class DoneTask : public Task {
   std::string PrepareFinalMetricsString();
 };
 
-/* -- For debugging -- */
-class PrintTask : public Task {
- public:
-  PrintTask(std::string print_str, int num);
-  ~PrintTask();
-
-  void Execute() override;
-
- private:
-  std::string print_str_;
-  int num_;
-};
-
 class InfiniteTask : public Task {
  public:
   InfiniteTask();
