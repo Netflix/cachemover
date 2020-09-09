@@ -168,7 +168,11 @@ void Dumper::Run() {
 
   // Output the "DONE" file.
   // TODO: (nit) Ideally would be submitted to the task scheduler.
-  DoneTask dtask;
+  DoneTask dtask(
+    task_scheduler_->total_keys_processed(),
+    task_scheduler_->total_keys_ignored(),
+    task_scheduler_->total_keys_missing(),
+    total_msw_.HumanElapsedStr());
   dtask.Execute();
 
   rest_server_->Shutdown();

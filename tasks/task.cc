@@ -17,13 +17,30 @@ namespace memcachedumper {
 
 DoneTask::~DoneTask() = default;
 
-DoneTask::DoneTask() {
+DoneTask::DoneTask(uint64_t dumped, uint64_t skipped, uint64_t not_found,
+    std::string time_taken_str)
+  : dumped_(dumped),
+    skipped_(skipped),
+    not_found_(not_found),
+    total_time_taken_str_(time_taken_str) {
+}
+
+std::string DoneTask::PrepareFinalMetricsString() {
+  std::stringstream final_metrics;
+
+  final_metrics <<
+      "DONE" << std::endl <<
+      "Total keys dumped: " << dumped_ << std::endl <<
+      "Total keys skipped: " << skipped_ << std::endl <<
+      "Total keys not found: " << not_found_ << std::endl <<
+      "Total time taken: " << total_time_taken_str_ << std::endl;
+
+  return final_metrics.str();
 }
 
 void DoneTask::Execute() {
-  std::ofstream done_file;
-  done_file.open(MemcachedUtils::GetDataFinalPath() + "/DONE");
-  done_file.write("DONE\n", 5);
+  std::ofstream done_file(MemcachedUtils::GetDataFinalPath() + "/DONE");
+  done_file << PrepareFinalMetricsString().c_str();
   done_file.close();
 }
 
