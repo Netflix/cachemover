@@ -14,30 +14,88 @@
 #include <fstream>
 #include <sstream>
 
+#include <aws/core/Aws.h>
 #include <aws/s3/model/PutObjectRequest.h>
+#include <aws/sqs/SQSClient.h>
+#include <aws/sqs/model/ReceiveMessageRequest.h>
+#include <aws/sqs/model/ReceiveMessageResult.h>
+#include <aws/sqs/model/SendMessageRequest.h>
+#include <aws/sqs/model/SendMessageResult.h>
 
 namespace fs = std::experimental::filesystem;
 namespace memcachedumper {
 
-S3UploadTask::~S3UploadTask() = default;
+S3UploadFileTask::~S3UploadFileTask() = default;
 
-S3UploadTask::S3UploadTask(std::string bucket_name, std::string path, std::string file_prefix)
-  : bucket_name_(bucket_name),
-    path_(path),
-    file_prefix_(file_prefix) {
+S3UploadFileTask::S3UploadFileTask(std::string fq_local_path, std::string filename)
+  : fq_local_path_(fq_local_path),
+    filename_(filename),
+    upload_status_(Status::OK()) {
 }
 
+Status S3UploadFileTask::SendSQSNotification() {
+  Aws::SQS::Model::SendMessageRequest sm_req;
+  std::string queue_url = MemcachedUtils::GetSQSQueueURL();
+  sm_req.SetQueueUrl(queue_url);
+
+  // TODO: Send a JSON formatted message.
+  Aws::String msg_body = "ReqId: " + MemcachedUtils::GetReqId() + "; filename: " + filename_ + "; DONE";
+  sm_req.SetMessageBody(msg_body);
+
+  auto sm_out = MemcachedUtils::GetSQSClient()->SendMessage(sm_req);
+  if (sm_out.IsSuccess()) {
+    LOG("Successfully sent SQS message to {0} for file {1}", queue_url, filename_);
+  } else {
+    return Status::NetworkError("Error sending SQS message to : " + queue_url,
+        sm_out.GetError().GetMessage());
+  }
+
+  return Status::OK();
+}
+
+void S3UploadFileTask::Execute() {
+  std::string s3_key_name = MemcachedUtils::GetS3Path() + "/" +
+      MemcachedUtils::GetReqId() + "/" + filename_;
+
+  const std::shared_ptr<Aws::IOStream> input_data =
+  Aws::MakeShared<Aws::FStream>("SampleAllocationTag",
+    fq_local_path_.c_str(),
+    std::ios_base::in | std::ios_base::binary);
+
+  Aws::S3::Model::PutObjectRequest object_request;
+
+  object_request.SetBucket(MemcachedUtils::GetS3Bucket());
+  object_request.SetKey(s3_key_name);
+  object_request.SetBody(input_data);
+
+  // Put the object
+  auto put_object_outcome = MemcachedUtils::GetS3Client()->PutObject(object_request);
+  if (!put_object_outcome.IsSuccess()) {
+    auto error = put_object_outcome.GetError();
+    upload_status_ = Status::NetworkError(error.GetExceptionName() + " : ", error.GetMessage());
+    return;
+  }
+  LOG("Successfully uploaded {0} to S3. Sending SQS notification...", filename_);
+
+  Status sqs_notify_status = SendSQSNotification();
+  if (!sqs_notify_status.ok()) {
+    upload_status_ = sqs_notify_status;
+    return;
+  }
+}
+
+/*
 void S3UploadTask::Execute() {
   
-  LOG("Uploading file: {0}{1} to {2}/{1}.", path_, file_prefix_, bucket_name_);
-  for (auto& f : fs::directory_iterator(path_)) {
+  LOG("Uploading file: {0}{1} to s3://{2}/{3}/{1}.", local_path_, file_prefix_, bucket_name_, s3_path_);
+  for (auto& f : fs::directory_iterator(local_path_)) {
     std::string fq_file = f.path().string();
     size_t filename_pos = fq_file.find(file_prefix_);
     if (filename_pos != std::string::npos) {
       std::string filename = fq_file.substr(filename_pos);
       LOG("MATCH FILE: {0}", filename);
 
-      std::string key_name = "native_dumper_upload_test/" + filename;
+      std::string key_name = s3_path_ + "/" + filename;
       const std::shared_ptr<Aws::IOStream> input_data =
       Aws::MakeShared<Aws::FStream>("SampleAllocationTag",
           fq_file.c_str(),
@@ -58,36 +116,7 @@ void S3UploadTask::Execute() {
       }
     }
   }
-
-/*
- for (auto& f : fs::directory_iterator("/mnt/sail_dumper_test/run_8")) {
-   std::cout << f.path().string() << std::endl;
-   std::string file_name = f.path().string();
-   std::string key_name = "native_dumper_test/run_1/" + std::to_string(file_idx);
-   std::cout << file_name << std::endl << key_name << std::endl;
-
-   const std::shared_ptr<Aws::IOStream> input_data =
-     Aws::MakeShared<Aws::FStream>("SampleAllocationTag",
-           file_name.c_str(),
-           std::ios_base::in | std::ios_base::binary);
-
-   Aws::S3::Model::PutObjectRequest object_request;
-   std::string bucket_name("evcache-test");
-
-   object_request.SetBucket(bucket_name);
-   object_request.SetKey("native_dumper_test/run_1/" + f.path().string());
-   object_request.SetBody(input_data);
-
-   // Put the object
-   auto put_object_outcome = s3_client.PutObject(object_request);
-   if (!put_object_outcome.IsSuccess()) {
-       auto error = put_object_outcome.GetError();
-       std::cout << "ERROR: " << error.GetExceptionName() << ": "
-     << error.GetMessage() << std::endl;
-       return false;
-   }
-  */
 }
-
+*/
 
 } // namespace memcachedumper

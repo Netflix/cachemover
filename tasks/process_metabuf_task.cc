@@ -175,11 +175,11 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
   metafile.close();
 
-  if (is_s3_dump_) {
+  /*if (is_s3_dump_) {
     S3UploadTask* upload_task = new S3UploadTask("evcache-test", MemcachedUtils::GetDataFinalPath(),
         MemcachedUtils::DataFilePrefix() + "_" + keyfile_idx_str);
     owning_thread()->task_scheduler()->SubmitTask(upload_task);
-  }
+  }*/
 
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));

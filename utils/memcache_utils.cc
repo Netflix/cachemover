@@ -35,11 +35,20 @@ void McData::printValue() {
 }
 
 // Static member declarations
+std::string MemcachedUtils::req_id_;
 std::string MemcachedUtils::output_dir_path_;
 uint32_t MemcachedUtils::bulk_get_threshold_ = DEFAULT_BULK_GET_THRESHOLD;
 uint64_t MemcachedUtils::max_data_file_size_;
 int MemcachedUtils::only_expire_after_;
+std::string MemcachedUtils::s3_bucket_;
+std::string MemcachedUtils::s3_path_;
+std::string MemcachedUtils::sqs_url_;
+Aws::S3::S3Client* MemcachedUtils::s3_client_;
+Aws::SQS::SQSClient* MemcachedUtils::sqs_client_;
 
+void MemcachedUtils::SetReqId(std::string req_id) {
+  MemcachedUtils::req_id_ = req_id;
+}
 void MemcachedUtils::SetOutputDirPath(std::string output_dir_path) {
   MemcachedUtils::output_dir_path_ = output_dir_path;
 }
@@ -55,6 +64,24 @@ void MemcachedUtils::SetMaxDataFileSize(uint64_t max_data_file_size) {
 }
 void MemcachedUtils::SetOnlyExpireAfter(int only_expire_after) {
   MemcachedUtils::only_expire_after_ = only_expire_after;
+}
+
+void MemcachedUtils::SetS3Bucket(std::string s3_bucket) {
+  MemcachedUtils::s3_bucket_ = s3_bucket;
+}
+
+void MemcachedUtils::SetS3Path(std::string s3_path) {
+  MemcachedUtils::s3_path_ = s3_path;
+}
+void MemcachedUtils::SetSQSQueueURL(std::string sqs_url) {
+  MemcachedUtils::sqs_url_ = sqs_url;
+}
+
+void MemcachedUtils::SetS3Client(Aws::S3::S3Client* s3_client) {
+  MemcachedUtils::s3_client_ = s3_client;
+}
+void MemcachedUtils::SetSQSClient(Aws::SQS::SQSClient* sqs_client) {
+  MemcachedUtils::sqs_client_ = sqs_client;
 }
 
 std::string MemcachedUtils::GetKeyFilePath() {

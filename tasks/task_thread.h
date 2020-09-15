@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include <aws/core/Aws.h>
-#include <aws/s3/S3Client.h>
 
 namespace memcachedumper {
 
@@ -27,8 +26,6 @@ class TaskThread {
   std::string thread_name() { return thread_name_; }
 
   MemoryManager *mem_mgr();
-
-  Aws::S3::S3Client* s3_client() { return task_scheduler_->dumper()->GetS3Client(); }
 
   int Init();
 

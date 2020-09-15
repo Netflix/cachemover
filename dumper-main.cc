@@ -45,6 +45,9 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   std::string output_dir_path;
   bool checkpoint_resume = false;
   bool is_s3_dump = false;
+  std::string s3_bucket;
+  std::string s3_path;
+  std::string req_id;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
       "Memcached IP.")->required());
@@ -72,6 +75,12 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       checkpoint_resume, "Resume dump from previous incomplete run."));
   IGNORE_RET_VAL(app.add_option("-s,--s3_dump",
       is_s3_dump, "Uploads dumped files to S3 if set."));
+  IGNORE_RET_VAL(app.add_option("--s3_bucket",
+      s3_bucket, "S3 Bucket name."));
+  IGNORE_RET_VAL(app.add_option("--s3_path",
+      s3_path, "S3 Final Path."));
+  IGNORE_RET_VAL(app.add_option("-r, --req_id",
+      req_id, "Dump ID assigned by requesting service.")->required());
 
   CLI11_PARSE(app, argc, argv);
 
@@ -88,7 +97,18 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   opts.set_only_expire_after(only_expire_after);
   opts.set_resume_mode(checkpoint_resume);
   opts.set_is_s3_dump(is_s3_dump);
+  if (is_s3_dump) {
+    opts.set_s3_bucket_name(s3_bucket);
+    opts.set_s3_final_path(s3_path);
+  }
+  opts.set_req_id(req_id);
 
+  if (is_s3_dump) {
+    if (s3_bucket.empty() || s3_path.empty()) {
+      LOG_ERROR("Configuration error: S3 Bucket and Path required if <is_s3_dump> is set to True.");
+      exit(-1);
+    }
+  }
   if (num_threads * 2 * bufsize > memlimit) {
         LOG_ERROR("Configuration error: Memory given is not enough for all threads.\n\
             Given: {0} bytes. \

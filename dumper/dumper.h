@@ -8,6 +8,7 @@
 
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
+#include <aws/sqs/SQSClient.h>
 
 namespace memcachedumper {
 
@@ -34,6 +35,9 @@ class DumperOptions {
   void set_only_expire_after(int only_expire_after);
   void set_resume_mode(bool resume_mode);
   void set_is_s3_dump(bool is_s3_dump);
+  void set_s3_bucket_name(std::string s3_bucket);
+  void set_s3_final_path(std::string s3_path);
+  void set_req_id(std::string req_id);
 
   std::string memcached_hostname() { return memcached_hostname_; }
   int memcached_port() { return memcached_port_; }
@@ -48,6 +52,9 @@ class DumperOptions {
   int only_expire_after() { return only_expire_after_; }
   bool is_resume_mode() { return resume_mode_; }
   bool is_s3_dump() { return is_s3_dump_; }
+  std::string s3_bucket() { return s3_bucket_; }
+  std::string s3_path() { return s3_path_; }
+  std::string req_id() { return req_id_; }
 
  private:
   // Hostname that contains target memecached.
@@ -77,6 +84,12 @@ class DumperOptions {
   bool resume_mode_;
   // Uploads to S3 if set.
   bool is_s3_dump_;
+  // S3 Bucket name.
+  std::string s3_bucket_;
+  // S3 Final path.
+  std::string s3_path_;
+  // Dump request ID.
+  std::string req_id_;
 };
 
 class Dumper {
@@ -86,6 +99,7 @@ class Dumper {
   ~Dumper();
 
   Aws::S3::S3Client* GetS3Client() { return &s3_client_; }
+  Aws::SQS::SQSClient* GetSQSClient() { return &sqs_client_; }
 
   MemoryManager *mem_mgr() { return mem_mgr_.get(); }
 
@@ -93,6 +107,9 @@ class Dumper {
 
   // Initializes the dumper by connecting to memcached.
   Status Init();
+
+  // Initialize the SQS queue.
+  Status InitSQS();
 
   // Starts the dumping process.
   void Run();
@@ -126,6 +143,7 @@ class Dumper {
 
   Aws::Client::ClientConfiguration s3_config_;
   Aws::S3::S3Client s3_client_;
+  Aws::SQS::SQSClient sqs_client_;
 
   // Stopwatch to run for the entire duration of the dumper.
   MonotonicStopWatch total_msw_;

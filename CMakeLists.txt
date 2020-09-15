@@ -48,7 +48,7 @@ set(PISTACHE_INCLUDE_DIR "extern/pistache/include")
 set(PISTACHE_LIBRARY "${PROJECT_SOURCE_DIR}/extern/pistache/libpistache.a")
 include_directories(${PISTACHE_INCLUDE_DIR})
 
-find_package(AWSSDK REQUIRED COMPONENTS s3)
+find_package(AWSSDK REQUIRED COMPONENTS s3 sqs)
 
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
 target_link_libraries(
