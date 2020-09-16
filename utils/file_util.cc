@@ -14,10 +14,9 @@
 
 namespace memcachedumper {
 
+namespace fs = std::experimental::filesystem;
 
 Status FileUtils::CreateDirectory(std::string dir_path) {
-  namespace fs = std::experimental::filesystem;
-
   if (fs::exists(dir_path)) {
     if (!fs::is_empty(dir_path)) {
       return Status::IOError(dir_path, "Given output path is not empty.");
@@ -32,12 +31,16 @@ Status FileUtils::CreateDirectory(std::string dir_path) {
 }
 
 void FileUtils::MoveFile(std::string file_path, std::string dest_path) {
-  namespace fs = std::experimental::filesystem;
   fs::rename(file_path, dest_path);
 }
 
+Status FileUtils::RemoveFile(std::string file_path) {
+  bool removed = fs::remove(file_path);
+  if (!removed) return Status::IOError("RemoveFile(): File not found", file_path);;
+  return Status::OK();
+}
+
 uint64_t FileUtils::GetSpaceAvailable(std::string path) {
-  namespace fs = std::experimental::filesystem;
   fs::space_info si = fs::space(path.c_str());
   return si.free;
 }
@@ -205,7 +208,8 @@ Status RotatingFile::FinalizeCurrentFile() {
     // TODO: Add a retry loop if necessary.
     RETURN_ON_ERROR(s3_task.GetUploadStatus());
 
-    // TODO: Delete file after upload.
+    // Since we've uploaded it to S3, delete it from the local FS.
+    RETURN_ON_ERROR(FileUtils::RemoveFile(final_filename_fq));
   }
 
   return Status::OK();

@@ -17,6 +17,7 @@ class FileUtils {
  public:
   static void MoveFile(std::string file_path, std::string dest_path);
   static Status CreateDirectory(std::string dir_path);
+  static Status RemoveFile(std::string file_path);
   static uint64_t GetSpaceAvailable(std::string path);
 };
 
