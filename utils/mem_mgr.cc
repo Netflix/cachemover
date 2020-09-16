@@ -14,7 +14,6 @@ MemoryManager::MemoryManager(uint64_t chunk_size, int num_chunks)
 
 Status MemoryManager::PreallocateChunks() {
 
-  LOG("Chunk size is {0}", chunk_size_);
   uint8_t* main_buff = static_cast<uint8_t*>(malloc(chunk_size_ * num_chunks_));
 
   if (main_buff == nullptr) {

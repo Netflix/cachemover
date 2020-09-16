@@ -192,6 +192,10 @@ Status Dumper::Init() {
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
   RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
+  // TODO: Validate if we have enough free space to run the dump smoothly.
+  uint64_t free_space = FileUtils::GetSpaceAvailable(opts_.output_dir_path());
+  LOG("Amount of free space on disk: {0} MB", free_space / 1024 / 1024);
+
   if (opts_.is_s3_dump()) {
     LOG("Dump target set to S3. S3 Bucket: {0} ; S3 Path: {1}", opts_.s3_bucket(), opts_.s3_path());
     AwsUtils::SetS3Client(&s3_client_);

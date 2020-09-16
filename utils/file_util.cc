@@ -36,6 +36,12 @@ void FileUtils::MoveFile(std::string file_path, std::string dest_path) {
   fs::rename(file_path, dest_path);
 }
 
+uint64_t FileUtils::GetSpaceAvailable(std::string path) {
+  namespace fs = std::experimental::filesystem;
+  fs::space_info si = fs::space(path.c_str());
+  return si.free;
+}
+
 PosixFile::PosixFile(std::string filename)
   : filename_(filename) {
 }
