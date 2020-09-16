@@ -1,5 +1,6 @@
 
 set(UTILS_SRCS
+  aws_utils.cc
   file_util.cc
   key_value_writer.cc
   mem_mgr.cc

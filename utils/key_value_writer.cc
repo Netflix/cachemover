@@ -1,4 +1,5 @@
 #include "common/logger.h"
+#include "utils/aws_utils.h"
 #include "utils/file_util.h"
 #include "utils/key_value_writer.h"
 #include "utils/socket.h"
@@ -58,9 +59,8 @@ Status KeyValueWriter::Init() {
         max_file_size_,
         MemcachedUtils::GetDataFinalPath(),
         true /* suffix checksum */,
-	MemcachedUtils::GetS3Bucket().empty() ? false : true /* Upload each file to S3 on close */));
+	AwsUtils::GetS3Bucket().empty() ? false : true /* Upload each file to S3 on close */));
   RETURN_ON_ERROR(rotating_data_files_->Init());
-
   return Status::OK();
 }
 

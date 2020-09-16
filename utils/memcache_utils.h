@@ -7,9 +7,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <aws/s3/S3Client.h>
-#include <aws/sqs/SQSClient.h>
-
 // Default number of items to bulk get at a time
 #define DEFAULT_BULK_GET_THRESHOLD 30
 
@@ -72,22 +69,12 @@ class MemcachedUtils {
   static void SetBulkGetThreshold(uint32_t bulk_get_threshold);
   static void SetMaxDataFileSize(uint64_t max_data_file_size);
   static void SetOnlyExpireAfter(int only_expire_after);
-  static void SetS3Bucket(std::string s3_bucket);
-  static void SetS3Path(std::string s3_path);
-  static void SetSQSQueueURL(std::string sqs_url);
-  static void SetS3Client(Aws::S3::S3Client* s3_client);
-  static void SetSQSClient(Aws::SQS::SQSClient* sqs_client);
 
   static std::string GetReqId() { return MemcachedUtils::req_id_; }
   static std::string OutputDirPath() { return MemcachedUtils::output_dir_path_; }
   static uint32_t BulkGetThreshold() { return MemcachedUtils::bulk_get_threshold_; }
   static uint64_t MaxDataFileSize() { return MemcachedUtils::max_data_file_size_; }
   static uint64_t OnlyExpireAfter() { return MemcachedUtils::only_expire_after_; }
-  static std::string GetS3Bucket() { return MemcachedUtils::s3_bucket_; }
-  static std::string GetS3Path() { return MemcachedUtils::s3_path_; }
-  static std::string GetSQSQueueURL() { return MemcachedUtils::sqs_url_; }
-  static Aws::S3::S3Client* GetS3Client() { return MemcachedUtils::s3_client_; }
-  static Aws::SQS::SQSClient* GetSQSClient() { return MemcachedUtils::sqs_client_; }
   static std::string GetKeyFilePath();
   static std::string GetDataStagingPath();
   static std::string GetDataFinalPath();
@@ -95,7 +82,6 @@ class MemcachedUtils {
   static std::string KeyFilePrefix();
   static std::string DataFilePrefix();
 
-  static std::string GetSQSQueueName() { return "native-cachewarmerapp-" + GetReqId(); }
   // Craft a bulk get command with the first 'BulkGetThreshold()' keys in
   // 'pending_keys' to send memcached.
   static std::string CraftBulkGetCommand(McDataMap* pending_keys);
@@ -146,11 +132,6 @@ class MemcachedUtils {
   static uint32_t bulk_get_threshold_;
   static uint64_t max_data_file_size_;
   static int only_expire_after_;
-  static std::string s3_bucket_;
-  static std::string s3_path_;
-  static std::string sqs_url_;
-  static Aws::S3::S3Client* s3_client_;
-  static Aws::SQS::SQSClient* sqs_client_;
 };
 
 

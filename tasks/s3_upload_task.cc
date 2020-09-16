@@ -3,6 +3,7 @@
 #include "common/logger.h"
 #include "tasks/task_scheduler.h"
 #include "tasks/task_thread.h"
+#include "utils/aws_utils.h"
 #include "utils/mem_mgr.h"
 #include "utils/memcache_utils.h"
 #include "utils/socket.h"
@@ -35,14 +36,14 @@ S3UploadFileTask::S3UploadFileTask(std::string fq_local_path, std::string filena
 
 Status S3UploadFileTask::SendSQSNotification() {
   Aws::SQS::Model::SendMessageRequest sm_req;
-  std::string queue_url = MemcachedUtils::GetSQSQueueURL();
+  std::string queue_url = AwsUtils::GetCachedSQSQueueURL();
   sm_req.SetQueueUrl(queue_url);
 
   // TODO: Send a JSON formatted message.
   Aws::String msg_body = "ReqId: " + MemcachedUtils::GetReqId() + "; filename: " + filename_ + "; DONE";
   sm_req.SetMessageBody(msg_body);
 
-  auto sm_out = MemcachedUtils::GetSQSClient()->SendMessage(sm_req);
+  auto sm_out = AwsUtils::GetSQSClient()->SendMessage(sm_req);
   if (sm_out.IsSuccess()) {
     LOG("Successfully sent SQS message to {0} for file {1}", queue_url, filename_);
   } else {
@@ -54,7 +55,7 @@ Status S3UploadFileTask::SendSQSNotification() {
 }
 
 void S3UploadFileTask::Execute() {
-  std::string s3_key_name = MemcachedUtils::GetS3Path() + "/" +
+  std::string s3_key_name = AwsUtils::GetS3Path() + "/" +
       MemcachedUtils::GetReqId() + "/" + filename_;
 
   const std::shared_ptr<Aws::IOStream> input_data =
@@ -64,12 +65,12 @@ void S3UploadFileTask::Execute() {
 
   Aws::S3::Model::PutObjectRequest object_request;
 
-  object_request.SetBucket(MemcachedUtils::GetS3Bucket());
+  object_request.SetBucket(AwsUtils::GetS3Bucket());
   object_request.SetKey(s3_key_name);
   object_request.SetBody(input_data);
 
   // Put the object
-  auto put_object_outcome = MemcachedUtils::GetS3Client()->PutObject(object_request);
+  auto put_object_outcome = AwsUtils::GetS3Client()->PutObject(object_request);
   if (!put_object_outcome.IsSuccess()) {
     auto error = put_object_outcome.GetError();
     upload_status_ = Status::NetworkError(error.GetExceptionName() + " : ", error.GetMessage());

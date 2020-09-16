@@ -6,6 +6,7 @@
 #include "tasks/resume_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
+#include "utils/aws_utils.h"
 #include "utils/file_util.h"
 #include "utils/mem_mgr.h"
 #include "utils/memcache_utils.h"
@@ -130,59 +131,46 @@ Status Dumper::CreateAndValidateOutputDirs() {
 }
 
 Status Dumper::InitSQS() {
+  Aws::String queue_name = AwsUtils::GetSQSQueueName();
 
-  // TODO: Create AwsUtils class and make this function use that.
-  Aws::String queue_name = MemcachedUtils::GetSQSQueueName();
-
-  Aws::SQS::Model::GetQueueUrlRequest gqu_req;
-  gqu_req.SetQueueName(queue_name);
-
-  auto gqu_out = sqs_client_.GetQueueUrl(gqu_req);
-  if (gqu_out.IsSuccess()) {
-    LOG("SQS Queue {0} already exists with URL: {1}", queue_name,
-        gqu_out.GetResult().GetQueueUrl());
+  std::string queue_url;
+  Status get_url_status = AwsUtils::GetSQSUrlFromName(queue_name, &queue_url);
+  if (get_url_status.ok()) {
+    LOG("SQS Queue {0} already exists with URL: {1}", queue_name, queue_url);
 
     // If the queue already exists, we can simply start publishing to it when we choose.
-    MemcachedUtils::SetSQSQueueURL(gqu_out.GetResult().GetQueueUrl());
+    AwsUtils::SetCachedSQSQueueURL(queue_url);
     return Status::OK();
-  } else {
-    // An error likely means that the queue does not exist. So we must create it.
-    LOG("Error getting url for queue {0} : {1}", queue_name,
-        gqu_out.GetError().GetMessage());
   }
 
-  LOG("Setting up a new queue...");
-  Aws::SQS::Model::CreateQueueRequest cq_req;
-  cq_req.SetQueueName(queue_name);
-  auto cq_out = sqs_client_.CreateQueue(cq_req);
-  if (cq_out.IsSuccess()) {
-    LOG("Successfully created SQS queue: {0}", queue_name);
+  LOG("Queue with name {0} not found. Setting up a new queue...", queue_name);
+  Status create_queue_status = AwsUtils::CreateNewSQSQueue(queue_name, &queue_url);
+  if (create_queue_status.ok()) {
+    LOG("Successfully created SQS Queue {0} with URL: {1}", queue_name, queue_url);
 
     // If the queue is successfully created, we can simply start publishing to it when we choose.
-    MemcachedUtils::SetSQSQueueURL(cq_out.GetResult().GetQueueUrl());
+    AwsUtils::SetCachedSQSQueueURL(queue_url);
     return Status::OK();
   } else {
-    LOG_ERROR("Error creating queue {0} : {1}", queue_name,
-        cq_out.GetError().GetMessage());
+    LOG_ERROR("Could not create SQS Queue {0}. Reason: {1}", queue_name, create_queue_status.ToString());
   }
 
-  // If we failed to create a queue, it's likely that we raced with another dumper instance, so
-  // we confirm if it is created or not.
-  gqu_out = sqs_client_.GetQueueUrl(gqu_req);
-  if (gqu_out.IsSuccess()) {
-    LOG("SQS Queue {0} already exists with URL: {1}", queue_name,
-        gqu_out.GetResult().GetQueueUrl());
+  // If we were unable to create the queue, it's likely that we raced with another dumper instance.
+  // Confirm that the queue exists.
+  get_url_status = AwsUtils::GetSQSUrlFromName(queue_name, &queue_url);
+  if (get_url_status.ok()) {
+    LOG("SQS Queue {0} already exists with URL: {1}", queue_name, queue_url);
 
     // If the queue already exists, we can simply start publishing to it when we choose.
-    MemcachedUtils::SetSQSQueueURL(gqu_out.GetResult().GetQueueUrl());
-    return Status::OK();
+    AwsUtils::SetCachedSQSQueueURL(queue_url);
   } else {
-    // If we're unable to create the queue and not see it, something must be wrong.
-    LOG("Error getting url for queue {0} : {1}", queue_name,
-        gqu_out.GetError().GetMessage());
-    return Status::NetworkError("Unable to set-up SQS queue ",
-        gqu_out.GetError().GetMessage());
+    LOG_ERROR("Could not create or find SQS Queue {0}. Reason: {1}", queue_name,
+        get_url_status.ToString());
+    return get_url_status;
   }
+
+  LOG("SQS successfully initialized.");
+  return Status::OK();
 }
 
 Status Dumper::Init() {
@@ -206,12 +194,12 @@ Status Dumper::Init() {
 
   if (opts_.is_s3_dump()) {
     LOG("Dump target set to S3. S3 Bucket: {0} ; S3 Path: {1}", opts_.s3_bucket(), opts_.s3_path());
-    MemcachedUtils::SetS3Bucket(opts_.s3_bucket());
-    MemcachedUtils::SetS3Path(opts_.s3_path());
+    AwsUtils::SetS3Bucket(opts_.s3_bucket());
+    AwsUtils::SetS3Path(opts_.s3_path());
     RETURN_ON_ERROR(InitSQS());
 
-    MemcachedUtils::SetS3Client(&s3_client_);
-    MemcachedUtils::SetSQSClient(&sqs_client_);
+    AwsUtils::SetS3Client(&s3_client_);
+    AwsUtils::SetSQSClient(&sqs_client_);
   }
   task_scheduler_.reset(new TaskScheduler(opts_.num_threads(), this));
   task_scheduler_->Init();
