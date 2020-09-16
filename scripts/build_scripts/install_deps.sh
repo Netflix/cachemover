@@ -11,7 +11,7 @@ cd extern/
 git clone --branch 1.7.332 https://github.com/aws/aws-sdk-cpp.git
 mkdir -p aws-sdk-cpp/build
 cd aws-sdk-cpp/build
-cmake -DBUILD_ONLY="s3" -DBUILD_SHARED_LIBS=OFF ..
+cmake -DBUILD_ONLY="s3;sqs" -DBUILD_SHARED_LIBS=OFF ..
 make
 make install
 cd $CWD

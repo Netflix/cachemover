@@ -45,11 +45,11 @@ class PosixFile {
 class RotatingFile {
  public:
   RotatingFile(std::string file_path, std::string file_prefix,
-      uint64_t max_file_size, bool suffix_checksum);
+      uint64_t max_file_size, bool suffix_checksum, bool s3_upload_on_close);
 
   RotatingFile(std::string file_path, std::string file_prefix,
       uint64_t max_file_size, std::string optional_dest_path,
-      bool suffix_checksum);
+      bool suffix_checksum, bool s3_upload_on_close);
 
   // Initialize by creating the first file.
   Status Init();
@@ -70,6 +70,10 @@ class RotatingFile {
 
   // Calculate checksum and append to end of final filename if 'true'.
   bool suffix_checksum_;
+
+  // If 'true', uploads every file created after Close().
+  bool s3_upload_on_close_;
+
   // Used for calculating the checksum of the current file.
   // Used a unique pointer here so we can reset it for every new file after
   // every call to RotateFile().

@@ -1,4 +1,5 @@
 #include "common/logger.h"
+#include "tasks/s3_upload_task.h"
 #include "utils/file_util.h"
 #include "utils/memcache_utils.h"
 
@@ -72,12 +73,13 @@ Status PosixFile::Close() {
 }
 
 RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
-    uint64_t max_file_size, bool suffix_checksum)
+    uint64_t max_file_size, bool suffix_checksum, bool s3_upload_on_close)
   : file_path_(file_path),
     file_prefix_(file_prefix),
     max_file_size_(max_file_size),
     optional_dest_path_(""),
     suffix_checksum_(suffix_checksum),
+    s3_upload_on_close_(s3_upload_on_close),
     cur_file_(nullptr),
     nfiles_(0),
     nwritten_current_(0),
@@ -86,12 +88,13 @@ RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
 
 RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
     uint64_t max_file_size, std::string optional_dest_path,
-    bool suffix_checksum)
+    bool suffix_checksum, bool s3_upload_on_close)
   : file_path_(file_path),
     file_prefix_(file_prefix),
     max_file_size_(max_file_size),
     optional_dest_path_(optional_dest_path),
     suffix_checksum_(suffix_checksum),
+    s3_upload_on_close_(s3_upload_on_close),
     cur_file_(nullptr),
     nfiles_(0),
     nwritten_current_(0),
@@ -145,7 +148,7 @@ Status RotatingFile::FsyncDestDir() {
 
 
 Status RotatingFile::FinalizeCurrentFile() {
-
+  std::string final_filename_only;
   std::string final_filename_fq;
 
   // If requested, append the file checksum to the filename.
@@ -166,11 +169,13 @@ Status RotatingFile::FinalizeCurrentFile() {
     ret = MD5_Init(md5_ctx_.get());
     if (ret != 1) return Status::IOError("MD5_Init failed");
 
-    final_filename_fq = optional_dest_path_ + file_prefix_ + "_" + digest_hex;
+    final_filename_only = file_prefix_ + "_" + digest_hex;
+    final_filename_fq = optional_dest_path_ + final_filename_only;
   } else {
 
+    final_filename_only = "_" + staging_file_name_;
     // Use the staging file name if a checksum wasn't requested.
-    final_filename_fq = optional_dest_path_ + "_" + staging_file_name_;
+    final_filename_fq = optional_dest_path_ + final_filename_only;
   }
 
   // Explicitly fsync()
@@ -182,6 +187,19 @@ Status RotatingFile::FinalizeCurrentFile() {
     FileUtils::MoveFile(cur_file_->filename(), final_filename_fq);
     LOG("File: {0} complete.", final_filename_fq);
     RETURN_ON_ERROR(FsyncDestDir());
+  }
+
+  if (s3_upload_on_close_) {
+
+    // Upload file to S3 and send a SQS notification.
+    S3UploadFileTask s3_task(final_filename_fq, final_filename_only);
+    s3_task.Execute();
+
+    // If the file upload was a failure, return the error.
+    // TODO: Add a retry loop if necessary.
+    RETURN_ON_ERROR(s3_task.GetUploadStatus());
+
+    // TODO: Delete file after upload.
   }
 
   return Status::OK();

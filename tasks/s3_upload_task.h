@@ -1,22 +1,26 @@
 #pragma once
 
 #include "tasks/task.h"
+#include "utils/status.h"
 
 #include <iostream>
 #include <string>
 
 namespace memcachedumper {
 
-class S3UploadTask : public Task {
+class S3UploadFileTask : public Task {
  public:
-  S3UploadTask(std::string bucket_name, std::string path, std::string file_prefix);
-  ~S3UploadTask();
+  S3UploadFileTask(std::string fq_local_path, std::string filename);
+  ~S3UploadFileTask();
 
+  Status SendSQSNotification();
   void Execute() override;
+  Status GetUploadStatus() { return upload_status_; }
 
  private:
-  std::string bucket_name_;
-  std::string path_;
-  std::string file_prefix_;
+  std::string fq_local_path_;
+  std::string filename_;
+
+  Status upload_status_;
 };
 } // namespace memcachedumper

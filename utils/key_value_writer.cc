@@ -57,7 +57,8 @@ Status KeyValueWriter::Init() {
         data_file_prefix_,
         max_file_size_,
         MemcachedUtils::GetDataFinalPath(),
-        true /* suffix checksum */));
+        true /* suffix checksum */,
+	MemcachedUtils::GetS3Bucket().empty() ? false : true /* Upload each file to S3 on close */));
   RETURN_ON_ERROR(rotating_data_files_->Init());
 
   return Status::OK();
