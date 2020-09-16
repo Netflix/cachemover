@@ -194,12 +194,12 @@ Status Dumper::Init() {
 
   if (opts_.is_s3_dump()) {
     LOG("Dump target set to S3. S3 Bucket: {0} ; S3 Path: {1}", opts_.s3_bucket(), opts_.s3_path());
+    AwsUtils::SetS3Client(&s3_client_);
+    AwsUtils::SetSQSClient(&sqs_client_);
     AwsUtils::SetS3Bucket(opts_.s3_bucket());
     AwsUtils::SetS3Path(opts_.s3_path());
     RETURN_ON_ERROR(InitSQS());
 
-    AwsUtils::SetS3Client(&s3_client_);
-    AwsUtils::SetSQSClient(&sqs_client_);
   }
   task_scheduler_.reset(new TaskScheduler(opts_.num_threads(), this));
   task_scheduler_->Init();

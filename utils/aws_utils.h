@@ -27,6 +27,10 @@ class AwsUtils {
   static Status GetSQSUrlFromName(std::string& queue_name, std::string* out_url);
   static Status CreateNewSQSQueue(std::string& queue_name, std::string* out_url);
 
+  // Returns a JSON string in 'out_sqs_body' with the following format:
+  // {"reqId":'123',"host":'127.0.0.1',"uri":'s3://bucket/file',"keysCount":0,"dumpFormat":'BINARY'}
+  static Status SQSBodyForS3(std::string& s3_file_uri, std::string* out_sqs_body);
+
  private:
   static std::string s3_bucket_;
   static std::string s3_path_;

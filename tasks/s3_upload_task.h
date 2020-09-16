@@ -13,7 +13,6 @@ class S3UploadFileTask : public Task {
   S3UploadFileTask(std::string fq_local_path, std::string filename);
   ~S3UploadFileTask();
 
-  Status SendSQSNotification();
   void Execute() override;
   Status GetUploadStatus() { return upload_status_; }
 
@@ -22,5 +21,8 @@ class S3UploadFileTask : public Task {
   std::string filename_;
 
   Status upload_status_;
+
+  Status SendSQSNotification(std::string s3_file_uri);
 };
+
 } // namespace memcachedumper

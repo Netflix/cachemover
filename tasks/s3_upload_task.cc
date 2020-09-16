@@ -34,13 +34,13 @@ S3UploadFileTask::S3UploadFileTask(std::string fq_local_path, std::string filena
     upload_status_(Status::OK()) {
 }
 
-Status S3UploadFileTask::SendSQSNotification() {
+Status S3UploadFileTask::SendSQSNotification(std::string s3_file_uri) {
   Aws::SQS::Model::SendMessageRequest sm_req;
   std::string queue_url = AwsUtils::GetCachedSQSQueueURL();
   sm_req.SetQueueUrl(queue_url);
 
-  // TODO: Send a JSON formatted message.
-  Aws::String msg_body = "ReqId: " + MemcachedUtils::GetReqId() + "; filename: " + filename_ + "; DONE";
+  std::string msg_body;
+  RETURN_ON_ERROR(AwsUtils::SQSBodyForS3(s3_file_uri, &msg_body));
   sm_req.SetMessageBody(msg_body);
 
   auto sm_out = AwsUtils::GetSQSClient()->SendMessage(sm_req);
@@ -78,7 +78,8 @@ void S3UploadFileTask::Execute() {
   }
   LOG("Successfully uploaded {0} to S3. Sending SQS notification...", filename_);
 
-  Status sqs_notify_status = SendSQSNotification();
+  std::string s3_file_uri = "s3://" + AwsUtils::GetS3Bucket() + "/" + s3_key_name;
+  Status sqs_notify_status = SendSQSNotification(s3_file_uri);
   if (!sqs_notify_status.ok()) {
     upload_status_ = sqs_notify_status;
     return;

@@ -1,5 +1,10 @@
 #include "utils/aws_utils.h"
 #include "utils/memcache_utils.h"
+#include "utils/net_util.h"
+
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <iostream>
 #include <sstream>
@@ -37,7 +42,7 @@ void AwsUtils::SetSQSClient(Aws::SQS::SQSClient* sqs_client) {
 }
 
 std::string AwsUtils::GetSQSQueueName() {
-  return "native-cachewarmerapp-" + MemcachedUtils::GetReqId();
+  return "cachewarmer-" + MemcachedUtils::GetReqId();
 }
 
 Status AwsUtils::GetSQSUrlFromName(std::string& queue_name, std::string* out_url) {
@@ -62,6 +67,41 @@ Status AwsUtils::CreateNewSQSQueue(std::string& queue_name, std::string* out_url
         cq_out.GetError().GetMessage());
   }
   *out_url = cq_out.GetResult().GetQueueUrl();
+  return Status::OK();
+}
+
+Status AwsUtils::SQSBodyForS3(std::string& s3_file_uri, std::string* out_sqs_body) {
+  using namespace rapidjson;
+
+  rapidjson::Document root;
+  // Use as object instead of array
+  root.SetObject();
+  // Allocator for object
+  rapidjson::Document::AllocatorType& allocator = root.GetAllocator();
+
+  Value req_id_val;
+  std::string req_id = MemcachedUtils::GetReqId();
+  req_id_val.SetString(req_id.c_str(), req_id.length(), allocator);
+  root.AddMember("reqId", req_id_val, allocator);
+
+  Value host_val;
+  std::string *host_ptr;
+  RETURN_ON_ERROR(GetIPAddrAsString(&host_ptr));
+  host_val.SetString(host_ptr->c_str(), host_ptr->length(), allocator);
+  root.AddMember("host", host_val, allocator);
+
+  Value s3_uri_val;
+  req_id_val.SetString(s3_file_uri.c_str(), s3_file_uri.length(), allocator);
+  root.AddMember("uri", req_id_val, allocator);
+
+  root.AddMember("keysCount", "0", allocator);
+  root.AddMember("dumpFormat", "BINARY", allocator);
+
+  rapidjson::StringBuffer strbuf;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+  root.Accept(writer);
+
+  *out_sqs_body = strbuf.GetString();
   return Status::OK();
 }
 
