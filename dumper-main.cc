@@ -48,6 +48,8 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
   std::string s3_bucket;
   std::string s3_path;
   std::string req_id;
+  std::string dest_ips_filepath;
+  std::string all_ips_filepath;
 
   IGNORE_RET_VAL(app.add_option("-i,--ip,ip", ip,
       "Memcached IP.")->required());
@@ -81,7 +83,10 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       s3_path, "S3 Final Path."));
   IGNORE_RET_VAL(app.add_option("-r, --req_id",
       req_id, "Dump ID assigned by requesting service.")->required());
-
+  IGNORE_RET_VAL(app.add_option("--dest_ips_filepath", dest_ips_filepath,
+      "Path to file containing one IP:port per line to narrow the dump to."));
+  IGNORE_RET_VAL(app.add_option("--all_ips_filepath", all_ips_filepath,
+      "Path to file containing one IP:port per line of all instances in the ASG."));
   CLI11_PARSE(app, argc, argv);
 
   opts.set_memcached_hostname(ip);
@@ -102,6 +107,9 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
     opts.set_s3_final_path(s3_path);
   }
   opts.set_req_id(req_id);
+  opts.set_dest_ips_filepath(dest_ips_filepath);
+  opts.set_all_ips_filepath(all_ips_filepath);
+  std::cout << "destips filepath: " << dest_ips_filepath << std::endl;
 
   if (is_s3_dump) {
     if (s3_bucket.empty() || s3_path.empty()) {

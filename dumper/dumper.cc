@@ -8,14 +8,13 @@
 #include "tasks/task_scheduler.h"
 #include "utils/aws_utils.h"
 #include "utils/file_util.h"
+#include "utils/ketama_hash.h"
 #include "utils/mem_mgr.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 #include "utils/socket_pool.h"
 
-#include <iostream>
 #include <sstream>
-#include <string>
 
 #include <string.h>
 #include <stdlib.h>
@@ -94,6 +93,14 @@ void DumperOptions::set_s3_final_path(std::string s3_path) {
 
 void DumperOptions::set_req_id(std::string req_id) {
   req_id_ = req_id;
+}
+
+void DumperOptions::set_dest_ips_filepath(std::string dest_ips_filepath) {
+  dest_ips_filepath_ = dest_ips_filepath;
+}
+
+void DumperOptions::set_all_ips_filepath(std::string all_ips_filepath) {
+  all_ips_filepath_ = all_ips_filepath;
 }
 
 Dumper::Dumper(DumperOptions& opts)
@@ -175,6 +182,29 @@ Status Dumper::InitSQS() {
 
 Status Dumper::Init() {
 
+  // If we've been given a list of destination IPs to filter the dump for,
+  // read and store it into a vector.
+  if (!opts_.dest_ips_filepath().empty()) {
+    if (opts_.all_ips_filepath().empty()) {
+      LOG_ERROR("CONFIG ERROR: --all_ips_filepath must be provided along with" \
+          "--dest_ips_filepath");
+      return Status::InvalidArgument("--all_ips_filepath not provided.");
+    }
+    LOG("Extracting destination IP:Port pairs from file: {}",
+        opts_.dest_ips_filepath());
+    RETURN_ON_ERROR(MemcachedUtils::ExtractIPsFromFile(
+        opts_.dest_ips_filepath(), dest_ips_));
+    MemcachedUtils::SetDestIps(dest_ips_);
+
+    LOG("Extracting all IP:Port pairs of target ASG from file: {}",
+        opts_.all_ips_filepath());
+    RETURN_ON_ERROR(MemcachedUtils::ExtractIPsFromFile(
+        opts_.all_ips_filepath(), all_ips_));
+    MemcachedUtils::SetAllIps(all_ips_);
+
+    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter());
+  }
+
   MemcachedUtils::SetReqId(opts_.req_id());
   MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
   MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
@@ -203,13 +233,12 @@ Status Dumper::Init() {
     AwsUtils::SetS3Bucket(opts_.s3_bucket());
     AwsUtils::SetS3Path(opts_.s3_path());
     RETURN_ON_ERROR(InitSQS());
-
   }
+
   task_scheduler_.reset(new TaskScheduler(opts_.num_threads(), this));
   task_scheduler_->Init();
 
   rest_server_.reset(new RESTServer(task_scheduler_.get()));
-
   return Status::OK();
 }
 

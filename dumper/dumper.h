@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <aws/core/Aws.h>
 #include <aws/s3/S3Client.h>
@@ -38,6 +39,8 @@ class DumperOptions {
   void set_s3_bucket_name(std::string s3_bucket);
   void set_s3_final_path(std::string s3_path);
   void set_req_id(std::string req_id);
+  void set_dest_ips_filepath(std::string dest_ips_filepath);
+  void set_all_ips_filepath(std::string all_ips_filepath);
 
   std::string memcached_hostname() { return memcached_hostname_; }
   int memcached_port() { return memcached_port_; }
@@ -55,6 +58,8 @@ class DumperOptions {
   std::string s3_bucket() { return s3_bucket_; }
   std::string s3_path() { return s3_path_; }
   std::string req_id() { return req_id_; }
+  std::string dest_ips_filepath() { return dest_ips_filepath_; }
+  std::string all_ips_filepath() { return all_ips_filepath_; }
 
  private:
   // Hostname that contains target memecached.
@@ -90,6 +95,12 @@ class DumperOptions {
   std::string s3_path_;
   // Dump request ID.
   std::string req_id_;
+  // Path to file containing IP:port pairs of target instances that
+  // we want to narrow the dump to.
+  std::string dest_ips_filepath_;
+  // Path to file containing IP:port pairs of all instances in the target
+  // ASG.
+  std::string all_ips_filepath_;
 };
 
 class Dumper {
@@ -144,6 +155,13 @@ class Dumper {
   Aws::Client::ClientConfiguration s3_config_;
   Aws::S3::S3Client s3_client_;
   Aws::SQS::SQSClient sqs_client_;
+
+  // Select IP addresses that we want to dump to. To use, 'all_ips_' must be provided
+  // and 'dest_ips_' must be a subset of 'all_ips_'. Optional.
+  std::vector<std::string> dest_ips_;
+  // All IP addresses of target ASG. To use, 'dest_ips_' must be provided and it
+  // must be a subset of 'all_ips_'. Optional.
+  std::vector<std::string> all_ips_;
 
   // Stopwatch to run for the entire duration of the dumper.
   MonotonicStopWatch total_msw_;
