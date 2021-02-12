@@ -15,13 +15,7 @@ namespace memcachedumper {
 
 ProcessMetabufTask::ProcessMetabufTask(const std::string& filename, bool is_s3_dump)
   : filename_(filename),
-    is_s3_dump_(is_s3_dump),
-    dest_ips_(nullptr) {
-}
-ProcessMetabufTask::ProcessMetabufTask(const std::string& filename, bool is_s3_dump, std::vector<std::string>* dest_ips)
-  : filename_(filename),
-    is_s3_dump_(is_s3_dump),
-    dest_ips_(dest_ips) {
+    is_s3_dump_(is_s3_dump) {
 }
 
 std::string ProcessMetabufTask::UrlDecode(std::string& str){

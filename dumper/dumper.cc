@@ -8,7 +8,6 @@
 #include "tasks/task_scheduler.h"
 #include "utils/aws_utils.h"
 #include "utils/file_util.h"
-#include "utils/ketama_hash.h"
 #include "utils/mem_mgr.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"

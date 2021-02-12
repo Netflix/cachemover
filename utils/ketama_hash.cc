@@ -21,8 +21,8 @@ KetamaHasher::KetamaHasher(std::vector<std::string> rh)
     uint32_t bucketSize = 160; // TODO : read from the config
     for (uint32_t j = 0; j < bucketSize / 4; ++j) {
       std::stringstream hostStringStream;
-      hostStringStream << hostname << "/" << hostname
-        << ":" << port << "-" << j;
+
+      hostStringStream << hostname << "/" << hostname << ":" << port << "-" << j;
       std::string hostString = hostStringStream.str();
       unsigned char result[MD5_DIGEST_LENGTH];
       std::string md5str =

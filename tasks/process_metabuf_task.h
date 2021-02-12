@@ -6,7 +6,6 @@
 #include <curl/curl.h>
 
 #include <string>
-#include <vector>
 
 namespace memcachedumper {
 
@@ -17,7 +16,6 @@ class Socket;
 class ProcessMetabufTask : public Task {
  public:
   ProcessMetabufTask(const std::string& filename, bool is_s3_dump);
-  ProcessMetabufTask(const std::string& filename, bool is_s3_dump, std::vector<std::string>* dest_ips);
   ~ProcessMetabufTask() = default;
 
   std::string UrlDecode(std::string& str);
@@ -42,9 +40,6 @@ class ProcessMetabufTask : public Task {
   // Queues up an S3UploadTask on 'filename_' if true.
   bool is_s3_dump_;
 
-  // An optional vector of IP addresses for which we'll filter
-  // keys for and dump.
-  std::vector<std::string>* dest_ips_;
 };
 
 } // namespace memcachedumper
