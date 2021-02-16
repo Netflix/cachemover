@@ -1,4 +1,5 @@
 #include "common/logger.h"
+#include "dumper/dumper_config.h"
 #include "dumper/dumper.h"
 #include "utils/status.h"
 #include "extern/CLI/CLI.hpp"
@@ -6,7 +7,6 @@
 #include <string>
 #include <experimental/filesystem>
 
-using std::string;
 namespace memcachedumper {
 
 void DumperMain(DumperOptions& opts) {
@@ -32,6 +32,15 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
 
   CLI::App app("Memcached dumper options");
 
+  std::string config_file_path;
+  IGNORE_RET_VAL(app.add_option("--config_file_path", config_file_path,
+        "Configuration file path.")->required());
+
+  CLI11_PARSE(app, argc, argv);
+  std::cout << "Filepath: " << config_file_path << std::endl;
+
+  opts.set_config_file_path(config_file_path);
+  /*
   std::string ip;
   int port;
   int num_threads;
@@ -83,10 +92,6 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
       s3_path, "S3 Final Path."));
   IGNORE_RET_VAL(app.add_option("-r, --req_id",
       req_id, "Dump ID assigned by requesting service.")->required());
-  IGNORE_RET_VAL(app.add_option("--dest_ips_filepath", dest_ips_filepath,
-      "Path to file containing one IP:port per line to narrow the dump to."));
-  IGNORE_RET_VAL(app.add_option("--all_ips_filepath", all_ips_filepath,
-      "Path to file containing one IP:port per line of all instances in the ASG."));
   CLI11_PARSE(app, argc, argv);
 
   opts.set_memcached_hostname(ip);
@@ -107,9 +112,6 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
     opts.set_s3_final_path(s3_path);
   }
   opts.set_req_id(req_id);
-  opts.set_dest_ips_filepath(dest_ips_filepath);
-  opts.set_all_ips_filepath(all_ips_filepath);
-  std::cout << "destips filepath: " << dest_ips_filepath << std::endl;
 
   if (is_s3_dump) {
     if (s3_bucket.empty() || s3_path.empty()) {
@@ -124,7 +126,7 @@ int ParseCLIOptions(int argc, char **argv, memcachedumper::DumperOptions& opts) 
             memlimit, num_threads * 2 * bufsize, 2 * num_threads, bufsize);
         exit(-1);
   }
-
+  */
   return 0;
 }
 
@@ -136,6 +138,12 @@ int main(int argc, char** argv) {
 
   memcachedumper::DumperOptions opts;
   IGNORE_RET_VAL(ParseCLIOptions(argc, argv, opts));
+  memcachedumper::Status s =
+      memcachedumper::DumperConfig::LoadConfig(opts.config_file_path(), opts);
+  if (!s.ok()) {
+    LOG_ERROR(s.ToString());
+    exit(-1);
+  }
 
   memcachedumper::DumperMain(opts);
 

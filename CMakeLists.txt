@@ -48,6 +48,10 @@ set(PISTACHE_INCLUDE_DIR "extern/pistache/include")
 set(PISTACHE_LIBRARY "${PROJECT_SOURCE_DIR}/extern/pistache/libpistache.a")
 include_directories(${PISTACHE_INCLUDE_DIR})
 
+# yaml-cpp
+add_subdirectory("extern/yaml-cpp")
+include_directories("extern/yaml-cpp/include")
+
 find_package(AWSSDK REQUIRED COMPONENTS s3 sqs)
 
 add_executable(memcache-dumper ${PROJECT_SOURCE_DIR}/dumper-main.cc)
@@ -61,7 +65,8 @@ target_link_libraries(
   ${CURL_LIBRARIES}
   ${PISTACHE_LIBRARY}
   ${AWSSDK_LINK_LIBRARIES}
-  spdlog::spdlog)
+  spdlog::spdlog
+  yaml-cpp)
 
 add_subdirectory(utils)
 add_subdirectory(common)

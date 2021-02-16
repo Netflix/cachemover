@@ -85,7 +85,9 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
     }
 
     // Filter the key out if required.
-    if (MemcachedUtils::FilterKey(decoded_key) == true) continue;
+    if (MemcachedUtils::FilterKey(decoded_key) == true) {
+      continue;
+    }
 
     // Track the key and queue it for processing.
     McData *new_key = new McData(decoded_key, expiry);
