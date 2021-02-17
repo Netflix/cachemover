@@ -135,4 +135,12 @@ uint64_t TaskScheduler::total_keys_missing() {
   }
   return total_keys_missing;
 }
+
+uint64_t TaskScheduler::total_keys_filtered() {
+  uint64_t total_keys_filtered = 0;
+  for (auto&& thread : threads_) {
+    total_keys_filtered += thread->num_keys_filtered();
+  }
+  return total_keys_filtered;
+}
 } // namespace memcachedumper

@@ -131,7 +131,7 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   }
 
   if (config[ARG_IS_S3_DUMP]) {
-    if (config[ARG_IS_S3_DUMP].as<std::string>() == "true") {
+    if (config[ARG_IS_S3_DUMP].as<bool>() == true) {
       out_opts.set_is_s3_dump(true);
       out_opts.set_s3_bucket_name(config[ARG_S3_BUCKET].as<std::string>());
       out_opts.set_s3_final_path(config[ARG_S3_FINAL_PATH].as<std::string>());

@@ -1,0 +1,26 @@
+---
+ ip: "127.0.0.1"
+ port: 11211
+ threads: 4
+ bufsize: 2097152
+ memlimit: 20971520
+ key_file_size: 2097152
+ data_file_size: 2097152
+ output_dir: "/tmp/test_dump/"
+ bulk_get_threshold: 30
+ only_expire_after_s: 0
+ log_file_path: "/tmp/native_dumper.log"
+ req_id: "native_test_s3_dump-20201216015312"
+ is_s3_dump: false
+ s3_bucket: "evcache-test"
+ s3_final_path: "dump/native_test_s3_dump"
+ dest_ips:
+   - "1.1.1.1:11211"
+   - "2.2.2.2:11211"
+   - "3.3.3.3:11211"
+ all_ips:
+   - "1.1.1.1:11211"
+   - "1.2.3.4:11211"
+   - "2.2.2.2:11211"
+   - "2.3.4.5:11211"
+   - "3.3.3.3:11211"
