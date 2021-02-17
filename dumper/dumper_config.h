@@ -20,6 +20,7 @@
 #define ARG_OUTPUT_DIR                "output_dir"
 #define ARG_BULK_GET_THRESHOLD        "bulk_get_threshold"
 #define ARG_ONLY_EXPIRE_AFTER_S       "only_expire_after_s"
+#define ARG_CHECKPOINT_RESUME         "checkpoint_resume"
 #define ARG_LOG_FILE_PATH             "log_file_path"
 #define ARG_REQ_ID                    "req_id"
 #define ARG_DEST_IPS                  "dest_ips"

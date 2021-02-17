@@ -123,6 +123,10 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   out_opts.set_log_file_path(config[ARG_LOG_FILE_PATH].as<std::string>());
   out_opts.set_req_id(config[ARG_REQ_ID].as<std::string>());
 
+  if (config[ARG_CHECKPOINT_RESUME]) {
+    out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
+  }
+
   for (auto dip : config[ARG_DEST_IPS]) {
     out_opts.add_dest_ip(dip.as<std::string>());
   }
