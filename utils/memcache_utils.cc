@@ -139,12 +139,12 @@ std::string MemcachedUtils::CraftBulkGetCommand(
   return bulk_get_cmd.str();
 }
 
-Status MemcachedUtils::InitKeyFilter() {
+Status MemcachedUtils::InitKeyFilter(uint32_t ketama_bucket_size) {
   if (all_ips_.size() == 0 || dest_ips_.size() == 0) {
     return Status::InvalidArgument(
         "Must provide dest_ips and all_ips to enable key filtering.");
   }
-  kf_ = new KeyFilter(all_ips_, dest_ips_);
+  kf_ = new KeyFilter(all_ips_, dest_ips_, ketama_bucket_size);
   RETURN_ON_ERROR(kf_->Init());
 
   return Status::OK();

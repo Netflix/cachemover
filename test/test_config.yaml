@@ -14,6 +14,7 @@
  is_s3_dump: false
  s3_bucket: "evcache-test"
  s3_final_path: "dump/native_test_s3_dump"
+ ketama_bucket_size: 160
  dest_ips:
    - "1.1.1.1:11211"
    - "2.2.2.2:11211"

@@ -113,7 +113,7 @@ Status Dumper::Init() {
     LOG("--dest_ips and --all_ips provided. Initializing key filter.");
     MemcachedUtils::SetDestIps(opts_.dest_ips());
     MemcachedUtils::SetAllIps(opts_.all_ips());
-    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter());
+    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter(opts_.ketama_bucket_size()));
   }
 
   MemcachedUtils::SetReqId(opts_.req_id());

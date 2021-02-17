@@ -24,7 +24,7 @@ inline uint32_t furc_maximum_pool_size(void) {
 
 class KetamaHasher {
  public:
-  KetamaHasher(std::vector<std::string> rh);
+  KetamaHasher(std::vector<std::string> rh, uint32_t bucket_size);
 
   // Returns the ketama hash of 'key'.
   uint32_t KetamaHash(const char* const key, const size_t len) const;

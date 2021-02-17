@@ -16,9 +16,11 @@ namespace memcachedumper {
 /// the subset of those hosts that we want to filter keys for.
 class KeyFilter {
  public:
-  KeyFilter(std::vector<std::string> all_ips, std::vector<std::string> dest_ips) {
+  KeyFilter(std::vector<std::string> all_ips, std::vector<std::string> dest_ips,
+      uint32_t ketama_bucket_size) {
     all_ips_ = all_ips;
     dest_ips_ = dest_ips;
+    ketama_bucket_size_ = ketama_bucket_size;
   }
 
   // Initializes the KeyFilter.
@@ -32,6 +34,8 @@ class KeyFilter {
   std::vector<std::string> all_ips_;
   // List of destination IPs that we want to filter for.
   std::vector<std::string> dest_ips_;
+  // Bucket size to configure the ketama hasher with.
+  uint32_t ketama_bucket_size_;
 
   KetamaHasher* hasher_;
 
