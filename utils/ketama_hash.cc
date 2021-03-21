@@ -3,7 +3,7 @@
 
 namespace memcachedumper {
 
-KetamaHasher::KetamaHasher(std::vector<std::string> rh)
+KetamaHasher::KetamaHasher(std::vector<std::string> rh, uint32_t bucket_size)
   : hostmap_() {
   size_t n = rh.size();
   if (!n || n > furc_maximum_pool_size()) {
@@ -18,8 +18,7 @@ KetamaHasher::KetamaHasher(std::vector<std::string> rh)
     std::string hostname = parts[0];
     std::string port = parts[1];
 
-    uint32_t bucketSize = 160; // TODO : read from the config
-    for (uint32_t j = 0; j < bucketSize / 4; ++j) {
+    for (uint32_t j = 0; j < bucket_size / 4; ++j) {
       std::stringstream hostStringStream;
 
       hostStringStream << hostname << "/" << hostname << ":" << port << "-" << j;

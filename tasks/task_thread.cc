@@ -17,7 +17,8 @@ TaskThread::TaskThread(TaskScheduler *task_scheduler, const std::string& thread_
     thread_(&TaskThread::WorkerLoop, this),
     num_keys_processed_(0),
     num_keys_ignored_(0),
-    num_keys_missing_(0) {
+    num_keys_missing_(0),
+    num_keys_filtered_(0) {
 }
 
 TaskThread::~TaskThread() {

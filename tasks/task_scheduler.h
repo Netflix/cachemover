@@ -51,6 +51,9 @@ class TaskScheduler {
   // threads.
   uint64_t total_keys_missing();
 
+  // The total number of keys filtered out by all the threads.
+  uint64_t total_keys_filtered();
+
   // Return a string containing metrics.
   std::string MetricsAsString();
  private:

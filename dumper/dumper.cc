@@ -1,3 +1,4 @@
+#include "dumper/dumper_config.h"
 #include "dumper/dumper.h"
 
 #include "common/logger.h"
@@ -25,82 +26,7 @@
 #include <aws/sqs/model/GetQueueUrlRequest.h>
 #include <aws/sqs/model/GetQueueUrlResult.h>
 
-using std::string;
-using std::string_view;
-
 namespace memcachedumper {
-
-void DumperOptions::set_memcached_hostname(string_view memcached_hostname) {
-  memcached_hostname_ = memcached_hostname;
-}
-
-void DumperOptions::set_memcached_port(int memcached_port) {
-  memcached_port_ = memcached_port;
-}
-
-void DumperOptions::set_num_threads(int num_threads) {
-  num_threads_ = num_threads;
-}
-
-void DumperOptions::set_chunk_size(uint64_t chunk_size) {
-  chunk_size_ = chunk_size;
-}
-
-void DumperOptions::set_max_memory_limit(uint64_t max_memory_limit) {
-  max_memory_limit_ = max_memory_limit;
-}
-
-void DumperOptions::set_max_key_file_size(uint64_t max_key_file_size) {
-  max_key_file_size_ = max_key_file_size;
-}
-
-void DumperOptions::set_max_data_file_size(uint64_t max_data_file_size) {
-  max_data_file_size_ = max_data_file_size;
-}
-
-void DumperOptions::set_log_file_path(string_view log_file_path) {
-  log_file_path_ = log_file_path;
-}
-
-void DumperOptions::set_output_dir_path(string_view output_dir_path) {
-  output_dir_path_ = output_dir_path;
-}
-
-void DumperOptions::set_bulk_get_threshold(uint32_t bulk_get_threshold) {
-  bulk_get_threshold_ = bulk_get_threshold;
-}
-
-void DumperOptions::set_only_expire_after(int only_expire_after) {
-  only_expire_after_ = only_expire_after;
-}
-
-void DumperOptions::set_resume_mode(bool resume_mode) {
-  resume_mode_ = resume_mode;
-}
-
-void DumperOptions::set_is_s3_dump(bool is_s3_dump) {
-  is_s3_dump_ = is_s3_dump;
-}
-
-void DumperOptions::set_s3_bucket_name(std::string s3_bucket) {
-  s3_bucket_ = s3_bucket;
-}
-
-void DumperOptions::set_s3_final_path(std::string s3_path) {
-  s3_path_ = s3_path;
-}
-
-void DumperOptions::set_req_id(std::string req_id) {
-  req_id_ = req_id;
-}
-
-void DumperOptions::set_dest_ips_filepath(std::string dest_ips_filepath) {
-  dest_ips_filepath_ = dest_ips_filepath;
-}
-
-void DumperOptions::set_all_ips_filepath(std::string all_ips_filepath) {
-  all_ips_filepath_ = all_ips_filepath;
-}
 
 Dumper::Dumper(DumperOptions& opts)
   : opts_(opts),
@@ -182,26 +108,12 @@ Status Dumper::InitSQS() {
 Status Dumper::Init() {
 
   // If we've been given a list of destination IPs to filter the dump for,
-  // read and store it into a vector.
-  if (!opts_.dest_ips_filepath().empty()) {
-    if (opts_.all_ips_filepath().empty()) {
-      LOG_ERROR("CONFIG ERROR: --all_ips_filepath must be provided along with" \
-          "--dest_ips_filepath");
-      return Status::InvalidArgument("--all_ips_filepath not provided.");
-    }
-    LOG("Extracting destination IP:Port pairs from file: {}",
-        opts_.dest_ips_filepath());
-    RETURN_ON_ERROR(MemcachedUtils::ExtractIPsFromFile(
-        opts_.dest_ips_filepath(), dest_ips_));
-    MemcachedUtils::SetDestIps(dest_ips_);
-
-    LOG("Extracting all IP:Port pairs of target ASG from file: {}",
-        opts_.all_ips_filepath());
-    RETURN_ON_ERROR(MemcachedUtils::ExtractIPsFromFile(
-        opts_.all_ips_filepath(), all_ips_));
-    MemcachedUtils::SetAllIps(all_ips_);
-
-    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter());
+  // initialize the key filter.
+  if (opts_.dest_ips().size() > 0) {
+    LOG("--dest_ips and --all_ips provided. Initializing key filter.");
+    MemcachedUtils::SetDestIps(opts_.dest_ips());
+    MemcachedUtils::SetAllIps(opts_.all_ips());
+    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter(opts_.ketama_bucket_size()));
   }
 
   MemcachedUtils::SetReqId(opts_.req_id());
@@ -285,6 +197,7 @@ void Dumper::Run() {
       << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
       << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
       << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
+      << " -Total keys filtered: " << task_scheduler_->total_keys_filtered() << std::endl
       << " -Time taken: " << total_msw_.HumanElapsedStr() << std::endl;
   LOG(final_metrics.str());
   LOG("Status: All tasks completed. Exiting...");

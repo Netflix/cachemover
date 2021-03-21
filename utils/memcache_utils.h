@@ -93,7 +93,7 @@ class MemcachedUtils {
   // Initialize key filtering for use by individual tasks.
   // Must call SetDestIps() and SetAllIps() before using.
   // TODO: Consider avoiding this global state.
-  static Status InitKeyFilter();
+  static Status InitKeyFilter(uint32_t ketama_bucket_size);
   // Returns 'true' if key needs to be filtered out. 'false' otherwise.
   // Always returns 'false' if InitKeyFilter() isn't called before this.
   static bool FilterKey(const std::string& key);

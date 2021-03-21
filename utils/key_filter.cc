@@ -4,7 +4,7 @@ namespace memcachedumper {
 
 Status KeyFilter::Init() {
   try {
-    hasher_ = new KetamaHasher(all_ips_);
+    hasher_ = new KetamaHasher(all_ips_, ketama_bucket_size_);
   } catch (...) {
     return Status::InvalidArgument("Destination IPs provided are invalid");
   }
