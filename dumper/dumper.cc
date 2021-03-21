@@ -113,7 +113,7 @@ Status Dumper::Init() {
     LOG("--dest_ips and --all_ips provided. Initializing key filter.");
     MemcachedUtils::SetDestIps(opts_.dest_ips());
     MemcachedUtils::SetAllIps(opts_.all_ips());
-    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter());
+    RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter(opts_.ketama_bucket_size()));
   }
 
   MemcachedUtils::SetReqId(opts_.req_id());
@@ -197,6 +197,7 @@ void Dumper::Run() {
       << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
       << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
       << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
+      << " -Total keys filtered: " << task_scheduler_->total_keys_filtered() << std::endl
       << " -Time taken: " << total_msw_.HumanElapsedStr() << std::endl;
   LOG(final_metrics.str());
   LOG("Status: All tasks completed. Exiting...");

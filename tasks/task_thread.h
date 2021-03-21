@@ -31,13 +31,19 @@ class TaskThread {
 
   void Join();
 
-  void account_keys_processed(uint64_t num_keys) { num_keys_processed_ += num_keys; }
-  void increment_keys_ignored() { num_keys_ignored_++; }
-  void account_keys_missing(uint64_t num_keys) { num_keys_missing_ += num_keys; }
+  inline void account_keys_processed(uint64_t num_keys) {
+    num_keys_processed_ += num_keys;
+  }
+  inline void increment_keys_ignored() { num_keys_ignored_++; }
+  inline void increment_keys_filtered() { num_keys_filtered_++; }
+  inline void account_keys_missing(uint64_t num_keys) {
+    num_keys_missing_ += num_keys;
+  }
 
   uint64_t num_keys_processed() { return num_keys_processed_; }
   uint64_t num_keys_ignored() { return num_keys_ignored_; }
   uint64_t num_keys_missing() { return num_keys_missing_; }
+  uint64_t num_keys_filtered() { return num_keys_filtered_; }
 
  private:
 
@@ -58,6 +64,7 @@ class TaskThread {
   uint64_t num_keys_processed_;
   uint64_t num_keys_ignored_;
   uint64_t num_keys_missing_;
+  uint64_t num_keys_filtered_;
 
 };
 

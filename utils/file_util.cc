@@ -198,6 +198,8 @@ Status RotatingFile::FinalizeCurrentFile() {
     RETURN_ON_ERROR(FsyncDestDir());
   }
 
+  // TODO: This isn't where we would do the upload ideally.
+  // Find a better way to do it.
   if (s3_upload_on_close_) {
 
     // Upload file to S3 and send a SQS notification.

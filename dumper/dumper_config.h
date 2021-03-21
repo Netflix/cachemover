@@ -20,10 +20,12 @@
 #define ARG_OUTPUT_DIR                "output_dir"
 #define ARG_BULK_GET_THRESHOLD        "bulk_get_threshold"
 #define ARG_ONLY_EXPIRE_AFTER_S       "only_expire_after_s"
+#define ARG_CHECKPOINT_RESUME         "checkpoint_resume"
 #define ARG_LOG_FILE_PATH             "log_file_path"
 #define ARG_REQ_ID                    "req_id"
 #define ARG_DEST_IPS                  "dest_ips"
 #define ARG_ALL_IPS                   "all_ips"
+#define ARG_KETAMA_BUCKET_SIZE        "ketama_bucket_size"
 #define ARG_IS_S3_DUMP                "is_s3_dump"
 #define ARG_S3_BUCKET                 "s3_bucket"
 #define ARG_S3_FINAL_PATH             "s3_final_path"
@@ -75,6 +77,7 @@ class DumperOptions {
   void set_all_ips_filepath(std::string all_ips_filepath);
   void add_dest_ip(const std::string& dest_ip);
   void add_all_ip(const std::string& all_ip);
+  void set_ketama_bucket_size(uint32_t ketama_bucket_size);
 
   std::string config_file_path() { return config_file_path_; }
   std::string memcached_hostname() { return memcached_hostname_; }
@@ -95,6 +98,7 @@ class DumperOptions {
   std::string req_id() { return req_id_; }
   const std::vector<std::string>& dest_ips() { return dest_ips_; }
   const std::vector<std::string>& all_ips() { return all_ips_; }
+  uint32_t ketama_bucket_size() { return ketama_bucket_size_; }
 
  private:
   // Path to configuration file.
@@ -136,6 +140,8 @@ class DumperOptions {
   std::vector<std::string> dest_ips_;
   // IP:port pairs of all instances in the target replica.
   std::vector<std::string> all_ips_;
+  // The bucket size to be used while evaluating ketama hashes.
+  uint32_t ketama_bucket_size_;
 };
 
 } // namespace memcachedumper
