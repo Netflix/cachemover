@@ -1,4 +1,5 @@
 #include "common/logger.h"
+#include "utils/key_filter.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 
@@ -40,6 +41,9 @@ std::string MemcachedUtils::output_dir_path_;
 uint32_t MemcachedUtils::bulk_get_threshold_ = DEFAULT_BULK_GET_THRESHOLD;
 uint64_t MemcachedUtils::max_data_file_size_;
 int MemcachedUtils::only_expire_after_;
+std::vector<std::string> MemcachedUtils::dest_ips_;
+std::vector<std::string> MemcachedUtils::all_ips_;
+KeyFilter* MemcachedUtils::kf_;
 
 void MemcachedUtils::SetReqId(std::string req_id) {
   MemcachedUtils::req_id_ = req_id;
@@ -61,6 +65,13 @@ void MemcachedUtils::SetOnlyExpireAfter(int only_expire_after) {
   MemcachedUtils::only_expire_after_ = only_expire_after;
 }
 
+void MemcachedUtils::SetDestIps(const std::vector<std::string>& dest_ips) {
+  MemcachedUtils::dest_ips_ = dest_ips;
+}
+void MemcachedUtils::SetAllIps(const std::vector<std::string>& all_ips) {
+  MemcachedUtils::all_ips_ = all_ips;
+}
+
 std::string MemcachedUtils::GetKeyFilePath() {
   return MemcachedUtils::output_dir_path_ + "/keyfile/";
 }
@@ -69,6 +80,9 @@ std::string MemcachedUtils::GetDataStagingPath() {
 }
 std::string MemcachedUtils::GetDataFinalPath() {
   return MemcachedUtils::output_dir_path_ + "/datafiles_completed/";
+}
+std::vector<std::string>* MemcachedUtils::GetDestIps() {
+  return &MemcachedUtils::dest_ips_;
 }
 
 std::string MemcachedUtils::KeyFilePrefix() {
@@ -123,6 +137,22 @@ std::string MemcachedUtils::CraftBulkGetCommand(
 
   bulk_get_cmd << "\n";
   return bulk_get_cmd.str();
+}
+
+Status MemcachedUtils::InitKeyFilter(uint32_t ketama_bucket_size) {
+  if (all_ips_.size() == 0 || dest_ips_.size() == 0) {
+    return Status::InvalidArgument(
+        "Must provide dest_ips and all_ips to enable key filtering.");
+  }
+  kf_ = new KeyFilter(all_ips_, dest_ips_, ketama_bucket_size);
+  RETURN_ON_ERROR(kf_->Init());
+
+  return Status::OK();
+}
+
+bool MemcachedUtils::FilterKey(const std::string& key) {
+  if (kf_ == nullptr) return false;
+  return kf_->FilterKey(key);
 }
 
 } // namespace memcachedumper

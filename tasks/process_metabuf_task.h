@@ -39,6 +39,7 @@ class ProcessMetabufTask : public Task {
 
   // Queues up an S3UploadTask on 'filename_' if true.
   bool is_s3_dump_;
+
 };
 
 } // namespace memcachedumper

@@ -8,6 +8,8 @@ yes | apt install uuid-dev zlib1g-dev libpulse-dev
 CWD=$(pwd)
 echo $CWD
 cd extern/
+git clone --branch yaml-cpp-0.6.3 https://github.com/jbeder/yaml-cpp.git
+
 git clone --branch 1.7.332 https://github.com/aws/aws-sdk-cpp.git
 mkdir -p aws-sdk-cpp/build
 cd aws-sdk-cpp/build

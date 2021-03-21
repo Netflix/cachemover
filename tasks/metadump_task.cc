@@ -195,7 +195,6 @@ Status MetadumpTask::RecvResponse() {
 
   chunk_file.close();
 
-  //printf("Scheduling ProcessMetabufTask: test_prefix%d", num_files);
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
       file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);
 

@@ -49,6 +49,8 @@ void RESTServer::HandleGet(const Rest::Request& request,
       task_scheduler_->total_keys_missing(), allocator);
   kv_metrics_obj.AddMember("skipped",
       task_scheduler_->total_keys_ignored(), allocator);
+  kv_metrics_obj.AddMember("filtered",
+      task_scheduler_->total_keys_filtered(), allocator);
   root.AddMember("keyvalue_metrics", kv_metrics_obj, allocator);
 
   std::string elapsed_str = task_scheduler_->dumper()->TimeElapsed();

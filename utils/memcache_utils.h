@@ -1,7 +1,9 @@
 #pragma once
 
 #include "utils/slice.h"
+#include "utils/status.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -12,6 +14,9 @@
 
 // Ignore a key if we tried to get it these many times unsuccessfully.
 #define MAX_GET_ATTEMPTS 3
+
+// Forward declaration.
+class KeyFilter;
 
 namespace memcachedumper {
 
@@ -69,6 +74,8 @@ class MemcachedUtils {
   static void SetBulkGetThreshold(uint32_t bulk_get_threshold);
   static void SetMaxDataFileSize(uint64_t max_data_file_size);
   static void SetOnlyExpireAfter(int only_expire_after);
+  static void SetDestIps(const std::vector<std::string>& dest_ips);
+  static void SetAllIps(const std::vector<std::string>& all_ips);
 
   static std::string GetReqId() { return MemcachedUtils::req_id_; }
   static std::string OutputDirPath() { return MemcachedUtils::output_dir_path_; }
@@ -78,9 +85,18 @@ class MemcachedUtils {
   static std::string GetKeyFilePath();
   static std::string GetDataStagingPath();
   static std::string GetDataFinalPath();
+  static std::vector<std::string>* GetDestIps();
 
   static std::string KeyFilePrefix();
   static std::string DataFilePrefix();
+
+  // Initialize key filtering for use by individual tasks.
+  // Must call SetDestIps() and SetAllIps() before using.
+  // TODO: Consider avoiding this global state.
+  static Status InitKeyFilter(uint32_t ketama_bucket_size);
+  // Returns 'true' if key needs to be filtered out. 'false' otherwise.
+  // Always returns 'false' if InitKeyFilter() isn't called before this.
+  static bool FilterKey(const std::string& key);
 
   // Craft a bulk get command with the first 'BulkGetThreshold()' keys in
   // 'pending_keys' to send memcached.
@@ -99,8 +115,26 @@ class MemcachedUtils {
     return final_str;
   }
 
+  // Reads 'filename' and extracts IP:Port pairs from the file.
+  // Assumes that the contents of the file are of the format of one IP:Port per line.
+  // Eg:
+  // <IP1>:<port1>
+  // <IP2>:<port2>
+  // ...
+  static Status ExtractIPsFromFile(std::string filename,
+      std::vector<std::string>& out_ips) {
+    std::string ip;
+
+    std::ifstream fhandle(filename);
+    while(std::getline(fhandle, ip)) {
+      out_ips.push_back(ip);
+    }
+    fhandle.close();
+    return Status::OK();
+  }
+
   static bool KeyExpiresSoon(time_t now, uint32_t key_expiry) {
-    // TODO: Is this protable?
+    // TODO: Is this portable?
     return (key_expiry <= now + OnlyExpireAfter());
   }
 
@@ -132,6 +166,11 @@ class MemcachedUtils {
   static uint32_t bulk_get_threshold_;
   static uint64_t max_data_file_size_;
   static int only_expire_after_;
+
+  static std::vector<std::string> dest_ips_;
+  static std::vector<std::string> all_ips_;
+
+  static KeyFilter* kf_;
 };
 
 

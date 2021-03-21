@@ -47,7 +47,6 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     const char *key_pos = mslice->next_key_pos();
     if (key_pos == nullptr) {
-      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -56,7 +55,6 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     const char *exp_pos = mslice->next_exp_pos();
     if (exp_pos == nullptr) {
-      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -65,7 +63,6 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
 
     const char *la_pos = mslice->next_la_pos();
     if (la_pos == nullptr) {
-      //printf("Going to copy remaining to start. Newline_pos: %s   \n", newline_pos);
       if (newline_pos != nullptr) {
         mslice->CopyRemainingToStart(newline_pos);
       }
@@ -75,8 +72,8 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
     char *unused;
     int32_t expiry = strtol(exp_pos + 4, &unused, 10);
 
-    //int decoded_keylen = 0;
-    std::string encoded_key(const_cast<char*>(key_pos) + 4, static_cast<int>(
+    std::string encoded_key(
+        const_cast<char*>(key_pos) + 4, static_cast<int>(
             exp_pos - key_pos - 4 - 1));
 
     std::string decoded_key = UrlDecode(encoded_key);
@@ -87,12 +84,16 @@ void ProcessMetabufTask::ProcessMetaBuffer(MetaBufferSlice* mslice) {
       continue;
     }
 
-    //McData *new_key = new McData(
-    //    decoded_key, static_cast<size_t>(decoded_keylen), expiry);
-    //curl_free(decoded_key);
+    // Filter the key out if required.
+    if (MemcachedUtils::FilterKey(decoded_key) == true) {
+      owning_thread()->increment_keys_filtered();
+      continue;
+    }
+
+    // Track the key and queue it for processing.
     McData *new_key = new McData(decoded_key, expiry);
-    
     data_writer_->QueueForProcessing(new_key);
+
   } while ((newline_pos = const_cast<char*>(mslice->next_newline())) != nullptr);
 
 }
@@ -175,16 +176,9 @@ void ProcessMetabufTask::Execute() {
   owning_thread()->account_keys_missing(data_writer_->num_missing_keys());
   metafile.close();
 
-  /*if (is_s3_dump_) {
-    S3UploadTask* upload_task = new S3UploadTask("evcache-test", MemcachedUtils::GetDataFinalPath(),
-        MemcachedUtils::DataFilePrefix() + "_" + keyfile_idx_str);
-    owning_thread()->task_scheduler()->SubmitTask(upload_task);
-  }*/
-
   owning_thread()->task_scheduler()->ReleaseMemcachedSocket(mc_sock);
   owning_thread()->mem_mgr()->ReturnBuffer(reinterpret_cast<uint8_t*>(metabuf));
   owning_thread()->mem_mgr()->ReturnBuffer(data_writer_buf);
-  //curl_easy_cleanup(curl_);
   MarkCheckpoint();
 }
 
