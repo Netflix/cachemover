@@ -1,6 +1,7 @@
 #include "common/logger.h"
 #include "common/rest_endpoint.h"
 #include "dumper/dumper.h"
+#include "utils/metrics.h"
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -43,6 +44,8 @@ void RESTServer::HandleGet(const Rest::Request& request,
   rapidjson::Document::AllocatorType& allocator = root.GetAllocator();
 
   rapidjson::Value kv_metrics_obj(rapidjson::kObjectType);
+  kv_metrics_obj.AddMember("total",
+      DumpMetrics::total_keys(), allocator);
   kv_metrics_obj.AddMember("dumped",
       task_scheduler_->total_keys_processed(), allocator);
   kv_metrics_obj.AddMember("not_found",

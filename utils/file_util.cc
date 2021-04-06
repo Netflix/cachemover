@@ -45,6 +45,12 @@ uint64_t FileUtils::GetSpaceAvailable(std::string path) {
   return si.free;
 }
 
+uint64_t FileUtils::CountNumLines(std::string path) {
+  std::ifstream ifile(path);
+  return std::count(std::istreambuf_iterator<char>(ifile),
+                    std::istreambuf_iterator<char>(), '\n');
+}
+
 PosixFile::PosixFile(std::string filename)
   : filename_(filename) {
 }
