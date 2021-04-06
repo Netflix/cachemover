@@ -5,6 +5,7 @@
 #include "tasks/task_scheduler.h"
 #include "tasks/task_thread.h"
 #include "utils/mem_mgr.h"
+#include "utils/metrics.h"
 #include "utils/socket.h"
 
 #include <string.h>
@@ -168,7 +169,9 @@ Status MetadumpTask::RecvResponse() {
       // Chunk the file.
       chunk_file.close();
       chunk_file.clear();
-      
+
+      DumpMetrics::update_total_keys(FileUtils::CountNumLines(chunk_file_name));
+
       ProcessMetabufTask *ptask = new ProcessMetabufTask(
           file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);
 
@@ -194,6 +197,9 @@ Status MetadumpTask::RecvResponse() {
   } while (bytes_read != 0 && !reached_end);
 
   chunk_file.close();
+
+  // Subtract 1 to discount the "END\r\n" line.
+  DumpMetrics::update_total_keys(FileUtils::CountNumLines(chunk_file_name) - 1);
 
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
       file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);

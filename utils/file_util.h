@@ -19,6 +19,10 @@ class FileUtils {
   static Status CreateDirectory(std::string dir_path);
   static Status RemoveFile(std::string file_path);
   static uint64_t GetSpaceAvailable(std::string path);
+
+  // This call opens the file and counts the number of lines.
+  // Could be expensive for large files. Use only if necessary.
+  static uint64_t CountNumLines(std::string path);
 };
 
 class PosixFile {

@@ -10,6 +10,7 @@
 #include "utils/aws_utils.h"
 #include "utils/file_util.h"
 #include "utils/mem_mgr.h"
+#include "utils/metrics.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 #include "utils/socket_pool.h"
@@ -193,6 +194,8 @@ void Dumper::Run() {
   std::stringstream final_metrics;
   final_metrics << std::endl
       << "All tasks completed..." << std::endl
+      << "-------------------------" << std::endl
+      << " -Total keys from metadump: " << DumpMetrics::total_keys() << std::endl
       << "-------------------------" << std::endl
       << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
       << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
