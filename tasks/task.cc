@@ -17,12 +17,17 @@ namespace memcachedumper {
 
 DoneTask::~DoneTask() = default;
 
-DoneTask::DoneTask(uint64_t dumped, uint64_t skipped, uint64_t not_found,
-    std::string time_taken_str)
-  : dumped_(dumped),
-    skipped_(skipped),
-    not_found_(not_found),
-    total_time_taken_str_(time_taken_str) {
+DoneTask::DoneTask(uint64_t total,
+    uint64_t dumped,
+    uint64_t skipped,
+    uint64_t not_found,
+    uint64_t filtered,
+    std::string time_taken_str) : total_(total),
+                                  dumped_(dumped),
+                                  skipped_(skipped),
+                                  not_found_(not_found),
+                                  filtered_(filtered),
+                                  total_time_taken_str_(time_taken_str) {
 }
 
 std::string DoneTask::PrepareFinalMetricsString() {
@@ -30,9 +35,11 @@ std::string DoneTask::PrepareFinalMetricsString() {
 
   final_metrics <<
       "DONE" << std::endl <<
+      "Total keys from metadump: " << total_ << std::endl <<
       "Total keys dumped: " << dumped_ << std::endl <<
       "Total keys skipped: " << skipped_ << std::endl <<
       "Total keys not found: " << not_found_ << std::endl <<
+      "Total keys filtered: " << filtered_ << std::endl <<
       "Total time taken: " << total_time_taken_str_ << std::endl;
 
   return final_metrics.str();
