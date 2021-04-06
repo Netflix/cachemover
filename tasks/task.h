@@ -26,16 +26,22 @@ public:
 
 class DoneTask : public Task {
  public:
-  DoneTask(uint64_t dumped, uint64_t skipped, uint64_t not_found,
+  DoneTask(uint64_t total,
+      uint64_t dumped,
+      uint64_t skipped,
+      uint64_t not_found,
+      uint64_t filtered,
       std::string time_taken_str);
   ~DoneTask();
 
   void Execute() override;
 
  private:
+  uint64_t total_;
   uint64_t dumped_;
   uint64_t skipped_;
   uint64_t not_found_;
+  uint64_t filtered_;
   std::string total_time_taken_str_;
 
   std::string PrepareFinalMetricsString();
