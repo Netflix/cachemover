@@ -29,6 +29,7 @@
 #define ARG_IS_S3_DUMP                "is_s3_dump"
 #define ARG_S3_BUCKET                 "s3_bucket"
 #define ARG_S3_FINAL_PATH             "s3_final_path"
+#define ARG_SQS_QUEUE                 "sqs_queue"
 
 #define ENSURE_OPT_EXISTS(config, opt) do {                                 \
   if (!config[opt]) {                                                       \
@@ -72,6 +73,7 @@ class DumperOptions {
   void set_is_s3_dump(bool is_s3_dump);
   void set_s3_bucket_name(std::string s3_bucket);
   void set_s3_final_path(std::string s3_path);
+  void set_sqs_queue_name(std::string sqs_queue);
   void set_req_id(std::string req_id);
   void set_dest_ips_filepath(std::string dest_ips_filepath);
   void set_all_ips_filepath(std::string all_ips_filepath);
@@ -95,6 +97,7 @@ class DumperOptions {
   bool is_s3_dump() { return is_s3_dump_; }
   std::string s3_bucket() { return s3_bucket_; }
   std::string s3_path() { return s3_path_; }
+  std::string sqs_queue_name() { return sqs_queue_name_; }
   std::string req_id() { return req_id_; }
   const std::vector<std::string>& dest_ips() { return dest_ips_; }
   const std::vector<std::string>& all_ips() { return all_ips_; }
@@ -127,13 +130,15 @@ class DumperOptions {
   int only_expire_after_ = 0;
   // Indicates that we have to resume from a checkpoint and not start dumping
   // from scratch.
-  bool resume_mode_;
+  bool resume_mode_ = 0;
   // Uploads to S3 if set.
   bool is_s3_dump_;
   // S3 Bucket name.
   std::string s3_bucket_;
   // S3 Final path.
   std::string s3_path_;
+  // SQS queue name.
+  std::string sqs_queue_name_;
   // Dump request ID.
   std::string req_id_;
   // IP:port pairs of target instances that we want to narrow the dump to.

@@ -128,7 +128,6 @@ Status MetadumpTask::RecvResponse() {
       return stat;
     }
 
-
     uint8_t *unwritten_tail = nullptr;
     size_t bytes_to_write = bytes_read;
 

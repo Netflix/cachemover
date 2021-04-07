@@ -144,6 +144,7 @@ Status Dumper::Init() {
     AwsUtils::SetSQSClient(&sqs_client_);
     AwsUtils::SetS3Bucket(opts_.s3_bucket());
     AwsUtils::SetS3Path(opts_.s3_path());
+    AwsUtils::SetSQSQueueName(opts_.sqs_queue_name());
     RETURN_ON_ERROR(InitSQS());
   }
 

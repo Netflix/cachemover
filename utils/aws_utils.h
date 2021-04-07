@@ -13,17 +13,18 @@ class AwsUtils {
  public:
   static void SetS3Bucket(std::string s3_bucket);
   static void SetS3Path(std::string s3_path);
+  static void SetSQSQueueName(std::string sqs_queue);
   static void SetCachedSQSQueueURL(std::string sqs_url);
   static void SetS3Client(Aws::S3::S3Client* s3_client);
   static void SetSQSClient(Aws::SQS::SQSClient* sqs_client);
 
   static std::string GetS3Bucket() { return AwsUtils::s3_bucket_; }
   static std::string GetS3Path() { return AwsUtils::s3_path_; }
+  static std::string GetSQSQueueName() { return AwsUtils::sqs_queue_name_; }
   static std::string GetCachedSQSQueueURL() { return AwsUtils::sqs_url_; }
   static Aws::S3::S3Client* GetS3Client() { return AwsUtils::s3_client_; }
   static Aws::SQS::SQSClient* GetSQSClient() { return AwsUtils::sqs_client_; }
 
-  static std::string GetSQSQueueName();
   static Status GetSQSUrlFromName(std::string& queue_name, std::string* out_url);
   static Status CreateNewSQSQueue(std::string& queue_name, std::string* out_url);
 
@@ -34,6 +35,7 @@ class AwsUtils {
  private:
   static std::string s3_bucket_;
   static std::string s3_path_;
+  static std::string sqs_queue_name_;
   static std::string sqs_url_;
   static Aws::S3::S3Client* s3_client_;
   static Aws::SQS::SQSClient* sqs_client_;

@@ -98,9 +98,10 @@ Status DumperConfig::ValidateConfig(const YAML::Node& config) {
 
   if (config[ARG_IS_S3_DUMP]) {
     if (config[ARG_S3_BUCKET].as<std::string>().empty() ||
-        config[ARG_S3_FINAL_PATH].as<std::string>().empty()) {
+        config[ARG_S3_FINAL_PATH].as<std::string>().empty() ||
+        config[ARG_SQS_QUEUE].as<std::string>().empty()) {
       return Status::InvalidArgument(
-          "Must provide both 's3_bucket' and 's3_final_path'.");
+          "Must provide 's3_bucket', 's3_final_path' and 'sqs_queue'.");
     }
   }
   return Status::OK();
@@ -142,6 +143,7 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
       out_opts.set_is_s3_dump(true);
       out_opts.set_s3_bucket_name(config[ARG_S3_BUCKET].as<std::string>());
       out_opts.set_s3_final_path(config[ARG_S3_FINAL_PATH].as<std::string>());
+      out_opts.set_sqs_queue_name(config[ARG_SQS_QUEUE].as<std::string>());
     } else {
       out_opts.set_is_s3_dump(false);
     }
@@ -211,6 +213,10 @@ void DumperOptions::set_s3_bucket_name(std::string s3_bucket) {
 
 void DumperOptions::set_s3_final_path(std::string s3_path) {
   s3_path_ = s3_path;
+}
+
+void DumperOptions::set_sqs_queue_name(std::string sqs_queue) {
+  sqs_queue_name_ = sqs_queue;
 }
 
 void DumperOptions::set_req_id(std::string req_id) {

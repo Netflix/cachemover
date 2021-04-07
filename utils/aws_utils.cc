@@ -19,6 +19,7 @@ namespace memcachedumper {
 // Static member declarations
 std::string AwsUtils::s3_bucket_;
 std::string AwsUtils::s3_path_;
+std::string AwsUtils::sqs_queue_name_;
 std::string AwsUtils::sqs_url_;
 Aws::S3::S3Client* AwsUtils::s3_client_;
 Aws::SQS::SQSClient* AwsUtils::sqs_client_;
@@ -41,8 +42,8 @@ void AwsUtils::SetSQSClient(Aws::SQS::SQSClient* sqs_client) {
   AwsUtils::sqs_client_ = sqs_client;
 }
 
-std::string AwsUtils::GetSQSQueueName() {
-  return "cachewarmer-" + MemcachedUtils::GetReqId();
+void AwsUtils::SetSQSQueueName(std::string sqs_queue) {
+  AwsUtils::sqs_queue_name_ = sqs_queue;
 }
 
 Status AwsUtils::GetSQSUrlFromName(std::string& queue_name, std::string* out_url) {
