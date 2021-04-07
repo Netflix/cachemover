@@ -14,6 +14,7 @@
  is_s3_dump: false
  s3_bucket: "evcache-test"
  s3_final_path: "dump/native_test_s3_dump"
+ sqs_queue: "cachewarmer-native_test_s3_dump-20201216015312"
  ketama_bucket_size: 160
  dest_ips:
    - "1.1.1.1:11211"
