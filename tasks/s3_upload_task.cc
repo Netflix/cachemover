@@ -23,6 +23,8 @@
 #include <aws/sqs/model/SendMessageRequest.h>
 #include <aws/sqs/model/SendMessageResult.h>
 
+#define CACHE_DUMP_CHUNK_JSON "cacheDumpChunk"
+
 namespace fs = std::experimental::filesystem;
 namespace memcachedumper {
 
@@ -34,7 +36,8 @@ S3UploadFileTask::S3UploadFileTask(std::string fq_local_path, std::string filena
     upload_status_(Status::OK()) {
 }
 
-Status S3UploadFileTask::SendSQSNotification(std::string s3_file_uri) {
+Status S3UploadFileTask::SendSQSNotification(std::string s3_file_uri,
+    std::string sqs_msg_body) {
   Aws::SQS::Model::SendMessageRequest sm_req;
   std::string queue_url = AwsUtils::GetCachedSQSQueueURL();
   sm_req.SetQueueUrl(queue_url);
@@ -58,6 +61,16 @@ void S3UploadFileTask::Execute() {
   std::string s3_key_name = AwsUtils::GetS3Path() + "/" +
       MemcachedUtils::GetReqId() + "/" + filename_;
 
+  std::string s3_file_uri = "s3://" + AwsUtils::GetS3Bucket() + "/" + s3_key_name;
+
+  // Retrieve the payload for the S3 file metadata and for the SQS notification.
+  std::string obj_md_string;
+  Status s = AwsUtils::SQSBodyForS3(s3_file_uri, &obj_md_string);
+  if (!s.ok()) {
+    LOG_ERROR("Can't get S3 File metadata: " + s.ToString());
+    return;
+  }
+
   const std::shared_ptr<Aws::IOStream> input_data =
   Aws::MakeShared<Aws::FStream>("SampleAllocationTag",
     fq_local_path_.c_str(),
@@ -69,6 +82,12 @@ void S3UploadFileTask::Execute() {
   object_request.SetKey(s3_key_name);
   object_request.SetBody(input_data);
 
+  // The AWS SDK takes metadata as a map. We set a single key_value pair
+  // for the metadata.
+  Aws::Map<Aws::String, Aws::String> md_map;
+  md_map.emplace(CACHE_DUMP_CHUNK_JSON, obj_md_string);
+  object_request.SetMetadata(md_map);
+
   // Put the object
   auto put_object_outcome = AwsUtils::GetS3Client()->PutObject(object_request);
   if (!put_object_outcome.IsSuccess()) {
@@ -78,8 +97,7 @@ void S3UploadFileTask::Execute() {
   }
   LOG("Successfully uploaded {0} to S3. Sending SQS notification...", filename_);
 
-  std::string s3_file_uri = "s3://" + AwsUtils::GetS3Bucket() + "/" + s3_key_name;
-  Status sqs_notify_status = SendSQSNotification(s3_file_uri);
+  Status sqs_notify_status = SendSQSNotification(s3_file_uri, obj_md_string);
   if (!sqs_notify_status.ok()) {
     upload_status_ = sqs_notify_status;
     return;

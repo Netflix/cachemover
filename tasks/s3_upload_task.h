@@ -22,7 +22,7 @@ class S3UploadFileTask : public Task {
 
   Status upload_status_;
 
-  Status SendSQSNotification(std::string s3_file_uri);
+  Status SendSQSNotification(std::string s3_file_uri, std::string sqs_msg_body);
 };
 
 } // namespace memcachedumper
