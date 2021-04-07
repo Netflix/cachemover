@@ -1,5 +1,6 @@
 #include "utils/aws_utils.h"
 #include "utils/memcache_utils.h"
+#include "utils/metrics.h"
 #include "utils/net_util.h"
 
 #include <rapidjson/document.h>
@@ -95,7 +96,7 @@ Status AwsUtils::SQSBodyForS3(std::string& s3_file_uri, std::string* out_sqs_bod
   req_id_val.SetString(s3_file_uri.c_str(), s3_file_uri.length(), allocator);
   root.AddMember("uri", req_id_val, allocator);
 
-  root.AddMember("keysCount", "0", allocator);
+  root.AddMember("keysCount", DumpMetrics::total_keys(), allocator);
   root.AddMember("dumpFormat", "BINARY", allocator);
 
   rapidjson::StringBuffer strbuf;
