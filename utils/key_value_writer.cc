@@ -447,13 +447,18 @@ Status KeyValueWriter::Finalize() {
 
   // In case we couldn't flush a few keys.
   while (n_keys_pending_ > 0 || n_unwritten_processed_keys_ > 0) {
+    // We noticed this happen very rarely. This assert should result in a core
+    // file which we can use to track the state of the process when it happened
+    // and fix the potential bug.
+    assert(!(mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()));
     ProcessKeys(true);
   }
 
   RETURN_ON_ERROR(rotating_data_files_->Finish());
 
   if (total_keys_to_process_ != num_processed_keys_) {
-    LOG("MISMATCH! Finalized. Total keys given: {0} Total keys processed: {1}", total_keys_to_process_, num_processed_keys_);
+    LOG("MISMATCH! Finalized. Total keys given: {0} Total keys processed + missing: {1}",
+        total_keys_to_process_, num_processed_keys_ + num_missing_keys_);
   }
   return Status::OK();
 }
