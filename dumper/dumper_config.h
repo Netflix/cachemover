@@ -130,9 +130,9 @@ class DumperOptions {
   int only_expire_after_ = 0;
   // Indicates that we have to resume from a checkpoint and not start dumping
   // from scratch.
-  bool resume_mode_ = 0;
+  bool resume_mode_ = false;
   // Uploads to S3 if set.
-  bool is_s3_dump_;
+  bool is_s3_dump_ = false;
   // S3 Bucket name.
   std::string s3_bucket_;
   // S3 Final path.
