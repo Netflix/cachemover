@@ -97,11 +97,13 @@ Status DumperConfig::ValidateConfig(const YAML::Node& config) {
   }
 
   if (config[ARG_IS_S3_DUMP]) {
-    if (config[ARG_S3_BUCKET].as<std::string>().empty() ||
-        config[ARG_S3_FINAL_PATH].as<std::string>().empty() ||
-        config[ARG_SQS_QUEUE].as<std::string>().empty()) {
-      return Status::InvalidArgument(
-          "Must provide 's3_bucket', 's3_final_path' and 'sqs_queue'.");
+    if (config[ARG_IS_S3_DUMP].as<bool>() == true) {
+      if (config[ARG_S3_BUCKET].as<std::string>().empty() ||
+          config[ARG_S3_FINAL_PATH].as<std::string>().empty() ||
+          config[ARG_SQS_QUEUE].as<std::string>().empty()) {
+        return Status::InvalidArgument(
+            "Must provide 's3_bucket', 's3_final_path' and 'sqs_queue'.");
+      }
     }
   }
   return Status::OK();
