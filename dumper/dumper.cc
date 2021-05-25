@@ -108,6 +108,32 @@ Status Dumper::InitSQS() {
 
 Status Dumper::Init() {
 
+  // update the ulimits for dumping the core for this process
+  // copied from memcached source
+  struct rlimit rlim;
+  struct rlimit rlim_new;
+
+  // First try raising to infinity; if that fails, try bringing
+  // the soft limit to the hard.
+  if (getrlimit(RLIMIT_CORE, &rlim) == 0) {
+      rlim_new.rlim_cur = rlim_new.rlim_max = RLIM_INFINITY;
+      if (setrlimit(RLIMIT_CORE, &rlim_new) != 0) {
+          /* failed. try raising just to the old max */
+          rlim_new.rlim_cur = rlim_new.rlim_max =
+              rlim.rlim_max;
+          (void) setrlimit(RLIMIT_CORE, &rlim_new);
+      }
+  }
+
+  // getrlimit again to see what we ended up with. Only fail if
+  // the soft limit ends up 0, because then no core files will be
+  // created at all.
+  if ((getrlimit(RLIMIT_CORE, &rlim) != 0) || rlim.rlim_cur == 0) {
+      LOG("failed to ensure corefile creation");
+      exit(1);
+  }
+
+
   // If we've been given a list of destination IPs to filter the dump for,
   // initialize the key filter.
   if (opts_.dest_ips().size() > 0) {
