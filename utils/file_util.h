@@ -18,7 +18,9 @@ class FileUtils {
   static void MoveFile(std::string file_path, std::string dest_path);
   static Status CreateDirectory(std::string dir_path);
   static Status RemoveFile(std::string file_path);
+  static Status RemoveDirectoryAndContents(std::string dir_path);
   static uint64_t GetSpaceAvailable(std::string path);
+  static bool FileExists(std::string path);
 
   // This call opens the file and counts the number of lines.
   // Could be expensive for large files. Use only if necessary.

@@ -18,7 +18,6 @@ ResumeTask::ResumeTask(bool is_s3_dump)
   : is_s3_dump_(is_s3_dump){
 }
 
-
 void ResumeTask::ProcessCheckpoints() {
   for (auto file : fs::directory_iterator(MemcachedUtils::GetKeyFilePath())) {
     std::string filename = file.path().filename();

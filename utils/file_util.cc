@@ -40,13 +40,26 @@ Status FileUtils::RemoveFile(std::string file_path) {
   return Status::OK();
 }
 
+Status FileUtils::RemoveDirectoryAndContents(std::string dir_path) {
+  std::error_code ec;
+  std::uintmax_t n = fs::remove_all(dir_path, ec);
+  return (n == static_cast<std::uintmax_t>(-1)) ?
+    Status::IOError("Could not delete directory", ec.message()) :
+    Status::OK();
+}
+
 uint64_t FileUtils::GetSpaceAvailable(std::string path) {
   fs::space_info si = fs::space(path.c_str());
   return si.free;
 }
 
+bool FileUtils::FileExists(std::string path) {
+  return fs::exists(path) ? true : false;
+}
+
 uint64_t FileUtils::CountNumLines(std::string path) {
   std::ifstream ifile(path);
+  // No need to explicitly close() because RAII
   return std::count(std::istreambuf_iterator<char>(ifile),
                     std::istreambuf_iterator<char>(), '\n');
 }

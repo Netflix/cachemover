@@ -27,6 +27,9 @@
 #include <aws/sqs/model/GetQueueUrlRequest.h>
 #include <aws/sqs/model/GetQueueUrlResult.h>
 
+// TODO: Move to a singleton "Execution Environment" class
+#define KEYDUMP_CHECKPOINT_FILENAME "ALL_KEYFILES_DUMPED"
+
 namespace memcachedumper {
 
 Dumper::Dumper(DumperOptions& opts)
@@ -53,6 +56,11 @@ Dumper::Dumper(DumperOptions& opts)
 }
 
 Dumper::~Dumper() = default;
+
+Status Dumper::ClearOutputDirs() {
+  LOG("Clearing output directories if they exist... Path: " + MemcachedUtils::OutputDirPath());
+  return FileUtils::RemoveDirectoryAndContents(MemcachedUtils::OutputDirPath());
+}
 
 Status Dumper::CreateAndValidateOutputDirs() {
   RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::OutputDirPath()));
@@ -154,9 +162,23 @@ Status Dumper::Init() {
   LOG("Data staging path: {0}", MemcachedUtils::GetDataStagingPath());
   LOG("Data final path: {0}", MemcachedUtils::GetDataFinalPath());
 
+  if (opts_.is_resume_mode()) {
+    // If we're in Resume mode, make sure the key dump from the previous run is
+    // complete. Otherwise, we start from scratch.
+    LOG("Resume mode selected. Attempting to continue from where previous run left off.");
+    if (!ValidateKeyDumpComplete()) {
+      opts_.set_resume_mode(false);
+      LOG("Key dump from previous run incomplete. Disabling resume mode," \
+          " clearing all previous output directories/files and starting from scratch...");
+      ClearOutputDirs();
+    }
+  }
+  // Note: (Subtle) No 'else if' here since the previous 'if' might set
+  // 'opts.is_resume_mode' to 'false'.
   if (!opts_.is_resume_mode()) {
     RETURN_ON_ERROR(CreateAndValidateOutputDirs());
   }
+
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
   RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
@@ -187,6 +209,13 @@ Socket* Dumper::GetMemcachedSocket() {
 
 void Dumper::ReleaseMemcachedSocket(Socket *sock) {
   return socket_pool_->ReleaseSocket(sock);
+}
+
+bool Dumper::ValidateKeyDumpComplete() {
+  LOG("[Resume mode] Validating if key dump is complete from the previous run.");
+  std::string keydump_checkpoint_file = MemcachedUtils::GetKeyFilePath() +
+    KEYDUMP_CHECKPOINT_FILENAME;
+  return FileUtils::FileExists(keydump_checkpoint_file);
 }
 
 void Dumper::Run() {
