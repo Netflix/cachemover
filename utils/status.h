@@ -66,6 +66,9 @@ class Status {
   static Status BusyLRUCrawler(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kBusyLRUCrawler, msg, msg2);
   }
+  static Status CoreDumpError(const Slice&msg, const Slice& msg2 = Slice()) {
+    return Status(kCoreDumpError, msg, msg2);
+  }
 
   // Returns true iff the status indicates success.
   bool ok() const { return (state_ == nullptr); }
@@ -94,6 +97,9 @@ class Status {
   // Returns true if the lru crawler is busy
   bool IsBusyLRUCrawler() const {return  code() == kBusyLRUCrawler; }
 
+  // Returns true if setting ulimit core to non-zero fails
+  bool IsCoreDumpError() const { return code() == kCoreDumpError; }
+
   // Return a string representation of this status suitable for printing.
   // Returns the string "OK" for success.
   std::string ToString() const;
@@ -108,7 +114,8 @@ class Status {
     kIOError = 5,
     kNetworkError = 6,
     kOutOfMemoryError = 7,
-    kBusyLRUCrawler = 8
+    kBusyLRUCrawler = 8,
+    kCoreDumpError = 9
   };
 
   Code code() const {
