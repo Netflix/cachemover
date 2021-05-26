@@ -37,10 +37,15 @@ MetadumpTask::MetadumpTask(int slab_class, const std::string& file_path,
 }
 
 void WriteCompleteMarker(int num_files) {
+  // TODO: Write in some machine readable format (JSON/YAML/XML) instead of
+  // plain strings.
   std::ofstream complete_marker_file;
   complete_marker_file.open(MemcachedUtils::GetKeyFilePath() + "/ALL_KEYFILES_DUMPED");
   std::string info_str = std::to_string(num_files) + " key files dumped.\n";
   complete_marker_file.write(info_str.c_str(), info_str.length());
+  std::string total_keys_str =
+    "Total keys: " + std::to_string(DumpMetrics::total_keys()) + "\n";
+  complete_marker_file.write(total_keys_str.c_str(), total_keys_str.length());
   complete_marker_file.close();
 }
 

@@ -48,7 +48,15 @@ class Dumper {
   // Releases a memcached socket back to the socket pool.
   void ReleaseMemcachedSocket(Socket *sock);
 
+  // Check if key dump is complete before attempting to resume from checkpoints.
+  // If it's not complete, bubble up an error to indicate that we must start from scratch.
+  bool ValidateKeyDumpComplete();
+
+
  private:
+
+  // If called, it will clear all the output directories if they exist.
+  Status ClearOutputDirs();
 
   // Set up the output directories and make sure they're empty.
   Status CreateAndValidateOutputDirs();
