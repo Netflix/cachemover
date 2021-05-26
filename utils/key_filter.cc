@@ -34,8 +34,8 @@ bool KeyFilter::FilterKey(const std::string& key) {
 
   // If the host index doesn't exist in our set, then we return true to indicate
   // that the key must be filtered out.
-  if (filtered_instance_idxs_.find(idx) != filtered_instance_idxs_.end()) return true;
-  return false;
+  return (filtered_instance_idxs_.find(idx) == filtered_instance_idxs_.end()) ?
+    true : false;
 }
 
 } // namespace memcachedumper
