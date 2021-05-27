@@ -44,7 +44,7 @@ void WriteCompleteMarker(int num_files) {
   std::string info_str = std::to_string(num_files) + " key files dumped.\n";
   complete_marker_file.write(info_str.c_str(), info_str.length());
   std::string total_keys_str =
-    "Total keys: " + std::to_string(DumpMetrics::total_keys()) + "\n";
+    "Total keys: " + std::to_string(DumpMetrics::total_metadump_keys()) + "\n";
   complete_marker_file.write(total_keys_str.c_str(), total_keys_str.length());
   complete_marker_file.close();
 }
@@ -174,7 +174,8 @@ Status MetadumpTask::RecvResponse() {
       chunk_file.close();
       chunk_file.clear();
 
-      DumpMetrics::update_total_keys(FileUtils::CountNumLines(chunk_file_name));
+      DumpMetrics::increment_total_metadump_keys(
+          FileUtils::CountNumLines(chunk_file_name));
 
       ProcessMetabufTask *ptask = new ProcessMetabufTask(
           file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);
@@ -203,7 +204,8 @@ Status MetadumpTask::RecvResponse() {
   chunk_file.close();
 
   // Subtract 1 to discount the "END\r\n" line.
-  DumpMetrics::update_total_keys(FileUtils::CountNumLines(chunk_file_name) - 1);
+  DumpMetrics::increment_total_metadump_keys(
+      FileUtils::CountNumLines(chunk_file_name) - 1);
 
   ProcessMetabufTask *ptask = new ProcessMetabufTask(
       file_path_ + file_prefix_ + std::to_string(num_files), is_s3_dump_);

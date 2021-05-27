@@ -221,7 +221,7 @@ bool Dumper::ValidateKeyDumpComplete() {
 void Dumper::Run() {
 
   {
-    SCOPED_STOP_WATCH(&total_msw_);
+    SCOPED_STOP_WATCH(&DumpMetrics::total_msw());
 
     if (opts_.is_resume_mode()) {
       // TODO
@@ -240,27 +240,17 @@ void Dumper::Run() {
   // Output the "DONE" file.
   // TODO: (nit) Ideally would be submitted to the task scheduler.
   DoneTask dtask(
-    DumpMetrics::total_keys(),
-    task_scheduler_->total_keys_processed(),
-    task_scheduler_->total_keys_ignored(),
-    task_scheduler_->total_keys_missing(),
-    task_scheduler_->total_keys_filtered(),
-    total_msw_.HumanElapsedStr());
+    DumpMetrics::total_metadump_keys(),
+    DumpMetrics::total_keys_processed(),
+    DumpMetrics::total_keys_ignored(),
+    DumpMetrics::total_keys_missing(),
+    DumpMetrics::total_keys_filtered(),
+    DumpMetrics::time_elapsed_str());
   dtask.Execute();
 
   rest_server_->Shutdown();
-  std::stringstream final_metrics;
-  final_metrics << std::endl
-      << "All tasks completed..." << std::endl
-      << "-------------------------" << std::endl
-      << " -Total keys from metadump: " << DumpMetrics::total_keys() << std::endl
-      << "-------------------------" << std::endl
-      << " -Total keys dumped: " << task_scheduler_->total_keys_processed() << std::endl
-      << " -Total keys ignored: " << task_scheduler_->total_keys_ignored() << std::endl
-      << " -Total keys missing: " << task_scheduler_->total_keys_missing() << std::endl
-      << " -Total keys filtered: " << task_scheduler_->total_keys_filtered() << std::endl
-      << " -Time taken: " << total_msw_.HumanElapsedStr() << std::endl;
-  LOG(final_metrics.str());
+
+  LOG(DumpMetrics::MetricsAsJsonString());
   LOG("Status: All tasks completed. Exiting...");
 }
 
