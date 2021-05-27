@@ -1,10 +1,13 @@
+#include "utils/memcache_utils.h"
 #include "utils/metrics.h"
+
+#include <fstream>
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
-#include <rapidjson/writer.h>
 
+#define METRICS_FILE "METRICS_CHECKPOINT"
 namespace memcachedumper {
 
 MonotonicStopWatch DumpMetrics::total_elapsed_;
@@ -13,6 +16,15 @@ std::atomic_uint64_t DumpMetrics::total_keys_processed_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_ignored_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_missing_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_filtered_ = 0;
+
+void DumpMetrics::PersistMetrics() {
+  std::ofstream ofs;
+  std::string fpath = MemcachedUtils::GetDataFinalPath() + METRICS_FILE;
+  // Open file with the truncate option to clear existing content.
+  ofs.open(fpath, std::ofstream::out | std::ofstream::trunc);
+  ofs << MetricsAsJsonString();
+  ofs.close();
+}
 
 std::string DumpMetrics::MetricsAsJsonString() {
   rapidjson::Document root;

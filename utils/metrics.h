@@ -36,7 +36,12 @@ class DumpMetrics {
     total_keys_filtered_ = num_keys;
   }
 
+  // Persist metrics to a file.
+  static void PersistMetrics();
+
+  // Pretty format the metrics as a JSON string and return it.
   static std::string MetricsAsJsonString();
+
  private:
 
   // Tracks the total time spent on the dumping process so far.
