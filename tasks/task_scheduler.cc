@@ -92,14 +92,16 @@ void TaskScheduler::UpdateMetrics() {
   DumpMetrics::update_total_keys_missing(total_keys_missing);
   DumpMetrics::update_total_keys_filtered(total_keys_filtered);
 
+  DumpMetrics::PersistMetrics();
 }
 
 void TaskScheduler::MarkTaskComplete(Task *task) {
   std::lock_guard<std::mutex> mlock(metrics_mutex_);
   num_running_--;
 
-  UpdateMetrics();
   delete task;
+  UpdateMetrics();
+
   // If all tasks completed, notify everyone waiting on the task queue
   // and everyone waiting for all tasks to complete.
   if (num_running_ == 0 && num_waiting_ == 0) {
