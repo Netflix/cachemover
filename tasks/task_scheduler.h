@@ -34,28 +34,15 @@ class TaskScheduler {
 
   void WaitUntilTasksComplete();
 
+  // Obtain the latest metrics from task threads and update the dump metrics.
+  void UpdateMetrics();
+
   // Get a socket to memcached.
   Socket* GetMemcachedSocket();
 
   // Release a memcached socket.
   void ReleaseMemcachedSocket(Socket *sock);
 
-  // The total number of keys processed by all the threads.
-  uint64_t total_keys_processed();
-
-  // The total number of keys ignored (due to imminent expiry) by all the
-  // threads.
-  uint64_t total_keys_ignored();
-
-  // The total number of keys missing (due to expiry or eviction) by all the
-  // threads.
-  uint64_t total_keys_missing();
-
-  // The total number of keys filtered out by all the threads.
-  uint64_t total_keys_filtered();
-
-  // Return a string containing metrics.
-  std::string MetricsAsString();
  private:
   friend class TaskThread;
 
