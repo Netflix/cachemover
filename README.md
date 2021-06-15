@@ -1,8 +1,16 @@
-# Native Memcached dumper
+# Native Memcached dumper  
+----------
+#### ***Note: Works in production but still an active WIP***  
+.  
+.  
+.  
+----------
 
-**Note: Works in production but still an active WIP**
 
-Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
+### Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
+
+----------
+----------
 
 ### Build instructions:
 
