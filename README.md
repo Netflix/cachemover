@@ -2,6 +2,8 @@
 
 **Note: Works in production but still an active WIP**
 
+Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
+
 ### Build instructions:
 
 From the project root directory, create a new directory called build, and run cmake from there:
