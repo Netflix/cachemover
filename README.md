@@ -1,15 +1,12 @@
-# Native Memcached dumper  
+# Cachemover
 ----------
-#### ***Note: Works in production but still an active WIP***  
-.  
-.  
-.  
-----------
+Memcached servers in a cloud environment also undergo hardware degradation, maintenance downtime, etc. This project provides the ability to dump memcached data (all KV pairs) to disk, and populate a memcached process on a different server.
+It has 2 components:
+1. Cache dumper
+2. Cache populator (Under development. Refer [docs/dump-format-V0.md](./docs/dump-format-V0.md) for the disk format to write your own)
 
+Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
 
-### Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
-
-----------
 ----------
 
 ### Build instructions:
@@ -37,7 +34,7 @@ $> cmake -DASAN_ENABLED=1 ..
 $> make
 ```
 
-This will create a bin/ directory under the root project directory. To run, pass in the appropriate arguments:
+This will create a bin/ directory under the root project directory. To run the cache dumper, pass in the appropriate arguments:
 ```bash
 $> cd ../bin/
 $> ./memcache-dumper -h
