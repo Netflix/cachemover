@@ -1,2 +1,4 @@
 build/
 bin/
+cscope.files
+cscope.out
