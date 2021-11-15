@@ -9,7 +9,6 @@ set(UTILS_SRCS
   memcache_utils.cc
   metrics.cc
   net_util.cc
-  ring_buffer.cc
   sockaddr.cc
   socket.cc
   socket_pool.cc
