@@ -1,9 +1,19 @@
 # Cachemover
 ----------
 Memcached servers in a cloud environment also undergo hardware degradation, maintenance downtime, etc. This project provides the ability to dump memcached data (all KV pairs) to disk, and populate a memcached process on a different server.
+
+This is used as part of the EVCache project at Netflix, for cluster maintenance and
+scaling. Read more about how its used in this technical article (TODO: Add Medium link).
+
 It has 2 components:
 1. Cache dumper
 2. Cache populator (Under development. Refer [docs/dump-format-V0.md](./docs/dump-format-V0.md) for the disk format to write your own)
+
+The dumper component of this project can be configured using the options below to
+point to a memcached process that's running (using the `ip` and `port` configs), and
+dumps its data to `output_dir`.
+
+With the populator process (*still under development*), it can be used to read the data files from disk and re-populate another memcached process.
 
 Refer [this document](./docs/architecture.md) for a High Level Architecture breakdown.
 
@@ -34,7 +44,12 @@ $> cmake -DASAN_ENABLED=1 ..
 $> make
 ```
 
-This will create a bin/ directory under the root project directory. To run the cache dumper, pass in the appropriate arguments:
+This will create a bin/ directory under the root project directory.
+
+### Usage
+----------
+
+To run the cache dumper, pass in the appropriate arguments:
 ```bash
 $> cd ../bin/
 $> ./memcache-dumper -h
