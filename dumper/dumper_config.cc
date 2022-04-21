@@ -254,4 +254,8 @@ void DumperOptions::set_ketama_bucket_size(uint32_t ketama_bucket_size) {
   ketama_bucket_size_ = ketama_bucket_size;
 }
 
+void DumperOptions::set_enable_hash_table_crawl(bool enable_hash_table_crawl) {
+    enable_hash_table_crawl_ = enable_hash_table_crawl;
+}
+
 } // namespace memcachedumper
