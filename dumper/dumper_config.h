@@ -155,7 +155,7 @@ class DumperOptions {
   // Uploads to S3 if set.
   bool is_s3_dump_ = false;
   // Enable Hash table Crawl for LRU crawler
-  bool enable_hash_table_crawl = false;
+  bool enable_hash_table_crawl_ = false;
   // S3 Bucket name.
   std::string s3_bucket_;
   // S3 Final path.
