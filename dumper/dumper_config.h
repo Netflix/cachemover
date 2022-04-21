@@ -48,6 +48,7 @@
 #define ARG_S3_BUCKET                 "s3_bucket"
 #define ARG_S3_FINAL_PATH             "s3_final_path"
 #define ARG_SQS_QUEUE                 "sqs_queue"
+#define ARG_ENABLE_HASH_TABLE_CRAWL   "enable_hash_table_crawl"
 
 #define ENSURE_OPT_EXISTS(config, opt) do {                                 \
   if (!config[opt]) {                                                       \
@@ -89,6 +90,7 @@ class DumperOptions {
   void set_only_expire_after(int only_expire_after);
   void set_resume_mode(bool resume_mode);
   void set_is_s3_dump(bool is_s3_dump);
+  void set_enable_hash_table_crawl(bool enable_hash_table_crawl);
   void set_s3_bucket_name(std::string s3_bucket);
   void set_s3_final_path(std::string s3_path);
   void set_sqs_queue_name(std::string sqs_queue);
@@ -113,6 +115,7 @@ class DumperOptions {
   int only_expire_after() { return only_expire_after_; }
   bool is_resume_mode() { return resume_mode_; }
   bool is_s3_dump() { return is_s3_dump_; }
+  bool enable_hash_table_crawl() { return enable_hash_table_crawl_; }
   std::string s3_bucket() { return s3_bucket_; }
   std::string s3_path() { return s3_path_; }
   std::string sqs_queue_name() { return sqs_queue_name_; }
@@ -151,6 +154,8 @@ class DumperOptions {
   bool resume_mode_ = false;
   // Uploads to S3 if set.
   bool is_s3_dump_ = false;
+  // Enable Hash table Crawl for LRU crawler
+  bool enable_hash_table_crawl = false;
   // S3 Bucket name.
   std::string s3_bucket_;
   // S3 Final path.

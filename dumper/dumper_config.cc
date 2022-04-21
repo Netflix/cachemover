@@ -147,9 +147,12 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   if (config[ARG_CHECKPOINT_RESUME]) {
     out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
   }
+  if (config[ARG_ENA]) {
+      out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
+    }
 
-  if (config[ARG_KETAMA_BUCKET_SIZE]) {
-    out_opts.set_ketama_bucket_size(config[ARG_KETAMA_BUCKET_SIZE].as<uint32_t>());
+  if (config[ARG_ENABLE_HASH_TABLE_CRAWL]) {
+    out_opts.set_enable_hash_table_crawl(config[ARG_ENABLE_HASH_TABLE_CRAWL].as<bool>());
   }
   for (auto dip : config[ARG_DEST_IPS]) {
     out_opts.add_dest_ip(dip.as<std::string>());

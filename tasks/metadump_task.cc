@@ -45,13 +45,14 @@ namespace memcachedumper {
 //TODO: Clean up code.
 
 MetadumpTask::MetadumpTask(int slab_class, const std::string& file_path,
-    uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump)
+    uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump, bool enable_hash_table_crawl)
   : slab_class_(slab_class),
     file_path_(file_path),
     file_prefix_(MemcachedUtils::KeyFilePrefix()),
     max_file_size_(max_file_size),
     mem_mgr_(mem_mgr),
-    is_s3_dump_(is_s3_dump) {
+    is_s3_dump_(is_s3_dump),
+    enable_hash_table_crawl_(enable_hash_table_crawl){
 }
 
 void WriteCompleteMarker(int num_files) {
@@ -81,6 +82,9 @@ void MetadumpTask::Execute() {
 
     busy_crawler = false;
     std::string metadump_cmd("lru_crawler metadump all\n");
+    if (enable_hash_table_crawl_) {
+        metadump_cmd = "lru_crawler metadump hash\n";
+    }
     Status send_status = SendCommand(metadump_cmd);
     if (!send_status.ok()) {
       LOG_ERROR("SendCommand() failed. (Status: {0})", send_status.ToString());

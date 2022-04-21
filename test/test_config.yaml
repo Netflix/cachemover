@@ -12,6 +12,7 @@
  log_file_path: "/tmp/native_dumper.log"
  req_id: "native_test_s3_dump-20201216015312"
  is_s3_dump: false
+ enable_hash_table_crawl: false
  s3_bucket: "evcache-test"
  s3_final_path: "dump/native_test_s3_dump"
  sqs_queue: "cachewarmer-native_test_s3_dump-20201216015312"
