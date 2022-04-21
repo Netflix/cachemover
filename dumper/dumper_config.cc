@@ -147,10 +147,6 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   if (config[ARG_CHECKPOINT_RESUME]) {
     out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
   }
-  if (config[ARG_ENA]) {
-      out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
-    }
-
   if (config[ARG_ENABLE_HASH_TABLE_CRAWL]) {
     out_opts.set_enable_hash_table_crawl(config[ARG_ENABLE_HASH_TABLE_CRAWL].as<bool>());
   }
