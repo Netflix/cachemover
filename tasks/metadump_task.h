@@ -61,6 +61,8 @@ class MetadumpTask : public Task {
   // Passes on this value to a ProcessMetabufTask.
   bool is_s3_dump_;
 
+  bool enable_hash_table_crawl_;
+
 };
 
 } // namespace memcachedumper
