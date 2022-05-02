@@ -248,7 +248,7 @@ void Dumper::Run() {
     } else {
       MetadumpTask *mtask = new MetadumpTask(
           0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get(),
-          opts_.is_s3_dump());
+          opts_.is_s3_dump(), opts_.enable_hash_table_crawl());
       task_scheduler_->SubmitTask(mtask);
     }
 

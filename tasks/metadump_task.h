@@ -31,7 +31,7 @@ class Socket;
 class MetadumpTask : public Task {
  public:
   MetadumpTask(int slab_class, const std::string& file_path,
-      uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump);
+      uint64_t max_file_size, MemoryManager *mem_mgr, bool is_s3_dump, bool enable_hash_table_crawl);
   ~MetadumpTask() = default;
 
   void Execute() override;
@@ -60,6 +60,8 @@ class MetadumpTask : public Task {
 
   // Passes on this value to a ProcessMetabufTask.
   bool is_s3_dump_;
+
+  bool enable_hash_table_crawl_;
 
 };
 

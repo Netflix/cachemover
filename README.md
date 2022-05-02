@@ -85,6 +85,7 @@ OPTIONAL:
   ketama_bucket_size      UINT          Bucket size to use for Ketama hashing
   all_ips                 LIST<STRING>  List of all IPs in target replica as strings
   dest_ips                LIST<STRING>  List of destination IPs in target replica
+  enable_hash_table_crawl BOOLEAN       Enable LRU crawler to dump keys using the hash table instead of LRUs (Default = false)
 
 ```
 An example configuration file can be found under `test/test_config.yaml`

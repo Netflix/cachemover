@@ -147,9 +147,11 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   if (config[ARG_CHECKPOINT_RESUME]) {
     out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
   }
-
+  if (config[ARG_ENABLE_HASH_TABLE_CRAWL]) {
+    out_opts.set_enable_hash_table_crawl(config[ARG_ENABLE_HASH_TABLE_CRAWL].as<bool>());
+  }
   if (config[ARG_KETAMA_BUCKET_SIZE]) {
-    out_opts.set_ketama_bucket_size(config[ARG_KETAMA_BUCKET_SIZE].as<uint32_t>());
+      out_opts.set_ketama_bucket_size(config[ARG_KETAMA_BUCKET_SIZE].as<uint32_t>());
   }
   for (auto dip : config[ARG_DEST_IPS]) {
     out_opts.add_dest_ip(dip.as<std::string>());
@@ -253,6 +255,10 @@ void DumperOptions::add_all_ip(const std::string& all_ip) {
 
 void DumperOptions::set_ketama_bucket_size(uint32_t ketama_bucket_size) {
   ketama_bucket_size_ = ketama_bucket_size;
+}
+
+void DumperOptions::set_enable_hash_table_crawl(bool enable_hash_table_crawl) {
+    enable_hash_table_crawl_ = enable_hash_table_crawl;
 }
 
 } // namespace memcachedumper
