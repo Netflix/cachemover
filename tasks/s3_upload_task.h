@@ -37,7 +37,7 @@ class S3UploadFileTask : public Task {
   ~S3UploadFileTask();
 
   void Execute() override;
-  Status GetUploadStatus() { return s3_sqs_upload_status_; }
+  s3_sqs_upload_status GetUploadStatus() { return s3_sqs_upload_status_; }
 
  private:
   std::string fq_local_path_;
