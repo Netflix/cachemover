@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "tasks/s3_upload_task.h"
 #include "utils/file_util.h"
+#include "utils/metrics.h"
 #include "utils/memcache_utils.h"
 
 #include <errno.h>

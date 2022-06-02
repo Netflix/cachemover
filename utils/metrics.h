@@ -33,6 +33,8 @@ class DumpMetrics {
   static MonotonicStopWatch& total_msw() { return total_elapsed_; }
   static std::string time_elapsed_str() { return total_elapsed_.HumanElapsedStr(); }
   static uint64_t total_metadump_keys() { return total_metadump_keys_; }
+  static uint64_t total_keys_uploaded() { return total_keys_uploaded_; }
+  static uint64_t total_keys_notified() { return total_keys_notified_; }
   static uint64_t total_keys_processed() { return total_keys_processed_; }
   static uint64_t total_keys_ignored() { return total_keys_ignored_; }
   static uint64_t total_keys_missing() { return total_keys_missing_; }

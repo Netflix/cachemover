@@ -31,6 +31,8 @@ namespace memcachedumper {
 MonotonicStopWatch DumpMetrics::total_elapsed_;
 uint64_t DumpMetrics::total_metadump_keys_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_processed_ = 0;
+std::atomic_uint64_t DumpMetrics::total_keys_uploaded_ = 0;
+std::atomic_uint64_t DumpMetrics::total_keys_notified_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_ignored_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_missing_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_filtered_ = 0;
@@ -56,6 +58,10 @@ std::string DumpMetrics::MetricsAsJsonString() {
       DumpMetrics::total_metadump_keys(), allocator);
   kv_metrics_obj.AddMember("dumped",
       DumpMetrics::total_keys_processed(), allocator);
+  kv_metrics_obj.AddMember("uploaded",
+      DumpMetrics::total_keys_uploaded(), allocator);
+  kv_metrics_obj.AddMember("notified",
+      DumpMetrics::total_keys_notified(), allocator);
   kv_metrics_obj.AddMember("not_found",
       DumpMetrics::total_keys_missing(), allocator);
   kv_metrics_obj.AddMember("skipped",

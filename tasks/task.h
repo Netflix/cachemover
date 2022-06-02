@@ -46,6 +46,8 @@ class DoneTask : public Task {
  public:
   DoneTask(uint64_t total,
       uint64_t dumped,
+      uint64_t uploaded,
+      uint64_t notified,
       uint64_t skipped,
       uint64_t not_found,
       uint64_t filtered,
@@ -57,6 +59,8 @@ class DoneTask : public Task {
  private:
   uint64_t total_;
   uint64_t dumped_;
+  uint64_t uploaded_;
+  uint64_t notified_;
   uint64_t skipped_;
   uint64_t not_found_;
   uint64_t filtered_;
