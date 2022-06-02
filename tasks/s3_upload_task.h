@@ -26,19 +26,23 @@
 
 namespace memcachedumper {
 
+struct s3_sqs_upload_status {
+  Status s3_status_;
+  Status sqs_status_;
+};
+
 class S3UploadFileTask : public Task {
  public:
   S3UploadFileTask(std::string fq_local_path, std::string filename);
   ~S3UploadFileTask();
 
   void Execute() override;
-  Status GetUploadStatus() { return upload_status_; }
+  Status GetUploadStatus() { return s3_sqs_upload_status_; }
 
  private:
   std::string fq_local_path_;
   std::string filename_;
-
-  Status upload_status_;
+  s3_sqs_upload_status s3_sqs_upload_status_;
 
   Status SendSQSNotification(std::string s3_file_uri, std::string sqs_msg_body);
 };
