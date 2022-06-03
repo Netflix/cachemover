@@ -58,6 +58,8 @@ std::string DoneTask::PrepareFinalMetricsString() {
   final_metrics <<
       "DONE" << std::endl <<
       "Total keys from metadump: " << total_ << std::endl <<
+      "Total keys uploaded: " << uploaded_ << std::endl <<
+      "Total keys notified: " << notified_ << std::endl <<
       "Total keys dumped: " << dumped_ << std::endl <<
       "Total keys skipped: " << skipped_ << std::endl <<
       "Total keys not found: " << not_found_ << std::endl <<
