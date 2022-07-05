@@ -50,8 +50,9 @@ S3UploadFileTask::~S3UploadFileTask() = default;
 
 S3UploadFileTask::S3UploadFileTask(std::string fq_local_path, std::string filename)
   : fq_local_path_(fq_local_path),
-    filename_(filename),
-    upload_status_(Status::OK()) {
+    filename_(filename) {
+      s3_sqs_upload_status_.s3_status_ = Status::OK();
+      s3_sqs_upload_status_.sqs_status_ = Status::OK();
 }
 
 Status S3UploadFileTask::SendSQSNotification(std::string s3_file_uri,
@@ -110,14 +111,14 @@ void S3UploadFileTask::Execute() {
   auto put_object_outcome = AwsUtils::GetS3Client()->PutObject(object_request);
   if (!put_object_outcome.IsSuccess()) {
     auto error = put_object_outcome.GetError();
-    upload_status_ = Status::NetworkError(error.GetExceptionName() + " : ", error.GetMessage());
+    s3_sqs_upload_status_.s3_status_ = Status::NetworkError(error.GetExceptionName() + " : ", error.GetMessage());
     return;
   }
   LOG("Successfully uploaded {0} to S3. Sending SQS notification...", filename_);
 
   Status sqs_notify_status = SendSQSNotification(s3_file_uri, obj_md_string);
   if (!sqs_notify_status.ok()) {
-    upload_status_ = sqs_notify_status;
+    s3_sqs_upload_status_.sqs_status_ = sqs_notify_status;
     return;
   }
 }

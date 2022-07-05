@@ -121,6 +121,8 @@ class RotatingFile {
   std::string staging_file_name_;
   // Current file handler.
   std::unique_ptr<PosixFile> cur_file_;
+  // Number of keys in the current file.
+  uint64_t nkeys_in_current_file_;
   // Number of files written to totally.
   int nfiles_;
   // Number of bytes written to the current file.

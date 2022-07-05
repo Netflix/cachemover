@@ -37,11 +37,15 @@ DoneTask::~DoneTask() = default;
 
 DoneTask::DoneTask(uint64_t total,
     uint64_t dumped,
+    uint64_t uploaded,
+    uint64_t notified,
     uint64_t skipped,
     uint64_t not_found,
     uint64_t filtered,
     std::string time_taken_str) : total_(total),
                                   dumped_(dumped),
+                                  uploaded_(uploaded),
+                                  notified_(notified),
                                   skipped_(skipped),
                                   not_found_(not_found),
                                   filtered_(filtered),
@@ -54,6 +58,8 @@ std::string DoneTask::PrepareFinalMetricsString() {
   final_metrics <<
       "DONE" << std::endl <<
       "Total keys from metadump: " << total_ << std::endl <<
+      "Total keys uploaded: " << uploaded_ << std::endl <<
+      "Total keys notified: " << notified_ << std::endl <<
       "Total keys dumped: " << dumped_ << std::endl <<
       "Total keys skipped: " << skipped_ << std::endl <<
       "Total keys not found: " << not_found_ << std::endl <<

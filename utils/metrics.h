@@ -33,6 +33,8 @@ class DumpMetrics {
   static MonotonicStopWatch& total_msw() { return total_elapsed_; }
   static std::string time_elapsed_str() { return total_elapsed_.HumanElapsedStr(); }
   static uint64_t total_metadump_keys() { return total_metadump_keys_; }
+  static uint64_t total_keys_uploaded() { return total_keys_uploaded_; }
+  static uint64_t total_keys_notified() { return total_keys_notified_; }
   static uint64_t total_keys_processed() { return total_keys_processed_; }
   static uint64_t total_keys_ignored() { return total_keys_ignored_; }
   static uint64_t total_keys_missing() { return total_keys_missing_; }
@@ -40,6 +42,12 @@ class DumpMetrics {
 
   static void increment_total_metadump_keys(uint64_t num_keys) {
     total_metadump_keys_ += num_keys;
+  }
+  static void increment_total_keys_uploaded(u_int64_t num_keys) {
+    total_keys_uploaded_ += num_keys;
+  }
+  static void increment_total_keys_notified(u_int64_t num_keys) {
+    total_keys_notified_ += num_keys;
   }
   static void update_total_keys_processed(uint64_t num_keys) {
     total_keys_processed_ = num_keys;
@@ -73,6 +81,10 @@ class DumpMetrics {
   // The remaining metrics are 'atomic' as they can be updated concurrently.
   // Metric to track the number of total keys processed so far.
   static std::atomic_uint64_t total_keys_processed_;
+  // Metric to track the number of keys successfully transferred to S3
+  static std::atomic_uint64_t total_keys_uploaded_;
+  // Metric to track total keys for which the SQS notification has been sent
+  static std::atomic_uint64_t total_keys_notified_;
   // Metric to track the number of total keys ignored for any reason so far.
   static std::atomic_uint64_t total_keys_ignored_;
   // Metric to track the number of total keys missing so far.

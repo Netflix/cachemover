@@ -259,6 +259,8 @@ void Dumper::Run() {
   // TODO: (nit) Ideally would be submitted to the task scheduler.
   DoneTask dtask(
     DumpMetrics::total_metadump_keys(),
+    DumpMetrics::total_keys_uploaded(),
+    DumpMetrics::total_keys_notified(),
     DumpMetrics::total_keys_processed(),
     DumpMetrics::total_keys_ignored(),
     DumpMetrics::total_keys_missing(),

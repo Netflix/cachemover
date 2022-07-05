@@ -19,6 +19,7 @@
 #include "common/logger.h"
 #include "tasks/s3_upload_task.h"
 #include "utils/file_util.h"
+#include "utils/metrics.h"
 #include "utils/memcache_utils.h"
 
 #include <errno.h>
@@ -127,6 +128,7 @@ RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
     suffix_checksum_(suffix_checksum),
     s3_upload_on_close_(s3_upload_on_close),
     cur_file_(nullptr),
+    nkeys_in_current_file_(0),
     nfiles_(0),
     nwritten_current_(0),
     nwritten_total_(0) {
@@ -142,6 +144,7 @@ RotatingFile::RotatingFile(std::string file_path, std::string file_prefix,
     suffix_checksum_(suffix_checksum),
     s3_upload_on_close_(s3_upload_on_close),
     cur_file_(nullptr),
+    nkeys_in_current_file_(0),
     nfiles_(0),
     nwritten_current_(0),
     nwritten_total_(0) {
@@ -245,7 +248,25 @@ Status RotatingFile::FinalizeCurrentFile() {
 
     // If the file upload was a failure, return the error.
     // TODO: Add a retry loop if necessary.
-    RETURN_ON_ERROR(s3_task.GetUploadStatus());
+    s3_sqs_upload_status task_status = s3_task.GetUploadStatus();
+    
+    if (task_status.s3_status_.ok()) {
+      DumpMetrics::increment_total_keys_uploaded(nkeys_in_current_file_);
+    }
+
+    if (task_status.sqs_status_.ok()) {
+      DumpMetrics::increment_total_keys_notified(nkeys_in_current_file_);
+    }
+
+    nkeys_in_current_file_ = 0;
+
+    if (!task_status.s3_status_.ok()) {
+      RETURN_ON_ERROR(task_status.s3_status_);
+    }
+
+    if (!task_status.sqs_status_.ok()) {
+      RETURN_ON_ERROR(task_status.sqs_status_);
+    }
 
     // Since we've uploaded it to S3, delete it from the local FS.
     RETURN_ON_ERROR(FileUtils::RemoveFile(final_filename_fq));
@@ -279,6 +300,7 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
   RETURN_ON_ERROR(cur_file_->WriteV(iovecs, n_iovecs, nwritten));
   assert(nwritten >= 0);
 
+  nkeys_in_current_file_ += (n_iovecs / 2);
   nwritten_current_ += *nwritten;
   nwritten_total_ += *nwritten;
 
