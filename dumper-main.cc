@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
   // Init the AWS SDK.
   Aws::SDKOptions options;
   options.httpOptions.installSigPipeHandler = true;
-  options.loggingOptions.logLevel = Aws::Utils::Logging::LogLevel::Trace;
+  options.loggingOptions.logLevel = Aws::Utils::Logging::LogLevel::Error;
   Aws::InitAPI(options);
 
   memcachedumper::DumperOptions opts;
