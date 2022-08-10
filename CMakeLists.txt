@@ -45,7 +45,7 @@ include_directories(SYSTEM ${CURL_INCLUDE_DIR})
 
 # Pistache for an async REST Server
 set(PISTACHE_INCLUDE_DIR "extern/pistache/include")
-set(PISTACHE_LIBRARY "${PROJECT_SOURCE_DIR}/extern/pistache/libpistache.a")
+set(PISTACHE_LIBRARY "${PROJECT_SOURCE_DIR}/extern/pistache/libpistache-${CMAKE_HOST_SYSTEM_PROCESSOR}.a")
 include_directories(${PISTACHE_INCLUDE_DIR})
 
 # yaml-cpp
