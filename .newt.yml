@@ -7,7 +7,7 @@ package-requires:
   # check if pistache can be added here as opposed to pulling it into the repo
 package-version: "1.0"
 
-build-image: dockerregistry.test.netflix.net:7002/engtools/newt-common-builder/bionic:latest
+build-image: dockerregistry.test.netflix.net:7002/engtools/newt-common-builder/jammy:latest
 
 build-setup:
   - sudo apt-get update
