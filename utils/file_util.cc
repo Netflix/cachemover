@@ -298,7 +298,7 @@ Status RotatingFile::WriteV(struct iovec* iovecs, int n_iovecs, ssize_t* nwritte
   }
 
   RETURN_ON_ERROR(cur_file_->WriteV(iovecs, n_iovecs, nwritten));
-  assert(nwritten >= 0);
+  assert(*nwritten >= 0);
 
   nkeys_in_current_file_ += (n_iovecs / 2);
   nwritten_current_ += *nwritten;
