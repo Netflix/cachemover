@@ -77,7 +77,15 @@ Status S3UploadFileTask::SendSQSNotification(std::string s3_file_uri,
 }
 
 void S3UploadFileTask::Execute() {
-  std::string s3_key_name = AwsUtils::GetS3Path() + "/" +
+  std::string s3_path = AwsUtils::GetS3Path();
+  bool is_snapshot_workflow = false;
+
+  // For snapshot workflow, this will always start with snapshot/ => 9 characters
+  if (s3_path.length() >= 9 && s3_path.substr(0,9).compare("snapshot/") == 0) {
+    is_snapshot_workflow = true;
+  }
+
+  std::string s3_key_name = s3_path + "/" +
       MemcachedUtils::GetReqId() + "/" + filename_;
 
   std::string s3_file_uri = "s3://" + AwsUtils::GetS3Bucket() + "/" + s3_key_name;
@@ -116,10 +124,12 @@ void S3UploadFileTask::Execute() {
   }
   LOG("Successfully uploaded {0} to S3. Sending SQS notification...", filename_);
 
-  Status sqs_notify_status = SendSQSNotification(s3_file_uri, obj_md_string);
-  if (!sqs_notify_status.ok()) {
-    s3_sqs_upload_status_.sqs_status_ = sqs_notify_status;
-    return;
+  if (!is_snapshot_workflow) {
+    Status sqs_notify_status = SendSQSNotification(s3_file_uri, obj_md_string);
+    if (!sqs_notify_status.ok()) {
+      s3_sqs_upload_status_.sqs_status_ = sqs_notify_status;
+      return;
+    }
   }
 }
 
