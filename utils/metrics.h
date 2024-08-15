@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/logger.h"
 #include "utils/stopwatch.h"
 
 #include <atomic>
@@ -52,6 +53,11 @@ class DumpMetrics {
   static void update_total_keys_processed(uint64_t num_keys) {
     total_keys_processed_ = num_keys;
   }
+  
+  static void increment_total_keys_processed(uint64_t num_keys) {
+    total_keys_processed_ += num_keys;
+  }
+  
   static void update_total_keys_ignored(uint64_t num_keys) {
     total_keys_ignored_ = num_keys;
   }

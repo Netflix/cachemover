@@ -46,6 +46,7 @@ class KeyFilter {
 
   // Returns 'true' if 'key' should be filtered out; 'false' otherwise.
   bool FilterKey(const std::string& key);
+  bool CheckIfKeyIsOrphan(const std::string& key, std::string current_ip);
 
  private:
   // List of all IP addresses in our target ASG.

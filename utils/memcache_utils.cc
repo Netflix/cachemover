@@ -18,6 +18,7 @@
 
 #include "common/logger.h"
 #include "utils/key_filter.h"
+#include "utils/key_cleaner.h"
 #include "utils/memcache_utils.h"
 #include "utils/net_util.h"
 
@@ -62,6 +63,7 @@ int MemcachedUtils::only_expire_after_;
 std::vector<std::string> MemcachedUtils::dest_ips_;
 std::vector<std::string> MemcachedUtils::all_ips_;
 KeyFilter* MemcachedUtils::kf_;
+KeyCleaner* MemcachedUtils::kcf_;
 
 void MemcachedUtils::SetReqId(std::string req_id) {
   MemcachedUtils::req_id_ = req_id;
@@ -168,9 +170,25 @@ Status MemcachedUtils::InitKeyFilter(uint32_t ketama_bucket_size) {
   return Status::OK();
 }
 
+Status MemcachedUtils::InitKeyCleanupFilter(uint32_t ketama_bucket_size) {
+  if (all_ips_.size() == 0) {
+    return Status::InvalidArgument(
+        "Must provide all_ips to enable key cleanup.");
+  }
+  kcf_ = new KeyCleaner(all_ips_, ketama_bucket_size);
+  RETURN_ON_ERROR(kcf_->Init());
+
+  return Status::OK();
+}
+
 bool MemcachedUtils::FilterKey(const std::string& key) {
   if (kf_ == nullptr) return false;
   return kf_->FilterKey(key);
+}
+
+bool MemcachedUtils::CheckIfKeyIsOrphan(const std::string& key, const std::string& current_ip) {
+  if (kcf_ == nullptr) return false;
+  return kcf_->CheckIfKeyIsOrphan(key, current_ip);
 }
 
 } // namespace memcachedumper

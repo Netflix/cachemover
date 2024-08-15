@@ -22,6 +22,7 @@
 #include "common/logger.h"
 #include "common/rest_endpoint.h"
 #include "tasks/metadump_task.h"
+#include "tasks/cleanup_task.h"
 #include "tasks/resume_task.h"
 #include "tasks/task.h"
 #include "tasks/task_scheduler.h"
@@ -169,16 +170,28 @@ Status Dumper::Init() {
     RETURN_ON_ERROR(MemcachedUtils::InitKeyFilter(opts_.ketama_bucket_size()));
   }
 
+  if (opts_.is_cleanup_mode()) {
+    LOG("--all_ips provided and cleanup mode selected. Initializing key cleaner.");
+    MemcachedUtils::SetAllIps(opts_.all_ips());
+    RETURN_ON_ERROR(MemcachedUtils::InitKeyCleanupFilter(opts_.ketama_bucket_size()));
+    MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
+    ClearOutputDirs();
+    RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::OutputDirPath()));
+    RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::GetDataFinalPath()));
+  }
   MemcachedUtils::SetReqId(opts_.req_id());
-  MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
   MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
   if (opts_.only_expire_after() > 0) {
     MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
   }
-  MemcachedUtils::SetMaxDataFileSize(opts_.max_data_file_size());
-  LOG("Keyfile path: {0}", MemcachedUtils::GetKeyFilePath());
-  LOG("Data staging path: {0}", MemcachedUtils::GetDataStagingPath());
-  LOG("Data final path: {0}", MemcachedUtils::GetDataFinalPath());
+
+  if (!opts_.is_cleanup_mode()) {
+    MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
+    MemcachedUtils::SetMaxDataFileSize(opts_.max_data_file_size());
+    LOG("Keyfile path: {0}", MemcachedUtils::GetKeyFilePath());
+    LOG("Data staging path: {0}", MemcachedUtils::GetDataStagingPath());
+    LOG("Data final path: {0}", MemcachedUtils::GetDataFinalPath());
+  }
 
   if (opts_.is_resume_mode()) {
     // If we're in Resume mode, make sure the key dump from the previous run is
@@ -193,16 +206,18 @@ Status Dumper::Init() {
   }
   // Note: (Subtle) No 'else if' here since the previous 'if' might set
   // 'opts.is_resume_mode' to 'false'.
-  if (!opts_.is_resume_mode()) {
+  if (!opts_.is_resume_mode() && !opts_.is_cleanup_mode()) {
     RETURN_ON_ERROR(CreateAndValidateOutputDirs());
   }
 
   RETURN_ON_ERROR(socket_pool_->PrimeConnections());
   RETURN_ON_ERROR(mem_mgr_->PreallocateChunks());
 
-  // TODO: Validate if we have enough free space to run the dump smoothly.
-  uint64_t free_space = FileUtils::GetSpaceAvailable(opts_.output_dir_path());
-  LOG("Amount of free space on disk: {0} MB", free_space / 1024 / 1024);
+  if (!opts_.is_cleanup_mode()) {
+    // TODO: Validate if we have enough free space to run the dump smoothly.
+    uint64_t free_space = FileUtils::GetSpaceAvailable(opts_.output_dir_path());
+    LOG("Amount of free space on disk: {0} MB", free_space / 1024 / 1024);
+  }
 
   if (opts_.is_s3_dump()) {
     LOG("Dump target set to S3. S3 Bucket: {0} ; S3 Path: {1}", opts_.s3_bucket(), opts_.s3_path());
@@ -245,7 +260,12 @@ void Dumper::Run() {
       // TODO
       ResumeTask *rtask = new ResumeTask(opts_.is_s3_dump());
       task_scheduler_->SubmitTask(rtask);
-    } else {
+    } else if (opts_.is_cleanup_mode()) {
+      LOG("Cleanup mode is selected");
+      CleanupTask *cTask = new CleanupTask(mem_mgr_.get(), opts_.current_ip(), 
+      opts_.enable_hash_table_crawl());
+      task_scheduler_->SubmitTask(cTask);
+    }else {
       MetadumpTask *mtask = new MetadumpTask(
           0, MemcachedUtils::GetKeyFilePath(), opts_.max_key_file_size(), mem_mgr_.get(),
           opts_.is_s3_dump(), opts_.enable_hash_table_crawl());

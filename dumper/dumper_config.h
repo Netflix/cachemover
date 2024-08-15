@@ -39,6 +39,8 @@
 #define ARG_BULK_GET_THRESHOLD        "bulk_get_threshold"
 #define ARG_ONLY_EXPIRE_AFTER_S       "only_expire_after_s"
 #define ARG_CHECKPOINT_RESUME         "checkpoint_resume"
+#define ARG_CLEANUP_MODE              "cleanup_mode"
+#define ARG_CURRENT_IP                "current_ip"
 #define ARG_LOG_FILE_PATH             "log_file_path"
 #define ARG_REQ_ID                    "req_id"
 #define ARG_DEST_IPS                  "dest_ips"
@@ -89,6 +91,7 @@ class DumperOptions {
   void set_output_dir_path(std::string_view output_dir_path);
   void set_only_expire_after(int only_expire_after);
   void set_resume_mode(bool resume_mode);
+  void set_cleanup_mode(bool cleanup_mode);
   void set_is_s3_dump(bool is_s3_dump);
   void set_enable_hash_table_crawl(bool enable_hash_table_crawl);
   void set_s3_bucket_name(std::string s3_bucket);
@@ -99,6 +102,7 @@ class DumperOptions {
   void set_all_ips_filepath(std::string all_ips_filepath);
   void add_dest_ip(const std::string& dest_ip);
   void add_all_ip(const std::string& all_ip);
+  void set_current_ip(const std::string& current_ip);
   void set_ketama_bucket_size(uint32_t ketama_bucket_size);
 
   std::string config_file_path() { return config_file_path_; }
@@ -114,6 +118,7 @@ class DumperOptions {
   std::string output_dir_path() { return output_dir_path_; }
   int only_expire_after() { return only_expire_after_; }
   bool is_resume_mode() { return resume_mode_; }
+  bool is_cleanup_mode() { return cleanup_mode_; }
   bool is_s3_dump() { return is_s3_dump_; }
   bool enable_hash_table_crawl() { return enable_hash_table_crawl_; }
   std::string s3_bucket() { return s3_bucket_; }
@@ -122,6 +127,7 @@ class DumperOptions {
   std::string req_id() { return req_id_; }
   const std::vector<std::string>& dest_ips() { return dest_ips_; }
   const std::vector<std::string>& all_ips() { return all_ips_; }
+  const std::string& current_ip() { return current_ip_; }
   uint32_t ketama_bucket_size() { return ketama_bucket_size_; }
 
  private:
@@ -152,6 +158,8 @@ class DumperOptions {
   // Indicates that we have to resume from a checkpoint and not start dumping
   // from scratch.
   bool resume_mode_ = false;
+  // Indicates that this is for orphan key cleanup
+  bool cleanup_mode_ = false;
   // Uploads to S3 if set.
   bool is_s3_dump_ = false;
   // Enable Hash table Crawl for LRU crawler
@@ -168,6 +176,8 @@ class DumperOptions {
   std::vector<std::string> dest_ips_;
   // IP:port pairs of all instances in the target replica.
   std::vector<std::string> all_ips_;
+  // Current IP address
+  std::string current_ip_;
   // The bucket size to be used while evaluating ketama hashes.
   uint32_t ketama_bucket_size_;
 };

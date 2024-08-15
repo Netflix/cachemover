@@ -70,7 +70,8 @@ std::string DoneTask::PrepareFinalMetricsString() {
 }
 
 void DoneTask::Execute() {
-  std::ofstream done_file(MemcachedUtils::GetDataFinalPath() + "/DONE");
+  std::ofstream done_file(MemcachedUtils::GetDataFinalPath() + "DONE");
+  std::string finPath = MemcachedUtils::GetDataFinalPath() + "DONE";
   done_file << PrepareFinalMetricsString().c_str();
   done_file.close();
 }

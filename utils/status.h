@@ -78,6 +78,9 @@ class Status {
   static Status NetworkError(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kNetworkError, msg, msg2);
   }
+  static Status EOFError(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kEOFError, msg, msg2);
+  }
   static Status OutOfMemoryError(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kOutOfMemoryError, msg, msg2);
   }
@@ -109,6 +112,9 @@ class Status {
   // Returns true iff the status indicates a network error.
   bool IsNetworkError() const { return code() == kNetworkError; }
 
+  // Returns true iff the status indicates a EOF error.
+  bool IsEOFError() const { return code() == kEOFError; }
+
   // Returns true iff the status indicates an OOM error.
   bool IsOutOfMemoryError() const { return code() == kOutOfMemoryError; }
 
@@ -133,7 +139,8 @@ class Status {
     kNetworkError = 6,
     kOutOfMemoryError = 7,
     kBusyLRUCrawler = 8,
-    kCoreDumpError = 9
+    kCoreDumpError = 9,
+    kEOFError = 10
   };
 
   Code code() const {

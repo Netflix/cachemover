@@ -35,6 +35,7 @@
 
 // Forward declaration.
 class KeyFilter;
+class KeyCleaner;
 
 namespace memcachedumper {
 
@@ -112,10 +113,12 @@ class MemcachedUtils {
   // Must call SetDestIps() and SetAllIps() before using.
   // TODO: Consider avoiding this global state.
   static Status InitKeyFilter(uint32_t ketama_bucket_size);
+  static Status InitKeyCleanupFilter(uint32_t ketama_bucket_size);
   // Returns 'true' if key needs to be filtered out. 'false' otherwise.
   // Always returns 'false' if InitKeyFilter() isn't called before this.
   static bool FilterKey(const std::string& key);
-
+  // Returns 'true' if key doesn't belong to the current instance
+  static bool CheckIfKeyIsOrphan(const std::string& key, const std::string& current_ip);
   // Craft a bulk get command with the first 'BulkGetThreshold()' keys in
   // 'pending_keys' to send memcached.
   static std::string CraftBulkGetCommand(McDataMap* pending_keys);
@@ -189,6 +192,7 @@ class MemcachedUtils {
   static std::vector<std::string> all_ips_;
 
   static KeyFilter* kf_;
+  static KeyCleaner* kcf_;
 };
 
 
