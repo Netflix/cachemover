@@ -178,20 +178,21 @@ Status Dumper::Init() {
     ClearOutputDirs();
     RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::OutputDirPath()));
     RETURN_ON_ERROR(FileUtils::CreateDirectory(MemcachedUtils::GetDataFinalPath()));
-  }
-  MemcachedUtils::SetReqId(opts_.req_id());
-  MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
-  if (opts_.only_expire_after() > 0) {
-    MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
-  }
-
-  if (!opts_.is_cleanup_mode()) {
+  } else {
     MemcachedUtils::SetOutputDirPath(opts_.output_dir_path());
     MemcachedUtils::SetMaxDataFileSize(opts_.max_data_file_size());
     LOG("Keyfile path: {0}", MemcachedUtils::GetKeyFilePath());
     LOG("Data staging path: {0}", MemcachedUtils::GetDataStagingPath());
     LOG("Data final path: {0}", MemcachedUtils::GetDataFinalPath());
   }
+
+  MemcachedUtils::SetReqId(opts_.req_id());
+  MemcachedUtils::SetBulkGetThreshold(opts_.bulk_get_threshold());
+  if (opts_.only_expire_after() > 0) {
+    MemcachedUtils::SetOnlyExpireAfter(opts_.only_expire_after());
+  }
+
+
 
   if (opts_.is_resume_mode()) {
     // If we're in Resume mode, make sure the key dump from the previous run is
@@ -285,6 +286,7 @@ void Dumper::Run() {
     DumpMetrics::total_keys_ignored(),
     DumpMetrics::total_keys_missing(),
     DumpMetrics::total_keys_filtered(),
+    DumpMetrics::total_keys_cleaned(),
     DumpMetrics::time_elapsed_str());
   dtask.Execute();
 

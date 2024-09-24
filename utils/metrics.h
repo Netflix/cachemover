@@ -40,6 +40,7 @@ class DumpMetrics {
   static uint64_t total_keys_ignored() { return total_keys_ignored_; }
   static uint64_t total_keys_missing() { return total_keys_missing_; }
   static uint64_t total_keys_filtered() { return total_keys_filtered_; }
+  static uint64_t total_keys_cleaned() { return total_keys_cleaned_; }
 
   static void increment_total_metadump_keys(uint64_t num_keys) {
     total_metadump_keys_ += num_keys;
@@ -57,7 +58,9 @@ class DumpMetrics {
   static void increment_total_keys_processed(uint64_t num_keys) {
     total_keys_processed_ += num_keys;
   }
-  
+  static void increment_total_keys_cleaned(uint64_t num_keys) {
+    total_keys_cleaned_ += num_keys;
+  }
   static void update_total_keys_ignored(uint64_t num_keys) {
     total_keys_ignored_ = num_keys;
   }
@@ -97,6 +100,8 @@ class DumpMetrics {
   static std::atomic_uint64_t total_keys_missing_;
   // Metric to track the number of total keys filtered out so far.
   static std::atomic_uint64_t total_keys_filtered_;
+  // Metric to track the number of total orphan keys cleaned up.
+  static std::atomic_uint64_t total_keys_cleaned_;
 
 };
 

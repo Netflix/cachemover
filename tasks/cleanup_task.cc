@@ -70,7 +70,7 @@ void CleanupTask::CleanupOrphanKeys(std::string chunk_keys) {
   }
 
   DumpMetrics::increment_total_metadump_keys(total_keys);
-  DumpMetrics::increment_total_keys_uploaded(total_keys_deleted);
+  DumpMetrics::increment_total_keys_cleaned(total_keys_deleted);
 }
 
 void CleanupTask::Execute() {
