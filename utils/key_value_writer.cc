@@ -468,7 +468,10 @@ Status KeyValueWriter::Finalize() {
     // We noticed this happen very rarely. This assert should result in a core
     // file which we can use to track the state of the process when it happened
     // and fix the potential bug.
-    assert(!(mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()));
+    if (mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()) {
+      LOG("[ERROR] Found discrepancy, total entries pending: {0}, total entries processing: {1}", 
+      mcdata_entries_pending_.size(), mcdata_entries_processing_.size());
+    }
     ProcessKeys(true);
   }
 
