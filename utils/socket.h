@@ -35,7 +35,7 @@ class Socket {
   Status Create();
   Status SetRecvTimeout(int seconds);
   Status Connect(const Sockaddr& remote_addr);
-  Status Recv(uint8_t* buf, size_t len, int32_t *nbytes_read);
+  Status Recv(uint8_t* buf, size_t len, int32_t *nbytes_read, int32_t retry_count=10, bool cleanup_mode=false);
   Status Send(const uint8_t* buf, size_t len, int32_t *nbytes_sent);
   Status Close();
   Status Refresh();

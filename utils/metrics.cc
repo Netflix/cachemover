@@ -36,6 +36,7 @@ std::atomic_uint64_t DumpMetrics::total_keys_notified_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_ignored_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_missing_ = 0;
 std::atomic_uint64_t DumpMetrics::total_keys_filtered_ = 0;
+std::atomic_uint64_t DumpMetrics::total_keys_cleaned_ = 0;
 
 void DumpMetrics::PersistMetrics() {
   std::ofstream ofs;
@@ -68,6 +69,8 @@ std::string DumpMetrics::MetricsAsJsonString() {
       DumpMetrics::total_keys_ignored(), allocator);
   kv_metrics_obj.AddMember("filtered",
       DumpMetrics::total_keys_filtered(), allocator);
+  kv_metrics_obj.AddMember("cleaned",
+      DumpMetrics::total_keys_cleaned(), allocator);
   root.AddMember("keyvalue_metrics", kv_metrics_obj, allocator);
 
   std::string elapsed_str = time_elapsed_str();

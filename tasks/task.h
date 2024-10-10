@@ -51,6 +51,7 @@ class DoneTask : public Task {
       uint64_t skipped,
       uint64_t not_found,
       uint64_t filtered,
+      uint64_t cleaned,
       std::string time_taken_str);
   ~DoneTask();
 
@@ -64,6 +65,7 @@ class DoneTask : public Task {
   uint64_t skipped_;
   uint64_t not_found_;
   uint64_t filtered_;
+  uint64_t cleaned_;
   std::string total_time_taken_str_;
 
   std::string PrepareFinalMetricsString();

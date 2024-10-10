@@ -82,17 +82,17 @@ Status Socket::Connect(const Sockaddr& remote_addr) {
   return Status::OK();
 }
 
-Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
+Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read, int32_t retry_count, bool cleanup_mode) {
   int32_t nbytes;
-  int retry_count = 0;
+  int retries = 0;
   int pollin_happened = 0;
-  pfds_[0].fd = fd_;
+  pfds_[0].fd = fd_;    
   pfds_[0].events = POLLIN;
-  while (!pollin_happened && retry_count < 10) { // TODO make the retry count configurable
+  while (!pollin_happened && retries < retry_count) {
     int events = poll(pfds_, 1, timeout_ * 1000);
     if (events == 0) {
       LOG("Poll timed out, retrying..\n");
-      retry_count++;
+      retries++;
     } else {
       pollin_happened = pfds_[0].revents & POLLIN;
       if (!pollin_happened) {
@@ -103,10 +103,16 @@ Status Socket::Recv(uint8_t* buf, size_t len, int32_t *nbytes_read) {
 
   RETRY_ON_EINTR(nbytes, recv(fd_, buf, len, 0));
   if (nbytes < 0) {
+    if (cleanup_mode) {
+      return Status::EOFError("Recv EOF", strerror(errno));
+    }
     return Status::NetworkError("Recv error", strerror(errno));
   } else if (nbytes == 0) {
     errno = ESHUTDOWN;
-    return Status::NetworkError("Recv EOF", strerror(errno));
+    if (cleanup_mode) {
+      return Status::EOFError("Recv EOF", strerror(errno));
+    }
+    else return Status::NetworkError("Recv EOF", strerror(errno));
   }
 
   *nbytes_read = nbytes;

@@ -147,6 +147,12 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   if (config[ARG_CHECKPOINT_RESUME]) {
     out_opts.set_resume_mode(config[ARG_CHECKPOINT_RESUME].as<bool>());
   }
+  if (config[ARG_CLEANUP_MODE]) {
+    out_opts.set_cleanup_mode(config[ARG_CLEANUP_MODE].as<bool>());
+  }
+  if (config[ARG_CURRENT_IP]) {
+    out_opts.set_current_ip(config[ARG_CURRENT_IP].as<std::string>());
+  }
   if (config[ARG_ENABLE_HASH_TABLE_CRAWL]) {
     out_opts.set_enable_hash_table_crawl(config[ARG_ENABLE_HASH_TABLE_CRAWL].as<bool>());
   }
@@ -247,6 +253,14 @@ void DumperOptions::set_req_id(std::string req_id) {
 
 void DumperOptions::add_dest_ip(const std::string& dest_ip) {
   dest_ips_.push_back(dest_ip);
+}
+
+void DumperOptions::set_cleanup_mode(bool cleanup_mode) {
+  cleanup_mode_ = cleanup_mode;
+}
+
+void DumperOptions::set_current_ip(const std::string& current_ip) {
+  current_ip_ = current_ip;
 }
 
 void DumperOptions::add_all_ip(const std::string& all_ip) {

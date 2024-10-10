@@ -1,6 +1,7 @@
 
 set(TASKS_SRCS
   metadump_task.cc
+  cleanup_task.cc
   process_metabuf_task.cc
   resume_task.cc
   s3_upload_task.cc

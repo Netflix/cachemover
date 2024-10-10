@@ -42,6 +42,7 @@ DoneTask::DoneTask(uint64_t total,
     uint64_t skipped,
     uint64_t not_found,
     uint64_t filtered,
+    uint64_t cleaned,
     std::string time_taken_str) : total_(total),
                                   dumped_(dumped),
                                   uploaded_(uploaded),
@@ -49,6 +50,7 @@ DoneTask::DoneTask(uint64_t total,
                                   skipped_(skipped),
                                   not_found_(not_found),
                                   filtered_(filtered),
+                                  cleaned_(cleaned),
                                   total_time_taken_str_(time_taken_str) {
 }
 
@@ -64,13 +66,15 @@ std::string DoneTask::PrepareFinalMetricsString() {
       "Total keys skipped: " << skipped_ << std::endl <<
       "Total keys not found: " << not_found_ << std::endl <<
       "Total keys filtered: " << filtered_ << std::endl <<
+      "Total keys cleaned: " << cleaned_ << std::endl <<
       "Total time taken: " << total_time_taken_str_ << std::endl;
 
   return final_metrics.str();
 }
 
 void DoneTask::Execute() {
-  std::ofstream done_file(MemcachedUtils::GetDataFinalPath() + "/DONE");
+  std::ofstream done_file(MemcachedUtils::GetDataFinalPath() + "DONE");
+  std::string finPath = MemcachedUtils::GetDataFinalPath() + "DONE";
   done_file << PrepareFinalMetricsString().c_str();
   done_file.close();
 }

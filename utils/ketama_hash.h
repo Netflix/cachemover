@@ -20,6 +20,7 @@
 
 #include "common/logger.h"
 #include "utils/key_filter.h"
+#include "utils/key_cleaner.h"
 #include "utils/string_util.h"
 
 #include <map>
