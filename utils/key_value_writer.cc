@@ -470,7 +470,8 @@ Status KeyValueWriter::Finalize() {
     // and fix the potential bug.
     if (mcdata_entries_pending_.empty() && mcdata_entries_processing_.empty()) {
       LOG("[ERROR] Found discrepancy, total entries pending: {0}, total entries processing: {1}", 
-      mcdata_entries_pending_.size(), mcdata_entries_processing_.size());
+      n_keys_pending_, n_unwritten_processed_keys_);
+      break;
     }
     ProcessKeys(true);
   }
