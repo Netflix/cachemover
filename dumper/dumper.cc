@@ -264,7 +264,7 @@ void Dumper::Run() {
     } else if (opts_.is_cleanup_mode()) {
       LOG("Cleanup mode is selected");
       CleanupTask *cTask = new CleanupTask(mem_mgr_.get(), opts_.current_ip(), 
-      opts_.enable_hash_table_crawl());
+      opts_.enable_hash_table_crawl(), opts_.perform_cleanup());
       task_scheduler_->SubmitTask(cTask);
     }else {
       MetadumpTask *mtask = new MetadumpTask(

@@ -150,6 +150,9 @@ Status DumperConfig::LoadConfig(std::string config_filepath, DumperOptions& out_
   if (config[ARG_CLEANUP_MODE]) {
     out_opts.set_cleanup_mode(config[ARG_CLEANUP_MODE].as<bool>());
   }
+  if (config[ARG_PERFORM_CLEANUP]) {
+    out_opts.set_perform_cleanup(config[ARG_PERFORM_CLEANUP].as<bool>());
+  }
   if (config[ARG_CURRENT_IP]) {
     out_opts.set_current_ip(config[ARG_CURRENT_IP].as<std::string>());
   }

@@ -30,7 +30,7 @@ class Socket;
 
 class CleanupTask : public Task {
  public:
-  CleanupTask(MemoryManager *mem_mgr, std::string current_ip, bool enable_hash_table_crawl);
+  CleanupTask(MemoryManager *mem_mgr, std::string current_ip, bool enable_hash_table_crawl, bool perform_cleanup);
   ~CleanupTask() = default;
 
   void Execute() override;
@@ -48,6 +48,8 @@ class CleanupTask : public Task {
   std::string current_ip_;
 
   bool enable_hash_table_crawl_;
+
+  bool perform_cleanup_;
 
 };
 

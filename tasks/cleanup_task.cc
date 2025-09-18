@@ -44,10 +44,11 @@ namespace memcachedumper {
 
 //TODO: Clean up code.
 
-CleanupTask::CleanupTask(MemoryManager *mem_mgr, std::string current_ip, bool enable_hash_table_crawl)
+CleanupTask::CleanupTask(MemoryManager *mem_mgr, std::string current_ip, bool enable_hash_table_crawl, bool perform_cleanup)
   : mem_mgr_(mem_mgr),
     current_ip_(current_ip),
-    enable_hash_table_crawl_(enable_hash_table_crawl){
+    enable_hash_table_crawl_(enable_hash_table_crawl),
+    perform_cleanup_(perform_cleanup){
 }
 
 void CleanupTask::CleanupOrphanKeys(std::string chunk_keys) {
@@ -60,9 +61,13 @@ void CleanupTask::CleanupOrphanKeys(std::string chunk_keys) {
     current_key = chunk_keys.substr(pos+4, end_idx - pos - 4);
     total_keys++;
     if (MemcachedUtils::CheckIfKeyIsOrphan(current_key, current_ip_)) {
-      std::string delete_cmd = "delete " + current_key + "\n";
-      Status send_status = SendCommand(delete_cmd);
-      if (send_status.ok()) {
+      if (perform_cleanup_) {
+        std::string delete_cmd = "delete " + current_key + "\n";
+        Status send_status = SendCommand(delete_cmd);
+        if (send_status.ok()) {
+          total_keys_deleted++;
+        }
+      } else {
         total_keys_deleted++;
       }
     }

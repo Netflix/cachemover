@@ -40,6 +40,7 @@
 #define ARG_ONLY_EXPIRE_AFTER_S       "only_expire_after_s"
 #define ARG_CHECKPOINT_RESUME         "checkpoint_resume"
 #define ARG_CLEANUP_MODE              "cleanup_mode"
+#define ARG_PERFORM_CLEANUP           "perform_cleanup"
 #define ARG_CURRENT_IP                "current_ip"
 #define ARG_LOG_FILE_PATH             "log_file_path"
 #define ARG_REQ_ID                    "req_id"
@@ -92,6 +93,7 @@ class DumperOptions {
   void set_only_expire_after(int only_expire_after);
   void set_resume_mode(bool resume_mode);
   void set_cleanup_mode(bool cleanup_mode);
+  void set_perform_cleanup(bool perform_cleanup);
   void set_is_s3_dump(bool is_s3_dump);
   void set_enable_hash_table_crawl(bool enable_hash_table_crawl);
   void set_s3_bucket_name(std::string s3_bucket);
@@ -119,6 +121,7 @@ class DumperOptions {
   int only_expire_after() { return only_expire_after_; }
   bool is_resume_mode() { return resume_mode_; }
   bool is_cleanup_mode() { return cleanup_mode_; }
+  bool perform_cleanup() { return perform_cleanup_; }
   bool is_s3_dump() { return is_s3_dump_; }
   bool enable_hash_table_crawl() { return enable_hash_table_crawl_; }
   std::string s3_bucket() { return s3_bucket_; }
@@ -160,6 +163,8 @@ class DumperOptions {
   bool resume_mode_ = false;
   // Indicates that this is for orphan key cleanup
   bool cleanup_mode_ = false;
+  // Indicates (within cleanup mode) whether we would actually perform cleanup or just report the orphan keys
+  bool perform_cleanup_ = false;
   // Uploads to S3 if set.
   bool is_s3_dump_ = false;
   // Enable Hash table Crawl for LRU crawler
