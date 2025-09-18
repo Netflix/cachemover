@@ -262,6 +262,10 @@ void DumperOptions::set_cleanup_mode(bool cleanup_mode) {
   cleanup_mode_ = cleanup_mode;
 }
 
+void DumperOptions::set_perform_cleanup(bool perform_cleanup) {
+  perform_cleanup_ = perform_cleanup;
+}
+
 void DumperOptions::set_current_ip(const std::string& current_ip) {
   current_ip_ = current_ip;
 }
